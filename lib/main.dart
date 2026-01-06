@@ -166,9 +166,7 @@ class _LocationNotifierHomeState extends State<LocationNotifierHome> {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
         currentPosition = position;

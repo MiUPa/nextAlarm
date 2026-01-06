@@ -26,7 +26,20 @@
 
 ## スマホで今すぐ試す（最も簡単）
 
-### Android APKをダウンロード
+### Web版アプリ（今すぐアクセス可能）
+
+**URLでアクセス**: https://miupa.github.io/Linux-Playground/
+
+スマホのブラウザで上記URLにアクセスするだけ！
+
+**制限事項**:
+- 位置情報はHTTPSでのみ動作（GitHub Pagesは対応済み）
+- **シミュレート機能は完全動作**：実際に移動せずにテスト可能
+- 通知機能はブラウザ通知として動作
+
+### Android APK（ネイティブアプリ）
+
+フル機能版が必要な場合：
 
 1. [GitHub Actions](https://github.com/MiUPa/Linux-Playground/actions)ページにアクセス
 2. 最新の成功したワークフロー実行をクリック
