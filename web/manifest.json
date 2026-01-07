@@ -1,6 +1,6 @@
 {
-    "name": "location_notifier",
-    "short_name": "location_notifier",
+    "name": "next_alarm",
+    "short_name": "next_alarm",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

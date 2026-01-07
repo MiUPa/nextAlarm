@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Location Notifier</string>
+	<string>Next Alarm</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>location_notifier</string>
+	<string>next_alarm</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,11 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs your location to send notifications when you enter specified areas.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs your location to send notifications when you enter specified areas, even in the background.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs your location to send notifications when you enter specified areas.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan QR codes and barcodes for wake-up challenges.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for voice recognition wake-up challenges.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app needs motion access for step counting and shake wake-up challenges.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app needs speech recognition for voice wake-up challenges.</string>
 </dict>
 </plist>
