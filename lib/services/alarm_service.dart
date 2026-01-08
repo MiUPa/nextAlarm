@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm.dart' as models;
-import 'notification_service_web.dart';
+import 'notification_service.dart';
 
 class AlarmService extends ChangeNotifier {
   List<models.Alarm> _alarms = [];

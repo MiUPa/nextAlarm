@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../services/alarm_service.dart';
-import '../services/notification_service_web.dart';
+import '../services/notification_service.dart';
 import '../models/alarm.dart' as models;
 import '../theme/app_theme.dart';
 import 'alarm_edit_screen.dart';
