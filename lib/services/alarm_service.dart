@@ -77,7 +77,7 @@ class AlarmService extends ChangeNotifier {
 
     // Send browser notification if on Web
     if (kIsWeb) {
-      NotificationServiceWeb.showNotification(
+      NotificationService.showNotification(
         'NextAlarm',
         '${alarm.label} - ${alarm.time.hour.toString().padLeft(2, '0')}:${alarm.time.minute.toString().padLeft(2, '0')}',
       );

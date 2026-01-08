@@ -1,7 +1,7 @@
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 
-class NotificationServiceWeb {
+class NotificationService {
   static Future<bool> requestPermission() async {
     if (!kIsWeb) return false;
 

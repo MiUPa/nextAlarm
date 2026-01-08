@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _requestNotificationPermission() async {
     // Wait a bit for the UI to load
     await Future.delayed(const Duration(seconds: 1));
-    await NotificationServiceWeb.requestPermission();
+    await NotificationService.requestPermission();
   }
 
   @override
