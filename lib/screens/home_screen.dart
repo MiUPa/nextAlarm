@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../services/alarm_service.dart';
+import '../services/notification_service_web.dart';
 import '../models/alarm.dart' as models;
 import '../theme/app_theme.dart';
 import 'alarm_edit_screen.dart';
@@ -24,6 +26,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
     );
     _fabController.forward();
+
+    // Request notification permission on Web
+    if (kIsWeb) {
+      _requestNotificationPermission();
+    }
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    // Wait a bit for the UI to load
+    await Future.delayed(const Duration(seconds: 1));
+    await NotificationServiceWeb.requestPermission();
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'services/alarm_service.dart';
 import 'screens/home_screen.dart';
+import 'screens/alarm_ringing_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -40,8 +41,29 @@ class NextAlarmApp extends StatelessWidget {
         title: 'NextAlarm',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const HomeScreen(),
+        home: const AlarmMonitor(),
       ),
+    );
+  }
+}
+
+class AlarmMonitor extends StatelessWidget {
+  const AlarmMonitor({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AlarmService>(
+      builder: (context, alarmService, child) {
+        final ringingAlarm = alarmService.ringingAlarm;
+
+        if (ringingAlarm != null) {
+          // Show alarm ringing screen
+          return AlarmRingingScreen(alarm: ringingAlarm);
+        }
+
+        // Show home screen
+        return const HomeScreen();
+      },
     );
   }
 }
