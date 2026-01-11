@@ -1,4 +1,4 @@
-package com.example.location_notifier
+package com.nextalarm.next_alarm
 
 import io.flutter.embedding.android.FlutterActivity
 

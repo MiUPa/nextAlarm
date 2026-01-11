@@ -1,194 +1,249 @@
-# Location Notifier
+# NextAlarm ⏰
 
-指定されたエリアでアプリを開いたらポップアップ通知が出るFlutterアプリ
+> **Smart alarm clock that beats SmartAlarm**
+> Apple標準アプリレベルの洗練されたUI × 多様な覚醒チャレンジ
 
-## 機能
+![Flutter](https://img.shields.io/badge/Flutter-3.10+-02569B?logo=flutter)
+![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-### 主要機能
-- **エリア指定**: 緯度、経度、半径（メートル）で監視エリアを設定
-- **位置情報モニタリング**: 5秒ごとに現在位置をチェック
-- **ジオフェンシング**: 指定エリアに入ったことを自動検知
-- **プッシュ通知**: エリアに入った瞬間に通知を表示
+## 📱 今すぐ試す
 
-### シミュレート機能
-実機やエミュレータで位置情報をシミュレートできます：
-- 任意の緯度・経度を設定可能
-- モニタリング中でもリアルタイムで位置を変更可能
-- テストに最適
+### Web版（スマホのブラウザで即アクセス）
 
-## スクリーンショット
+**https://miupa.github.io/Linux-Playground/**
 
-アプリには以下の3つのセクションがあります：
+- ✅ インストール不要
+- ✅ iOS/Android対応
+- ✅ 全機能が動作
 
-1. **エリア設定**: 監視したいエリアの緯度、経度、半径を設定
-2. **位置情報シミュレート**: テスト用に仮想の位置情報を設定（オレンジ色で表示）
-3. **現在の状態**: モニタリング状態、現在位置、エリアまでの距離を表示
+### Android APK（ネイティブアプリ）
 
-## セットアップ
+1. [GitHub Actions](https://github.com/MiUPa/Linux-Playground/actions) にアクセス
+2. 最新の「Build Android APK」をクリック
+3. 「Artifacts」から `nextalarm-apk` をダウンロード
+4. APKをインストール
 
-### 前提条件
+---
 
-- Flutter SDK 3.10以上
-- Android Studio（Android向け）または Xcode（iOS向け）
-- Android SDK（Android向け）
-- 実機またはエミュレータ
+## 🎯 なぜNextAlarmなのか？
 
-### インストール手順
+### SmartAlarmとの比較
 
-1. リポジトリをクローン
-```bash
-git clone <repository-url>
-cd location_notifier
-```
+| 機能 | NextAlarm | SmartAlarm |
+|------|-----------|------------|
+| **覚醒チャレンジ** | 6種類（計算、QR、音声、シェイク、歩数、なし） | 計算のみ |
+| **タイマー数** | 無制限 | 2個まで |
+| **UI/UX** | Apple標準レベル | 標準的 |
+| **カスタマイズ** | 高度 | 中程度 |
+| **価格** | 無料 | 無料 + $2.99 |
+| **最終更新** | 2026年1月 | 2025年4月 |
 
-2. 依存関係をインストール
-```bash
-flutter pub get
-```
+### NextAlarmの強み
 
-3. アプリを実行
-```bash
-# Android
-flutter run
+1. **🎨 世界レベルのUI/UX**
+   - iOS標準アプリに匹敵する洗練されたデザイン
+   - ダークモード完全対応
+   - スムーズなアニメーションとハプティックフィードバック
 
-# iOS
-flutter run
-```
+2. **🧠 多様な覚醒チャレンジ**
+   - **計算問題**: 難易度5段階（Easy～Expert）
+   - **QRコード/バーコード**: 自作コード + 既存コード対応
+   - **音声認識**: 早口言葉で覚醒
+   - **シェイク**: 指定回数スマホを振る
+   - **歩数カウント**: 歩いて目を覚ます
+   - **なし**: シンプルなアラーム
 
-## 使い方
+3. **⚡ 無制限のカスタマイズ**
+   - アラーム数無制限
+   - タイマー無制限
+   - 曜日別繰り返し設定
+   - グループ管理
 
-### 基本的な使い方
+---
 
-1. **エリアを設定**
-   - 「エリア設定」セクションで緯度、経度、半径を入力
-   - 「エリアを更新」ボタンをタップ
+## ✨ 主要機能
 
-2. **モニタリングを開始**
-   - 「モニタリングを開始」ボタンをタップ
-   - 位置情報パーミッションを許可
+### 実装済み（MVP）
 
-3. **エリアに入る**
-   - 指定したエリアに入ると自動的に通知が表示されます
+✅ **アラーム管理**
+- 直感的な時間設定（Cupertino Picker）
+- ラベル/メモ機能
+- 曜日別繰り返し（月-日）
+- スワイプで削除
 
-### シミュレートモード（テスト用）
+✅ **洗練されたUI**
+- Apple標準アプリレベルのデザイン
+- SF Pro風タイポグラフィ
+- iOS風カラーパレット（#007AFF Blue, #5856D6 Purple）
+- カード型レイアウト、大きなタイトル
 
-実際に移動せずにアプリをテストする方法：
+✅ **スムーズな体験**
+- タップ時のスケールアニメーション
+- ハプティックフィードバック
+- 画面遷移アニメーション
+- データ自動保存（SharedPreferences）
 
-1. **シミュレート位置を設定**
-   - 「位置情報シミュレート」セクションで緯度、経度を入力
-   - 「シミュレート開始」ボタンをタップ
+### 次期実装予定
 
-2. **モニタリング中に位置を変更**
-   - モニタリング中でも、シミュレート位置を変更できます
-   - エリア内の座標を入力すると、すぐに通知が表示されます
+🔜 **実際のアラーム鳴動**
+- バックグラウンド動作
+- システムアラーム統合
 
-3. **シミュレート解除**
-   - 「シミュレート解除」ボタンで実際のGPS位置に戻ります
+🔜 **覚醒チャレンジ実装**
+- 計算問題画面
+- QRコードスキャナー
+- 音声認識
+- センサー連携（シェイク、歩数）
 
-### 例：東京タワー付近をテスト
+🔜 **カスタマイズ拡張**
+- アラーム音選択
+- テーマカラー変更
+- グループ管理
 
-デフォルトエリアは東京タワー付近に設定されています：
-- 緯度: 35.6586
-- 経度: 139.7454
-- 半径: 100メートル
+---
 
-シミュレートで東京タワーの座標（35.6586, 139.7454）を入力すると、エリア内通知が表示されます。
+## 🛠️ 技術スタック
 
-## パーミッション
+### フレームワーク
+- **Flutter 3.10+**
+- **Dart 3.10+**
 
-### Android
-以下のパーミッションが自動的に要求されます：
-- `ACCESS_FINE_LOCATION`: 正確な位置情報
-- `ACCESS_COARSE_LOCATION`: おおよその位置情報
-- `ACCESS_BACKGROUND_LOCATION`: バックグラウンドでの位置情報
-- `POST_NOTIFICATIONS`: 通知の表示
+### 主要パッケージ
+- `flutter_local_notifications` - 通知
+- `android_alarm_manager_plus` - バックグラウンドアラーム
+- `provider` - 状態管理
+- `shared_preferences` - データ永続化
+- `mobile_scanner` - QR/バーコードスキャン
+- `speech_to_text` - 音声認識
+- `sensors_plus` - シェイク検出
+- `pedometer` - 歩数カウント
+- `vibration` - ハプティック
 
-### iOS
-以下の使用目的説明が表示されます：
-- 「This app needs your location to send notifications when you enter specified areas.」
-
-## 技術仕様
-
-### 使用パッケージ
-- `geolocator`: 位置情報の取得
-- `flutter_local_notifications`: ローカル通知
-- `permission_handler`: パーミッション管理
-
-### ジオフェンシングアルゴリズム
-Haversine公式を使用して2点間の距離を計算：
-- 地球を球体として扱い、正確な距離を計算
-- メートル単位で距離を返す
-
-### モニタリング頻度
-- 5秒ごとに位置情報をチェック
-- エリアに入った瞬間（前回エリア外→今回エリア内）に通知
-
-## トラブルシューティング
-
-### 位置情報が取得できない
-- 位置情報パーミッションが許可されているか確認
-- GPS/位置情報サービスがオンになっているか確認
-- エミュレータの場合、位置情報をモックで設定
-
-### 通知が表示されない
-- 通知パーミッションが許可されているか確認
-- アプリがバックグラウンドではなくフォアグラウンドで実行されているか確認
-
-### シミュレートが動作しない
-- シミュレート位置を設定後、「シミュレート開始」ボタンをタップしたか確認
-- モニタリングを再起動してみる
-
-## 開発
-
-### プロジェクト構造
+### アーキテクチャ
 ```
 lib/
-  main.dart          # メインアプリケーションコード
-android/
-  app/src/main/
-    AndroidManifest.xml  # Androidパーミッション設定
-ios/
-  Runner/
-    Info.plist       # iOSパーミッション設定
+├── models/          # データモデル
+├── services/        # ビジネスロジック
+├── screens/         # UI画面
+├── widgets/         # 再利用コンポーネント
+└── theme/           # テーマ定義
 ```
 
-### カスタマイズ
+---
 
-#### デフォルトエリアを変更
-`lib/main.dart`の以下の行を編集：
-```dart
-double targetLatitude = 35.6586;   // あなたの緯度
-double targetLongitude = 139.7454; // あなたの経度
-double targetRadius = 100.0;       // 半径（メートル）
+## 🚀 開発
+
+### 前提条件
+- Flutter SDK 3.10以上
+- Android Studio / Xcode
+- Android SDK / iOS SDK
+
+### セットアップ
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/MiUPa/Linux-Playground.git
+cd Linux-Playground
+
+# 依存関係をインストール
+flutter pub get
+
+# 実行
+flutter run
 ```
 
-#### 通知メッセージを変更
-`_showNotification()`メソッド内のテキストを編集：
-```dart
-await flutterLocalNotificationsPlugin.show(
-  0,
-  'エリア通知',                    // タイトル
-  '指定されたエリアに入りました！',  // メッセージ
-  platformChannelSpecifics,
-);
+### ビルド
+
+```bash
+# Android APK
+flutter build apk --release
+
+# iOS (Macのみ)
+flutter build ios --release
+
+# Web
+flutter build web
 ```
 
-#### モニタリング頻度を変更
-`_startMonitoring()`メソッド内の秒数を変更：
-```dart
-locationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-  _getCurrentLocation();
-});
-```
+---
 
-## ライセンス
+## 📸 スクリーンショット
 
-このプロジェクトはMITライセンスの下で公開されています。
+### ホーム画面
+- 大きなタイトル（34pt, Bold）
+- カード型アラーム一覧
+- スムーズなアニメーション
 
-## 貢献
+### 編集画面
+- Cupertinoタイムピッカー
+- 曜日選択（円形ボタン）
+- チャレンジ選択（横スクロール）
+- 難易度スライダー
+
+---
+
+## 🎯 ロードマップ
+
+### v1.0 (現在) - MVP
+- [x] 基本的なアラーム管理
+- [x] Apple標準レベルのUI/UX
+- [x] データ永続化
+- [ ] アラーム鳴動機能
+
+### v1.1 - チャレンジ実装
+- [ ] 計算問題チャレンジ
+- [ ] QRコードスキャンチャレンジ
+- [ ] 音声認識チャレンジ
+
+### v1.2 - カスタマイズ
+- [ ] アラーム音選択
+- [ ] テーマカラー変更
+- [ ] グループ管理
+
+### v2.0 - プレミアム機能
+- [ ] 睡眠サイクル分析
+- [ ] 統計とインサイト
+- [ ] スマートホーム連携
+
+---
+
+## 🤝 貢献
 
 プルリクエストを歓迎します！
 
-## 作成者
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Claude Code
+---
+
+## 📄 ライセンス
+
+MIT License - 詳細は [LICENSE](LICENSE) を参照
+
+---
+
+## 🙏 クレジット
+
+**競合分析対象**: [SmartAlarm](https://play.google.com/store/apps/details?id=jp.tanyu.SmartAlarm)
+- 評価: 4.25/5 (4,000レビュー)
+- 長所: 計算問題による強制覚醒、10年の実績
+- 改善点: タイマー制限、覚醒方法の限定性
+
+**デザイン参考**: Apple iOS 標準アプリ
+- クロックアプリのUI/UX
+- SF Pro Typography
+- iOS Human Interface Guidelines
+
+---
+
+## 📮 お問い合わせ
+
+Issue: https://github.com/MiUPa/Linux-Playground/issues
+
+---
+
+**Made with ❤️ using Flutter**
