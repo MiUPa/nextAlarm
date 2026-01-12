@@ -1,8 +1,6 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [ main, master, claude/** ]
   workflow_dispatch:
 
 permissions:
@@ -26,7 +24,7 @@ jobs:
       run: flutter pub get
 
     - name: Build Web
-      run: flutter build web --base-href /Linux-Playground/
+      run: flutter build web --base-href /nextAlarm/
 
     - name: Verify build output
       run: |
