@@ -52,7 +52,7 @@ dependencies:
   pedometer: ^4.0.2
 
   # Media & Effects
-  audioplayers: ^6.1.0
+  flutter_ringtone_player: ^4.0.0+4
   vibration: ^2.0.0
 
   # Utilities
@@ -81,14 +81,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/sounds/
-  # Alarm sound file: Place alarm.mp3 in assets/sounds/
-  # You can use any free alarm sound from sources like:
-  # - https://freesound.org/
-  # - https://mixkit.co/free-sound-effects/alarm/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

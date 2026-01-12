@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import '../models/alarm.dart' as models;
 import 'notification_service.dart';
 
@@ -13,7 +13,6 @@ class AlarmService extends ChangeNotifier {
   Timer? _checkTimer;
   models.Alarm? _ringingAlarm;
   final Set<String> _triggeredToday = {};
-  final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlayingSound = false;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
@@ -22,18 +21,11 @@ class AlarmService extends ChangeNotifier {
   AlarmService() {
     _loadAlarms();
     _startAlarmChecker();
-    _configureAudioPlayer();
-  }
-
-  void _configureAudioPlayer() {
-    _audioPlayer.setReleaseMode(ReleaseMode.loop);
-    _audioPlayer.setVolume(1.0);
   }
 
   @override
   void dispose() {
     _checkTimer?.cancel();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -92,16 +84,14 @@ class AlarmService extends ChangeNotifier {
     try {
       _isPlayingSound = true;
 
-      // Try to play alarm sound from assets
-      try {
-        await _audioPlayer.play(AssetSource('sounds/alarm.mp3'));
-        debugPrint('🔔 Alarm sound playing from assets');
-      } catch (assetError) {
-        // Fallback: Use online alarm sound if asset not available
-        debugPrint('⚠️ Asset sound not found, using fallback');
-        // For demo, just log the error
-        debugPrint('🔔 Alarm triggered (add alarm.mp3 to assets/sounds/ for audio)');
-      }
+      // Play system alarm sound
+      await FlutterRingtonePlayer().play(
+        android: AndroidSounds.alarm,
+        ios: const IosSound(1023), // iOS Alert sound
+        looping: true,
+        volume: 1.0,
+      );
+      debugPrint('🔔 Playing system alarm sound');
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }
@@ -115,7 +105,7 @@ class AlarmService extends ChangeNotifier {
 
   Future<void> _stopAlarmSound() async {
     if (_isPlayingSound) {
-      await _audioPlayer.stop();
+      await FlutterRingtonePlayer().stop();
       _isPlayingSound = false;
       debugPrint('🔇 Alarm sound stopped');
     }
