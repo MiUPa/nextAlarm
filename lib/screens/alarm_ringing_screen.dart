@@ -6,7 +6,6 @@ import '../theme/app_theme.dart';
 import 'dart:math' as math;
 import 'package:sensors_plus/sensors_plus.dart';
 import 'dart:async';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:pedometer/pedometer.dart';
 
@@ -152,6 +151,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
       ];
       operations[random.nextInt(operations.length)]();
     }
+    debugPrint('Math problem: $_mathQuestion, Correct answer: $_correctAnswer');
   }
 
   void _checkAnswer() {
@@ -281,8 +281,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
     switch (widget.alarm.challenge) {
       case WakeUpChallenge.math:
         return _buildMathChallenge();
-      case WakeUpChallenge.qrCode:
-        return _buildQRChallenge();
       case WakeUpChallenge.voiceRecognition:
         return _buildSpeechChallenge();
       case WakeUpChallenge.shake:
@@ -543,47 +541,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
                 color: AppTheme.primary,
               ),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQRChallenge() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'QRコードをスキャンしてアラームを停止',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.white70,
-          ),
-        ),
-        const SizedBox(height: 40),
-        Container(
-          width: 250,
-          height: 250,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-          child: MobileScanner(
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                _stopAlarm();
-              }
-            },
-          ),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          '登録したQRコードをスキャンしてください',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white70,
           ),
         ),
       ],

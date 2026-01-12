@@ -261,7 +261,6 @@ class _ChallengeSelector extends StatelessWidget {
     final challenges = [
       (models.WakeUpChallenge.none, Icons.alarm, 'None'),
       (models.WakeUpChallenge.math, Icons.calculate_outlined, 'Math'),
-      (models.WakeUpChallenge.qrCode, Icons.qr_code_scanner, 'QR Code'),
       (models.WakeUpChallenge.voiceRecognition, Icons.mic, 'Voice'),
       (models.WakeUpChallenge.shake, Icons.phone_android, 'Shake'),
       (models.WakeUpChallenge.steps, Icons.directions_walk, 'Steps'),

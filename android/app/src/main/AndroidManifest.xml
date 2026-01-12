@@ -7,10 +7,6 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
-    <!-- Camera for QR/Barcode scanning -->
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
-
     <!-- Microphone for voice recognition -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
@@ -21,9 +17,9 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="next_alarm"
+        android:label="Next Alarm (Alarm Clock)"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

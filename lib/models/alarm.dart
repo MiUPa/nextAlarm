@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 enum WakeUpChallenge {
   none,
   math,
-  qrCode,
   voiceRecognition,
   shake,
   steps,
@@ -141,8 +140,6 @@ class Alarm {
         return 'No challenge';
       case WakeUpChallenge.math:
         return 'Math problem';
-      case WakeUpChallenge.qrCode:
-        return 'QR/Barcode scan';
       case WakeUpChallenge.voiceRecognition:
         return 'Voice recognition';
       case WakeUpChallenge.shake:

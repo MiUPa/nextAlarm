@@ -5,10 +5,28 @@ plugins {
 	id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+
 android {
-	namespace = "com.nextalarm.next_alarm"
-	compileSdk = flutter.compileSdkVersion
-	ndkVersion = flutter.ndkVersion
+    // Signing properties from key.properties
+    val propertiesFile = project.rootProject.file("key.properties")
+    val properties = Properties()
+    if (propertiesFile.exists()) {
+        propertiesFile.inputStream().use { properties.load(it) } // Correct Kotlin DSL
+    }
+
+    namespace = "com.nextalarm.next_alarm"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion // Correctly placed
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(properties.getProperty("storeFile"))
+            storePassword = properties.getProperty("storePassword")
+            keyAlias = properties.getProperty("keyAlias")
+            keyPassword = properties.getProperty("keyPassword")
+        }
+    }
 
 	compileOptions {
 		sourceCompatibility = JavaVersion.VERSION_17
@@ -29,10 +47,9 @@ android {
 	}
 
 	buildTypes {
-		release {
-			signingConfig = signingConfigs.getByName("debug")
-		}
-	}
+		        release {
+		            signingConfig = signingConfigs.getByName("release")
+		        }	}
 }
 
 flutter {
