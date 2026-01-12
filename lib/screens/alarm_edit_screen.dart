@@ -31,7 +31,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     _label = widget.alarm?.label ?? '';
     _repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
     _challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
-    _challengeDifficulty = widget.alarm?.challengeDifficulty ?? 3;
+    _challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
   }
 
   @override
@@ -340,8 +340,8 @@ class _DifficultySelector extends StatelessWidget {
               child: Slider(
                 value: difficulty.toDouble(),
                 min: 1,
-                max: 5,
-                divisions: 4,
+                max: 3,
+                divisions: 2,
                 label: _getDifficultyLabel(difficulty),
                 onChanged: (value) => onChanged(value.toInt()),
               ),
@@ -370,13 +370,9 @@ class _DifficultySelector extends StatelessWidget {
       case 2:
         return 'Normal';
       case 3:
-        return 'Medium';
-      case 4:
         return 'Hard';
-      case 5:
-        return 'Expert';
       default:
-        return 'Medium';
+        return 'Normal';
     }
   }
 }

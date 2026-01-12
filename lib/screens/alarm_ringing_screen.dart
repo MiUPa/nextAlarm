@@ -89,25 +89,68 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
     final random = math.Random();
     final difficulty = widget.alarm.challengeDifficulty;
 
-    if (difficulty <= 2) {
-      // Easy: simple addition
-      final a = random.nextInt(20) + 1;
-      final b = random.nextInt(20) + 1;
-      _mathQuestion = '$a + $b = ?';
-      _correctAnswer = a + b;
-    } else if (difficulty == 3) {
-      // Medium: multiplication
-      final a = random.nextInt(12) + 1;
-      final b = random.nextInt(12) + 1;
-      _mathQuestion = '$a × $b = ?';
-      _correctAnswer = a * b;
+    if (difficulty == 1) {
+      // Easy: 2桁の足し算・引き算
+      final a = random.nextInt(80) + 20; // 20-99
+      final b = random.nextInt(80) + 20; // 20-99
+      if (random.nextBool()) {
+        _mathQuestion = '$a + $b = ?';
+        _correctAnswer = a + b;
+      } else {
+        // 負の数にならないよう調整
+        final larger = a > b ? a : b;
+        final smaller = a > b ? b : a;
+        _mathQuestion = '$larger - $smaller = ?';
+        _correctAnswer = larger - smaller;
+      }
+    } else if (difficulty == 2) {
+      // Normal: 2桁×1桁の掛け算または3桁の足し算・引き算
+      if (random.nextBool()) {
+        // 2桁×1桁の掛け算
+        final a = random.nextInt(30) + 10; // 10-39
+        final b = random.nextInt(9) + 2; // 2-10
+        _mathQuestion = '$a × $b = ?';
+        _correctAnswer = a * b;
+      } else {
+        // 3桁の足し算・引き算
+        final a = random.nextInt(300) + 100; // 100-399
+        final b = random.nextInt(200) + 50; // 50-249
+        if (random.nextBool()) {
+          _mathQuestion = '$a + $b = ?';
+          _correctAnswer = a + b;
+        } else {
+          _mathQuestion = '$a - $b = ?';
+          _correctAnswer = a - b;
+        }
+      }
     } else {
-      // Hard: mixed operations
-      final a = random.nextInt(50) + 10;
-      final b = random.nextInt(20) + 1;
-      final c = random.nextInt(10) + 1;
-      _mathQuestion = '($a + $b) × $c = ?';
-      _correctAnswer = (a + b) * c;
+      // Hard: 複数の演算
+      final a = random.nextInt(50) + 20; // 20-69
+      final b = random.nextInt(9) + 2; // 2-10
+      final c = random.nextInt(50) + 10; // 10-59
+      final operations = [
+        () {
+          // 2桁×2桁の掛け算
+          final x = random.nextInt(20) + 10; // 10-29
+          final y = random.nextInt(20) + 10; // 10-29
+          _mathQuestion = '$x × $y = ?';
+          _correctAnswer = x * y;
+        },
+        () {
+          _mathQuestion = '$a × $b + $c = ?';
+          _correctAnswer = a * b + c;
+        },
+        () {
+          _mathQuestion = '$a × $b - $c = ?';
+          _correctAnswer = a * b - c;
+        },
+        () {
+          final d = random.nextInt(30) + 10;
+          _mathQuestion = '$a + $b × $c - $d = ?';
+          _correctAnswer = a + b * c - d;
+        },
+      ];
+      operations[random.nextInt(operations.length)]();
     }
   }
 
@@ -131,13 +174,13 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
   void _stopAlarm() {
     final alarmService = Provider.of<AlarmService>(context, listen: false);
     alarmService.stopRingingAlarm();
-    Navigator.of(context).pop();
+    // AlarmMonitorが自動的にHomeScreenに切り替えるため、Navigator.pop()は不要
   }
 
   // === Shake Challenge ===
   void _initShakeChallenge() {
     final difficulty = widget.alarm.challengeDifficulty;
-    _requiredShakes = 10 + (difficulty * 5); // 15-35 shakes based on difficulty
+    _requiredShakes = 5 + (difficulty * 10); // 15/25/35 shakes based on difficulty
 
     _accelerometerSubscription = accelerometerEventStream().listen((event) {
       final acceleration = math.sqrt(
@@ -218,7 +261,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
   // === Step Challenge ===
   void _initStepChallenge() {
     final difficulty = widget.alarm.challengeDifficulty;
-    _requiredSteps = 10 + (difficulty * 5); // 15-35 steps based on difficulty
+    _requiredSteps = 5 + (difficulty * 10); // 15/25/35 steps based on difficulty
 
     _stepSubscription = Pedometer.stepCountStream.listen((event) {
       if (_initialSteps == 0) {
