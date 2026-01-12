@@ -9,6 +9,7 @@ class AppTheme {
   static const Color success = Color(0xFF34C759); // iOS Green
   static const Color warning = Color(0xFFFF9500); // iOS Orange
   static const Color danger = Color(0xFFFF3B30); // iOS Red
+  static const Color error = danger; // Alias for danger
 
   // Neutral colors
   static const Color background = Color(0xFF000000);

@@ -91,15 +91,17 @@ class AlarmService extends ChangeNotifier {
 
     try {
       _isPlayingSound = true;
-      // Note: For Web version, we use a simple beep tone
-      // In production, you would add an actual alarm sound file to assets
-      // For now, we'll use a URL-based sound or generate one
 
-      // Using a free alarm sound URL (replace with your own asset in production)
-      // await _audioPlayer.play(AssetSource('sounds/alarm.mp3'));
-
-      // For Web demo, we'll just print a message
-      debugPrint('🔔 Alarm sound playing (audio file not configured for Web demo)');
+      // Try to play alarm sound from assets
+      try {
+        await _audioPlayer.play(AssetSource('sounds/alarm.mp3'));
+        debugPrint('🔔 Alarm sound playing from assets');
+      } catch (assetError) {
+        // Fallback: Use online alarm sound if asset not available
+        debugPrint('⚠️ Asset sound not found, using fallback');
+        // For demo, just log the error
+        debugPrint('🔔 Alarm triggered (add alarm.mp3 to assets/sounds/ for audio)');
+      }
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }
