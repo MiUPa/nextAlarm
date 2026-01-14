@@ -1,0 +1,79 @@
+{
+	"@@locale": "ja",
+	"appTitle": "NextAlarm",
+
+	"alarms": "アラーム",
+	"noAlarmsYet": "アラームがありません",
+	"tapToCreateAlarm": "+をタップして最初のアラームを作成",
+
+	"addAlarm": "アラームを追加",
+	"editAlarm": "アラームを編集",
+	"save": "保存",
+	"cancel": "キャンセル",
+
+	"label": "ラベル",
+	"labelHint": "アラーム名",
+	"repeat": "繰り返し",
+	"wakeUpChallenge": "起床チャレンジ",
+	"difficulty": "難易度",
+
+	"challengeNone": "なし",
+	"challengeMath": "計算",
+	"challengeVoice": "音声",
+	"challengeShake": "シェイク",
+	"challengeSteps": "歩く",
+
+	"difficultyEasy": "簡単",
+	"difficultyNormal": "普通",
+	"difficultyHard": "難しい",
+
+	"dayMonday": "月",
+	"dayTuesday": "火",
+	"dayWednesday": "水",
+	"dayThursday": "木",
+	"dayFriday": "金",
+	"daySaturday": "土",
+	"daySunday": "日",
+
+	"repeatOnce": "1回のみ",
+	"repeatEveryDay": "毎日",
+	"repeatWeekdays": "平日",
+	"repeatWeekends": "週末",
+
+	"inDays": "{count}日後",
+	"inHoursMinutes": "{hours}時間{minutes}分後",
+	"inHours": "{count}時間後",
+	"inMinutes": "{count}分後",
+
+	"stopAlarm": "アラームを停止",
+	"solveMathToStop": "数学問題を解いてアラームを停止",
+	"enterAnswer": "答えを入力",
+	"confirm": "確認",
+	"wrongAnswer": "不正解！もう一度試してください。",
+
+	"shakeToStop": "スマホを振ってアラームを停止",
+	"shakesCount": "{current} / {required}",
+
+	"speakToStop": "早口言葉を言ってアラームを停止",
+	"tapMicrophone": "マイクをタップ",
+	"listening": "聞き取り中...",
+	"recognized": "認識: {text}",
+	"speechNotAvailable": "音声認識が利用できません",
+
+	"walkToStop": "歩いてアラームを停止",
+	"stepsCount": "{current} / {required} 歩",
+
+	"challengeNotImplemented": "このチャレンジはまだ実装されていません",
+
+	"settings": "設定",
+	"language": "言語",
+	"languageSystem": "システム設定",
+	"languageEnglish": "English",
+	"languageJapanese": "日本語",
+
+	"tongueTwister1": "生麦生米生卵",
+	"tongueTwister2": "バスガス爆発",
+	"tongueTwister3": "東京特許許可局",
+	"tongueTwister4": "隣の客はよく柿食う客だ",
+	"tongueTwister5": "赤巻紙青巻紙黄巻紙"
+}

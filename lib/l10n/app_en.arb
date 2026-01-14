@@ -1,0 +1,143 @@
+{
+	"@@locale": "en",
+	"appTitle": "NextAlarm",
+	"@appTitle": {
+		"description": "The title of the application"
+	},
+
+	"alarms": "Alarms",
+	"@alarms": {
+		"description": "Title for the alarms list screen"
+	},
+	"noAlarmsYet": "No alarms yet",
+	"tapToCreateAlarm": "Tap + to create your first alarm",
+
+	"addAlarm": "Add Alarm",
+	"editAlarm": "Edit Alarm",
+	"save": "Save",
+	"cancel": "Cancel",
+
+	"label": "Label",
+	"labelHint": "Alarm name",
+	"repeat": "Repeat",
+	"wakeUpChallenge": "Wake-up Challenge",
+	"difficulty": "Difficulty",
+
+	"challengeNone": "None",
+	"challengeMath": "Math",
+	"challengeVoice": "Voice",
+	"challengeShake": "Shake",
+	"challengeSteps": "Steps",
+
+	"difficultyEasy": "Easy",
+	"difficultyNormal": "Normal",
+	"difficultyHard": "Hard",
+
+	"dayMonday": "M",
+	"dayTuesday": "T",
+	"dayWednesday": "W",
+	"dayThursday": "T",
+	"dayFriday": "F",
+	"daySaturday": "S",
+	"daySunday": "S",
+
+	"repeatOnce": "Once",
+	"repeatEveryDay": "Every day",
+	"repeatWeekdays": "Weekdays",
+	"repeatWeekends": "Weekends",
+
+	"inDays": "in {count} {count, plural, =1{day} other{days}}",
+	"@inDays": {
+		"placeholders": {
+			"count": {
+				"type": "int"
+			}
+		}
+	},
+	"inHoursMinutes": "in {hours}h {minutes}m",
+	"@inHoursMinutes": {
+		"placeholders": {
+			"hours": {
+				"type": "int"
+			},
+			"minutes": {
+				"type": "int"
+			}
+		}
+	},
+	"inHours": "in {count} {count, plural, =1{hour} other{hours}}",
+	"@inHours": {
+		"placeholders": {
+			"count": {
+				"type": "int"
+			}
+		}
+	},
+	"inMinutes": "in {count} {count, plural, =1{minute} other{minutes}}",
+	"@inMinutes": {
+		"placeholders": {
+			"count": {
+				"type": "int"
+			}
+		}
+	},
+
+	"stopAlarm": "Stop Alarm",
+	"solveMathToStop": "Solve the math problem to stop the alarm",
+	"enterAnswer": "Enter answer",
+	"confirm": "Confirm",
+	"wrongAnswer": "Wrong! Try again.",
+
+	"shakeToStop": "Shake your phone to stop the alarm",
+	"shakesCount": "{current} / {required}",
+	"@shakesCount": {
+		"placeholders": {
+			"current": {
+				"type": "int"
+			},
+			"required": {
+				"type": "int"
+			}
+		}
+	},
+
+	"speakToStop": "Say the phrase to stop the alarm",
+	"tapMicrophone": "Tap microphone",
+	"listening": "Listening...",
+	"recognized": "Recognized: {text}",
+	"@recognized": {
+		"placeholders": {
+			"text": {
+				"type": "String"
+			}
+		}
+	},
+	"speechNotAvailable": "Speech recognition not available",
+
+	"walkToStop": "Walk to stop the alarm",
+	"stepsCount": "{current} / {required} steps",
+	"@stepsCount": {
+		"placeholders": {
+			"current": {
+				"type": "int"
+			},
+			"required": {
+				"type": "int"
+			}
+		}
+	},
+
+	"challengeNotImplemented": "This challenge is not implemented yet",
+
+	"settings": "Settings",
+	"language": "Language",
+	"languageSystem": "System default",
+	"languageEnglish": "English",
+	"languageJapanese": "Japanese",
+
+	"tongueTwister1": "Peter Piper picked a peck of pickled peppers",
+	"tongueTwister2": "She sells seashells by the seashore",
+	"tongueTwister3": "How much wood would a woodchuck chuck",
+	"tongueTwister4": "Red lorry yellow lorry",
+	"tongueTwister5": "Unique New York"
+}

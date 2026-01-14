@@ -1,13 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'services/alarm_service.dart';
+import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/alarm_ringing_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+/// Global notification plugin instance
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+/// Request microphone permission at app startup for voice recognition challenge
+Future<void> _requestMicrophonePermission() async {
+  if (kIsWeb) return; // Skip on web platform
+
+  final status = await Permission.microphone.status;
+  if (status.isDenied) {
+    await Permission.microphone.request();
+  }
+}
+
+/// Initialize notifications for Android
+Future<void> _initializeNotifications() async {
+  if (kIsWeb) return;
+
+  const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+  const initSettings = InitializationSettings(android: androidSettings);
+
+  await flutterLocalNotificationsPlugin.initialize(
+    initSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      // Notification was tapped - app will show alarm screen via AlarmMonitor
+      debugPrint('Notification tapped: ${response.payload}');
+    },
+  );
+
+  // Request notification permission for Android 13+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestNotificationsPermission();
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Android Alarm Manager for background alarms
+  if (!kIsWeb) {
+    await AndroidAlarmManager.initialize();
+  }
+
+  // Initialize notifications
+  await _initializeNotifications();
+
+  // Request microphone permission at startup for voice recognition challenge
+  await _requestMicrophonePermission();
 
   // Set system UI overlay style for status bar
   SystemChrome.setSystemUIOverlayStyle(
@@ -36,12 +89,25 @@ class NextAlarmApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AlarmService()),
+        ChangeNotifierProvider(create: (_) => LocaleService()),
       ],
-      child: MaterialApp(
-        title: 'NextAlarm',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        home: const AlarmMonitor(),
+      child: Consumer<LocaleService>(
+        builder: (context, localeService, child) {
+          return MaterialApp(
+            title: 'NextAlarm',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.darkTheme,
+            locale: localeService.locale,
+            supportedLocales: LocaleService.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const AlarmMonitor(),
+          );
+        },
       ),
     );
   }
