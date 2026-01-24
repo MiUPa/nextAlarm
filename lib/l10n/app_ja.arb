@@ -82,5 +82,9 @@
 	"soundGentle": "やさしい",
 	"soundDigital": "デジタル",
 	"soundClassic": "クラシック",
-	"soundNature": "自然"
+	"soundNature": "自然",
+
+	"vibration": "バイブレーション",
+	"vibrationOn": "オン",
+	"vibrationOff": "オフ"
 }

@@ -240,4 +240,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get soundNature => 'Nature';
+
+  @override
+  String get vibration => 'Vibration';
+
+  @override
+  String get vibrationOn => 'On';
+
+  @override
+  String get vibrationOff => 'Off';
 }

@@ -499,6 +499,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nature'**
   String get soundNature;
+
+  /// No description provided for @vibration.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get vibration;
+
+  /// No description provided for @vibrationOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get vibrationOn;
+
+  /// No description provided for @vibrationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get vibrationOff;
 }
 
 class _AppLocalizationsDelegate
