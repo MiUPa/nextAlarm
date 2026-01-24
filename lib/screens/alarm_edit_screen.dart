@@ -23,6 +23,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late Set<int> _repeatDays;
 	late models.WakeUpChallenge _challenge;
 	late int _challengeDifficulty;
+	late bool _vibrate;
 
 	@override
 	void initState() {
@@ -33,6 +34,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		_repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
 		_challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
+		_vibrate = widget.alarm?.vibrate ?? true;
 	}
 
 	@override
@@ -119,6 +121,34 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							),
 						),
 
+						// Vibration toggle
+						_buildSection(
+							l10n.vibration,
+							Padding(
+								padding: const EdgeInsets.symmetric(horizontal: 20),
+								child: Row(
+									mainAxisAlignment: MainAxisAlignment.spaceBetween,
+									children: [
+										Text(
+											_vibrate ? l10n.vibrationOn : l10n.vibrationOff,
+											style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+												color: AppTheme.onSurface,
+											),
+										),
+										Switch(
+											value: _vibrate,
+											onChanged: (value) {
+												setState(() => _vibrate = value);
+												if (value) {
+													Vibration.vibrate(duration: 50);
+												}
+											},
+										),
+									],
+								),
+							),
+						),
+
 						// Wake-up challenge
 						_buildSection(
 							l10n.wakeUpChallenge,
@@ -179,6 +209,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			repeatDays: _repeatDays,
 			challenge: _challenge,
 			challengeDifficulty: _challengeDifficulty,
+			vibrate: _vibrate,
 		);
 
 		final alarmService = context.read<AlarmService>();

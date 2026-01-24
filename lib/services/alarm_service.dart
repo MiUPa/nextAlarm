@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:vibration/vibration.dart';
 import '../models/alarm.dart' as models;
 import 'notification_service.dart';
 
@@ -109,6 +110,7 @@ class AlarmService extends ChangeNotifier {
   void _triggerAlarm(models.Alarm alarm) {
     _ringingAlarm = alarm;
     _playAlarmSound();
+    _startVibration(alarm);
 
     // Send browser notification if on Web
     if (kIsWeb) {
@@ -119,6 +121,30 @@ class AlarmService extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Timer? _vibrationTimer;
+
+  void _startVibration(models.Alarm alarm) {
+    if (!alarm.vibrate) return;
+
+    // Vibrate in a pattern: 500ms on, 1000ms off
+    _vibrationTimer?.cancel();
+    _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+      if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
+        Vibration.vibrate(duration: 500);
+      } else {
+        timer.cancel();
+      }
+    });
+    // Initial vibration
+    Vibration.vibrate(duration: 500);
+  }
+
+  void _stopVibration() {
+    _vibrationTimer?.cancel();
+    _vibrationTimer = null;
+    Vibration.cancel();
   }
 
   /// Trigger alarm externally (e.g., from notification callback)
@@ -158,6 +184,7 @@ class AlarmService extends ChangeNotifier {
 
     _ringingAlarm = null;
     _stopAlarmSound();
+    _stopVibration();
     notifyListeners();
   }
 

@@ -139,5 +139,9 @@
 	"tongueTwister2": "She sells seashells by the seashore",
 	"tongueTwister3": "How much wood would a woodchuck chuck",
 	"tongueTwister4": "Red lorry yellow lorry",
-	"tongueTwister5": "Unique New York"
+	"tongueTwister5": "Unique New York",
+
+	"vibration": "Vibration",
+	"vibrationOn": "On",
+	"vibrationOff": "Off"
 }
