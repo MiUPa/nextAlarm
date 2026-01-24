@@ -18,6 +18,7 @@ class Alarm {
   final int challengeDifficulty; // 1-5
   final String? challengeData; // QR code data, phrase for voice, etc.
   final bool vibrate;
+  final bool gradualVolume; // Gradually increase volume
   final String? soundPath;
   final int snoozeMinutes;
   final DateTime? nextAlarmTime;
@@ -32,6 +33,7 @@ class Alarm {
     this.challengeDifficulty = 3,
     this.challengeData,
     this.vibrate = true,
+    this.gradualVolume = false,
     this.soundPath,
     this.snoozeMinutes = 5,
     this.nextAlarmTime,
@@ -46,6 +48,7 @@ class Alarm {
     int? challengeDifficulty,
     String? challengeData,
     bool? vibrate,
+    bool? gradualVolume,
     String? soundPath,
     int? snoozeMinutes,
     DateTime? nextAlarmTime,
@@ -60,6 +63,7 @@ class Alarm {
       challengeDifficulty: challengeDifficulty ?? this.challengeDifficulty,
       challengeData: challengeData ?? this.challengeData,
       vibrate: vibrate ?? this.vibrate,
+      gradualVolume: gradualVolume ?? this.gradualVolume,
       soundPath: soundPath ?? this.soundPath,
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
       nextAlarmTime: nextAlarmTime ?? this.nextAlarmTime,
@@ -78,6 +82,7 @@ class Alarm {
       'challengeDifficulty': challengeDifficulty,
       'challengeData': challengeData,
       'vibrate': vibrate,
+      'gradualVolume': gradualVolume,
       'soundPath': soundPath,
       'snoozeMinutes': snoozeMinutes,
       'nextAlarmTime': nextAlarmTime?.toIso8601String(),
@@ -95,6 +100,7 @@ class Alarm {
       challengeDifficulty: json['challengeDifficulty'] ?? 3,
       challengeData: json['challengeData'],
       vibrate: json['vibrate'] ?? true,
+      gradualVolume: json['gradualVolume'] ?? false,
       soundPath: json['soundPath'],
       snoozeMinutes: json['snoozeMinutes'] ?? 5,
       nextAlarmTime: json['nextAlarmTime'] != null

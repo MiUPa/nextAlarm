@@ -23,6 +23,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late Set<int> _repeatDays;
 	late models.WakeUpChallenge _challenge;
 	late int _challengeDifficulty;
+	late bool _gradualVolume;
 
 	@override
 	void initState() {
@@ -33,6 +34,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		_repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
 		_challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
+		_gradualVolume = widget.alarm?.gradualVolume ?? false;
 	}
 
 	@override
@@ -119,6 +121,34 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							),
 						),
 
+						// Gradual volume
+						_buildSection(
+							l10n.gradualVolume,
+							Padding(
+								padding: const EdgeInsets.symmetric(horizontal: 20),
+								child: Row(
+									mainAxisAlignment: MainAxisAlignment.spaceBetween,
+									children: [
+										Expanded(
+											child: Text(
+												l10n.gradualVolumeDescription,
+												style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+													color: AppTheme.onSurfaceSecondary,
+												),
+											),
+										),
+										Switch(
+											value: _gradualVolume,
+											onChanged: (value) {
+												setState(() => _gradualVolume = value);
+												Vibration.vibrate(duration: 10);
+											},
+										),
+									],
+								),
+							),
+						),
+
 						// Wake-up challenge
 						_buildSection(
 							l10n.wakeUpChallenge,
@@ -179,6 +209,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			repeatDays: _repeatDays,
 			challenge: _challenge,
 			challengeDifficulty: _challengeDifficulty,
+			gradualVolume: _gradualVolume,
 		);
 
 		final alarmService = context.read<AlarmService>();

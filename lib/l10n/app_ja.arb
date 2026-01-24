@@ -75,5 +75,8 @@
 	"tongueTwister2": "バスガス爆発",
 	"tongueTwister3": "東京特許許可局",
 	"tongueTwister4": "隣の客はよく柿食う客だ",
-	"tongueTwister5": "赤巻紙青巻紙黄巻紙"
+	"tongueTwister5": "赤巻紙青巻紙黄巻紙",
+
+	"gradualVolume": "だんだん大きく",
+	"gradualVolumeDescription": "音量を徐々に上げる"
 }

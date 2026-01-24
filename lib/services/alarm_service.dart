@@ -54,9 +54,11 @@ class AlarmService extends ChangeNotifier {
   List<models.Alarm> _alarms = [];
   static const String _storageKey = 'alarms';
   Timer? _checkTimer;
+  Timer? _volumeTimer;
   models.Alarm? _ringingAlarm;
   final Set<String> _triggeredToday = {};
   bool _isPlayingSound = false;
+  double _currentVolume = 1.0;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
@@ -135,18 +137,51 @@ class AlarmService extends ChangeNotifier {
     try {
       _isPlayingSound = true;
 
+      final useGradualVolume = _ringingAlarm?.gradualVolume ?? false;
+
+      if (useGradualVolume) {
+        // Start with low volume and gradually increase
+        _currentVolume = 0.1;
+        _startGradualVolumeIncrease();
+      } else {
+        _currentVolume = 1.0;
+      }
+
       // Play system alarm sound using STREAM_ALARM volume
       await FlutterRingtonePlayer().play(
         android: AndroidSounds.alarm,
         ios: const IosSound(1023), // iOS Alert sound
         looping: true,
-        volume: 1.0,
+        volume: _currentVolume,
         asAlarm: true, // Use alarm volume stream instead of media volume
       );
-      debugPrint('🔔 Playing system alarm sound');
+      debugPrint('🔔 Playing system alarm sound (volume: $_currentVolume)');
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }
+  }
+
+  void _startGradualVolumeIncrease() {
+    _volumeTimer?.cancel();
+    // Increase volume every 5 seconds until max
+    _volumeTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (_currentVolume < 1.0 && _isPlayingSound) {
+        _currentVolume = (_currentVolume + 0.15).clamp(0.0, 1.0);
+
+        // Restart with new volume
+        await FlutterRingtonePlayer().stop();
+        await FlutterRingtonePlayer().play(
+          android: AndroidSounds.alarm,
+          ios: const IosSound(1023),
+          looping: true,
+          volume: _currentVolume,
+          asAlarm: true,
+        );
+        debugPrint('🔊 Volume increased to: $_currentVolume');
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   void stopRingingAlarm() {
@@ -158,6 +193,8 @@ class AlarmService extends ChangeNotifier {
 
     _ringingAlarm = null;
     _stopAlarmSound();
+    _volumeTimer?.cancel();
+    _volumeTimer = null;
     notifyListeners();
   }
 
