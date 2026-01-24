@@ -135,15 +135,45 @@ class AlarmService extends ChangeNotifier {
     try {
       _isPlayingSound = true;
 
-      // Play system alarm sound using STREAM_ALARM volume
+      // Get the sound type from the ringing alarm
+      final sound = _ringingAlarm?.sound ?? models.AlarmSound.defaultAlarm;
+
+      // Map AlarmSound to AndroidSounds
+      AndroidSound androidSound;
+      IosSound iosSound;
+      switch (sound) {
+        case models.AlarmSound.gentle:
+          androidSound = AndroidSounds.notification;
+          iosSound = const IosSound(1007); // iOS subtle sound
+          break;
+        case models.AlarmSound.digital:
+          androidSound = AndroidSounds.alarm;
+          iosSound = const IosSound(1005); // iOS electronic sound
+          break;
+        case models.AlarmSound.classic:
+          androidSound = AndroidSounds.ringtone;
+          iosSound = const IosSound(1000); // iOS classic ring
+          break;
+        case models.AlarmSound.nature:
+          androidSound = AndroidSounds.notification;
+          iosSound = const IosSound(1013); // iOS chime sound
+          break;
+        case models.AlarmSound.defaultAlarm:
+        default:
+          androidSound = AndroidSounds.alarm;
+          iosSound = const IosSound(1023); // iOS Alert sound
+          break;
+      }
+
+      // Play the selected alarm sound using STREAM_ALARM volume
       await FlutterRingtonePlayer().play(
-        android: AndroidSounds.alarm,
-        ios: const IosSound(1023), // iOS Alert sound
+        android: androidSound,
+        ios: iosSound,
         looping: true,
         volume: 1.0,
         asAlarm: true, // Use alarm volume stream instead of media volume
       );
-      debugPrint('🔔 Playing system alarm sound');
+      debugPrint('🔔 Playing alarm sound: ${sound.name}');
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }

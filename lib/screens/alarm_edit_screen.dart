@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart' hide TimeOfDay;
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
 import '../services/alarm_service.dart';
 import '../theme/app_theme.dart';
@@ -23,6 +22,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late Set<int> _repeatDays;
 	late models.WakeUpChallenge _challenge;
 	late int _challengeDifficulty;
+	late models.AlarmSound _sound;
 
 	@override
 	void initState() {
@@ -33,6 +33,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		_repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
 		_challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
+		_sound = widget.alarm?.sound ?? models.AlarmSound.defaultAlarm;
 	}
 
 	@override
@@ -60,30 +61,22 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			body: SingleChildScrollView(
 				child: Column(
 					children: [
-						// Time Picker
-						Container(
-							height: 220,
-							padding: const EdgeInsets.symmetric(vertical: 20),
-							child: CupertinoTheme(
-								data: const CupertinoThemeData(
-									brightness: Brightness.dark,
-									textTheme: CupertinoTextThemeData(
-										dateTimePickerTextStyle: TextStyle(
-											fontSize: 24,
+						// Time Picker - Android style
+						GestureDetector(
+							onTap: () => _showTimePicker(context),
+							child: Container(
+								height: 180,
+								padding: const EdgeInsets.symmetric(vertical: 30),
+								child: Center(
+									child: Text(
+										'${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+										style: const TextStyle(
+											fontSize: 72,
+											fontWeight: FontWeight.w300,
 											color: AppTheme.onSurface,
+											letterSpacing: 2,
 										),
 									),
-								),
-								child: CupertinoDatePicker(
-									mode: CupertinoDatePickerMode.time,
-									use24hFormat: true,
-									initialDateTime: DateTime(2024, 1, 1, _hour, _minute),
-									onDateTimeChanged: (DateTime value) {
-										setState(() {
-											_hour = value.hour;
-											_minute = value.minute;
-										});
-									},
 								),
 							),
 						),
@@ -114,6 +107,18 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 								selectedDays: _repeatDays,
 								onChanged: (days) {
 									setState(() => _repeatDays = days);
+									Vibration.vibrate(duration: 10);
+								},
+							),
+						),
+
+						// Alarm sound
+						_buildSection(
+							l10n.alarmSound,
+							_SoundSelector(
+								selected: _sound,
+								onChanged: (sound) {
+									setState(() => _sound = sound);
 									Vibration.vibrate(duration: 10);
 								},
 							),
@@ -169,6 +174,46 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		);
 	}
 
+	Future<void> _showTimePicker(BuildContext context) async {
+		Vibration.vibrate(duration: 10);
+		final TimeOfDay? picked = await showTimePicker(
+			context: context,
+			initialTime: TimeOfDay(hour: _hour, minute: _minute),
+			builder: (context, child) {
+				return Theme(
+					data: Theme.of(context).copyWith(
+						colorScheme: const ColorScheme.dark(
+							primary: AppTheme.primary,
+							onPrimary: Colors.white,
+							surface: AppTheme.surface,
+							onSurface: AppTheme.onSurface,
+						),
+						timePickerTheme: TimePickerThemeData(
+							backgroundColor: AppTheme.surface,
+							hourMinuteColor: AppTheme.surfaceVariant,
+							hourMinuteTextColor: AppTheme.onSurface,
+							hourMinuteTextStyle: const TextStyle(
+								fontSize: 40,
+								fontWeight: FontWeight.w400,
+							),
+							dialBackgroundColor: AppTheme.surfaceVariant,
+							dialHandColor: AppTheme.primary,
+							dialTextColor: AppTheme.onSurface,
+							entryModeIconColor: AppTheme.onSurfaceSecondary,
+						),
+					),
+					child: child!,
+				);
+			},
+		);
+		if (picked != null) {
+			setState(() {
+				_hour = picked.hour;
+				_minute = picked.minute;
+			});
+		}
+	}
+
 	void _saveAlarm() async {
 		Vibration.vibrate(duration: 15);
 
@@ -179,6 +224,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			repeatDays: _repeatDays,
 			challenge: _challenge,
 			challengeDifficulty: _challengeDifficulty,
+			sound: _sound,
 		);
 
 		final alarmService = context.read<AlarmService>();
@@ -388,5 +434,72 @@ class _DifficultySelector extends StatelessWidget {
 			default:
 				return l10n.difficultyNormal;
 		}
+	}
+}
+
+class _SoundSelector extends StatelessWidget {
+	final models.AlarmSound selected;
+	final ValueChanged<models.AlarmSound> onChanged;
+
+	const _SoundSelector({
+		required this.selected,
+		required this.onChanged,
+	});
+
+	@override
+	Widget build(BuildContext context) {
+		final l10n = AppLocalizations.of(context)!;
+		final sounds = [
+			(models.AlarmSound.defaultAlarm, Icons.alarm, l10n.soundDefault),
+			(models.AlarmSound.gentle, Icons.water_drop_outlined, l10n.soundGentle),
+			(models.AlarmSound.digital, Icons.electric_bolt, l10n.soundDigital),
+			(models.AlarmSound.classic, Icons.notifications_outlined, l10n.soundClassic),
+			(models.AlarmSound.nature, Icons.forest_outlined, l10n.soundNature),
+		];
+
+		return SizedBox(
+			height: 100,
+			child: ListView.builder(
+				scrollDirection: Axis.horizontal,
+				padding: const EdgeInsets.symmetric(horizontal: 16),
+				itemCount: sounds.length,
+				itemBuilder: (context, index) {
+					final (sound, icon, label) = sounds[index];
+					final isSelected = selected == sound;
+
+					return GestureDetector(
+						onTap: () => onChanged(sound),
+						child: Container(
+							width: 80,
+							margin: const EdgeInsets.symmetric(horizontal: 4),
+							decoration: BoxDecoration(
+								color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
+								borderRadius: BorderRadius.circular(16),
+							),
+							child: Column(
+								mainAxisAlignment: MainAxisAlignment.center,
+								children: [
+									Icon(
+										icon,
+										color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
+										size: 32,
+									),
+									const SizedBox(height: 8),
+									Text(
+										label,
+										style: TextStyle(
+											color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
+											fontSize: 12,
+											fontWeight: FontWeight.w600,
+										),
+										textAlign: TextAlign.center,
+									),
+								],
+							),
+						),
+					);
+				},
+			),
+		);
 	}
 }

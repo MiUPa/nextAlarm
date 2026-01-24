@@ -8,6 +8,14 @@ enum WakeUpChallenge {
   steps,
 }
 
+enum AlarmSound {
+  defaultAlarm,
+  gentle,
+  digital,
+  classic,
+  nature,
+}
+
 class Alarm {
   final String id;
   final TimeOfDay time;
@@ -16,9 +24,9 @@ class Alarm {
   final Set<int> repeatDays; // 1-7 (Monday-Sunday)
   final WakeUpChallenge challenge;
   final int challengeDifficulty; // 1-5
-  final String? challengeData; // QR code data, phrase for voice, etc.
+  final String? challengeData; // phrase for voice, etc.
   final bool vibrate;
-  final String? soundPath;
+  final AlarmSound sound;
   final int snoozeMinutes;
   final DateTime? nextAlarmTime;
 
@@ -32,7 +40,7 @@ class Alarm {
     this.challengeDifficulty = 3,
     this.challengeData,
     this.vibrate = true,
-    this.soundPath,
+    this.sound = AlarmSound.defaultAlarm,
     this.snoozeMinutes = 5,
     this.nextAlarmTime,
   }) : id = id ?? const Uuid().v4();
@@ -46,7 +54,7 @@ class Alarm {
     int? challengeDifficulty,
     String? challengeData,
     bool? vibrate,
-    String? soundPath,
+    AlarmSound? sound,
     int? snoozeMinutes,
     DateTime? nextAlarmTime,
   }) {
@@ -60,7 +68,7 @@ class Alarm {
       challengeDifficulty: challengeDifficulty ?? this.challengeDifficulty,
       challengeData: challengeData ?? this.challengeData,
       vibrate: vibrate ?? this.vibrate,
-      soundPath: soundPath ?? this.soundPath,
+      sound: sound ?? this.sound,
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
       nextAlarmTime: nextAlarmTime ?? this.nextAlarmTime,
     );
@@ -78,7 +86,7 @@ class Alarm {
       'challengeDifficulty': challengeDifficulty,
       'challengeData': challengeData,
       'vibrate': vibrate,
-      'soundPath': soundPath,
+      'sound': sound.index,
       'snoozeMinutes': snoozeMinutes,
       'nextAlarmTime': nextAlarmTime?.toIso8601String(),
     };
@@ -95,7 +103,7 @@ class Alarm {
       challengeDifficulty: json['challengeDifficulty'] ?? 3,
       challengeData: json['challengeData'],
       vibrate: json['vibrate'] ?? true,
-      soundPath: json['soundPath'],
+      sound: AlarmSound.values[json['sound'] ?? 0],
       snoozeMinutes: json['snoozeMinutes'] ?? 5,
       nextAlarmTime: json['nextAlarmTime'] != null
           ? DateTime.parse(json['nextAlarmTime'])
