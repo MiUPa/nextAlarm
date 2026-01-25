@@ -18,7 +18,7 @@ class AlarmEditScreen extends StatefulWidget {
 class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late int _hour;
 	late int _minute;
-	late String _label;
+	late TextEditingController _labelController;
 	late Set<int> _repeatDays;
 	late models.WakeUpChallenge _challenge;
 	late int _challengeDifficulty;
@@ -31,13 +31,19 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		super.initState();
 		_hour = widget.alarm?.time.hour ?? DateTime.now().hour;
 		_minute = widget.alarm?.time.minute ?? DateTime.now().minute;
-		_label = widget.alarm?.label ?? '';
+		_labelController = TextEditingController(text: widget.alarm?.label ?? '');
 		_repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
 		_challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
 		_sound = widget.alarm?.sound ?? models.AlarmSound.defaultAlarm;
 		_vibrate = widget.alarm?.vibrate ?? true;
 		_gradualVolume = widget.alarm?.gradualVolume ?? false;
+	}
+
+	@override
+	void dispose() {
+		_labelController.dispose();
+		super.dispose();
 	}
 
 	@override
@@ -88,19 +94,37 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						const SizedBox(height: 8),
 
 						// Label
-						_buildSection(
-							l10n.label,
-							Padding(
-								padding: const EdgeInsets.symmetric(horizontal: 20),
-								child: TextField(
-									controller: TextEditingController(text: _label),
-									onChanged: (value) => _label = value,
-									style: const TextStyle(color: AppTheme.onSurface),
-									decoration: InputDecoration(
-										hintText: l10n.labelHint,
-										hintStyle: const TextStyle(color: AppTheme.onSurfaceSecondary),
+						Padding(
+							padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+							child: Row(
+								children: [
+									Text(
+										l10n.label,
+										style: Theme.of(context).textTheme.titleSmall?.copyWith(
+											color: AppTheme.onSurfaceSecondary,
+											letterSpacing: 0.5,
+										),
 									),
-								),
+									const SizedBox(width: 16),
+									Expanded(
+										child: TextField(
+											controller: _labelController,
+											style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+												color: AppTheme.onSurface,
+											),
+											textAlign: TextAlign.end,
+											decoration: InputDecoration(
+												hintText: l10n.labelHint,
+												hintStyle: TextStyle(
+													color: AppTheme.onSurfaceSecondary.withOpacity(0.5),
+												),
+												border: InputBorder.none,
+												isDense: true,
+												contentPadding: EdgeInsets.zero,
+											),
+										),
+									),
+								],
 							),
 						),
 
@@ -117,71 +141,81 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						),
 
 						// Alarm sound
-						_buildSection(
-							l10n.alarmSound,
-							_SoundSelector(
-								selected: _sound,
-								onChanged: (sound) {
-									setState(() => _sound = sound);
-									Vibration.vibrate(duration: 10);
-								},
+						ListTile(
+							contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+							title: Text(
+								l10n.alarmSound,
+								style: Theme.of(context).textTheme.titleSmall?.copyWith(
+									color: AppTheme.onSurfaceSecondary,
+									letterSpacing: 0.5,
+								),
 							),
+							trailing: Row(
+								mainAxisSize: MainAxisSize.min,
+								children: [
+									Text(
+										_getSoundName(l10n, _sound),
+										style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+											color: AppTheme.onSurface,
+										),
+									),
+									const SizedBox(width: 4),
+									const Icon(
+										Icons.chevron_right,
+										color: AppTheme.onSurfaceSecondary,
+									),
+								],
+							),
+							onTap: () {
+								Vibration.vibrate(duration: 10);
+								_showSoundPicker(context);
+							},
 						),
 
 						// Vibration toggle
-						_buildSection(
-							l10n.vibration,
-							Padding(
-								padding: const EdgeInsets.symmetric(horizontal: 20),
-								child: Row(
-									mainAxisAlignment: MainAxisAlignment.spaceBetween,
-									children: [
-										Text(
-											_vibrate ? l10n.vibrationOn : l10n.vibrationOff,
-											style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-												color: AppTheme.onSurface,
-											),
-										),
-										Switch(
-											value: _vibrate,
-											onChanged: (value) {
-												setState(() => _vibrate = value);
-												if (value) {
-													Vibration.vibrate(duration: 50);
-												}
-											},
-										),
-									],
+						SwitchListTile(
+							contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+							title: Text(
+								l10n.vibration,
+								style: Theme.of(context).textTheme.titleSmall?.copyWith(
+									color: AppTheme.onSurfaceSecondary,
+									letterSpacing: 0.5,
 								),
 							),
+							value: _vibrate,
+							activeTrackColor: AppTheme.primary,
+							activeColor: Colors.white,
+							onChanged: (value) {
+								setState(() => _vibrate = value);
+								if (value) {
+									Vibration.vibrate(duration: 50);
+								}
+							},
 						),
 
 						// Gradual volume
-						_buildSection(
-							l10n.gradualVolume,
-							Padding(
-								padding: const EdgeInsets.symmetric(horizontal: 20),
-								child: Row(
-									mainAxisAlignment: MainAxisAlignment.spaceBetween,
-									children: [
-										Expanded(
-											child: Text(
-												l10n.gradualVolumeDescription,
-												style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-													color: AppTheme.onSurfaceSecondary,
-												),
-											),
-										),
-										Switch(
-											value: _gradualVolume,
-											onChanged: (value) {
-												setState(() => _gradualVolume = value);
-												Vibration.vibrate(duration: 10);
-											},
-										),
-									],
+						SwitchListTile(
+							contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+							title: Text(
+								l10n.gradualVolume,
+								style: Theme.of(context).textTheme.titleSmall?.copyWith(
+									color: AppTheme.onSurfaceSecondary,
+									letterSpacing: 0.5,
 								),
 							),
+							subtitle: Text(
+								l10n.gradualVolumeDescription,
+								style: Theme.of(context).textTheme.bodySmall?.copyWith(
+									color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+								),
+							),
+							value: _gradualVolume,
+							activeTrackColor: AppTheme.primary,
+							activeColor: Colors.white,
+							onChanged: (value) {
+								setState(() => _gradualVolume = value);
+								Vibration.vibrate(duration: 10);
+							},
 						),
 
 						// Wake-up challenge
@@ -234,6 +268,64 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		);
 	}
 
+	String _getSoundName(AppLocalizations l10n, models.AlarmSound sound) {
+		switch (sound) {
+			case models.AlarmSound.defaultAlarm:
+				return l10n.soundDefault;
+			case models.AlarmSound.gentle:
+				return l10n.soundGentle;
+			case models.AlarmSound.digital:
+				return l10n.soundDigital;
+			case models.AlarmSound.classic:
+				return l10n.soundClassic;
+			case models.AlarmSound.nature:
+				return l10n.soundNature;
+		}
+	}
+
+	void _showSoundPicker(BuildContext context) {
+		final l10n = AppLocalizations.of(context)!;
+		showModalBottomSheet(
+			context: context,
+			backgroundColor: AppTheme.surface,
+			shape: const RoundedRectangleBorder(
+				borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+			),
+			builder: (context) => Column(
+				mainAxisSize: MainAxisSize.min,
+				children: [
+					const SizedBox(height: 8),
+					Container(
+						width: 40,
+						height: 4,
+						decoration: BoxDecoration(
+							color: AppTheme.onSurfaceSecondary.withOpacity(0.4),
+							borderRadius: BorderRadius.circular(2),
+						),
+					),
+					const SizedBox(height: 8),
+					...models.AlarmSound.values.map((sound) =>
+						RadioListTile<models.AlarmSound>(
+							title: Text(
+								_getSoundName(l10n, sound),
+								style: const TextStyle(color: AppTheme.onSurface),
+							),
+							value: sound,
+							groupValue: _sound,
+							activeColor: AppTheme.primary,
+							onChanged: (value) {
+								setState(() => _sound = value!);
+								Vibration.vibrate(duration: 10);
+								Navigator.pop(context);
+							},
+						),
+					),
+					const SizedBox(height: 16),
+				],
+			),
+		);
+	}
+
 	Future<void> _showTimePicker(BuildContext context) async {
 		Vibration.vibrate(duration: 10);
 		final TimeOfDay? picked = await showTimePicker(
@@ -280,7 +372,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		final alarm = models.Alarm(
 			id: widget.alarm?.id,
 			time: models.TimeOfDay(hour: _hour, minute: _minute),
-			label: _label,
+			label: _labelController.text,
 			repeatDays: _repeatDays,
 			challenge: _challenge,
 			challengeDifficulty: _challengeDifficulty,
@@ -499,69 +591,3 @@ class _DifficultySelector extends StatelessWidget {
 	}
 }
 
-class _SoundSelector extends StatelessWidget {
-	final models.AlarmSound selected;
-	final ValueChanged<models.AlarmSound> onChanged;
-
-	const _SoundSelector({
-		required this.selected,
-		required this.onChanged,
-	});
-
-	@override
-	Widget build(BuildContext context) {
-		final l10n = AppLocalizations.of(context)!;
-		final sounds = [
-			(models.AlarmSound.defaultAlarm, Icons.alarm, l10n.soundDefault),
-			(models.AlarmSound.gentle, Icons.water_drop_outlined, l10n.soundGentle),
-			(models.AlarmSound.digital, Icons.electric_bolt, l10n.soundDigital),
-			(models.AlarmSound.classic, Icons.notifications_outlined, l10n.soundClassic),
-			(models.AlarmSound.nature, Icons.forest_outlined, l10n.soundNature),
-		];
-
-		return SizedBox(
-			height: 100,
-			child: ListView.builder(
-				scrollDirection: Axis.horizontal,
-				padding: const EdgeInsets.symmetric(horizontal: 16),
-				itemCount: sounds.length,
-				itemBuilder: (context, index) {
-					final (sound, icon, label) = sounds[index];
-					final isSelected = selected == sound;
-
-					return GestureDetector(
-						onTap: () => onChanged(sound),
-						child: Container(
-							width: 80,
-							margin: const EdgeInsets.symmetric(horizontal: 4),
-							decoration: BoxDecoration(
-								color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
-								borderRadius: BorderRadius.circular(16),
-							),
-							child: Column(
-								mainAxisAlignment: MainAxisAlignment.center,
-								children: [
-									Icon(
-										icon,
-										color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
-										size: 32,
-									),
-									const SizedBox(height: 8),
-									Text(
-										label,
-										style: TextStyle(
-											color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
-											fontSize: 12,
-											fontWeight: FontWeight.w600,
-										),
-										textAlign: TextAlign.center,
-									),
-								],
-							),
-						),
-					);
-				},
-			),
-		);
-	}
-}

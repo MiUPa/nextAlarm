@@ -1,5 +1,21 @@
 # NextAlarm - Development Notes
 
+## ⚠️ リリース前チェックリスト
+
+**重要**: mainブランチにマージしてリリースビルドを作成する前に、必ず以下を確認すること：
+
+1. **バージョンを上げる** - `pubspec.yaml`の`version`を更新
+   - 形式: `X.Y.Z+N` (例: `0.1.1+2`)
+   - `X.Y.Z`: セマンティックバージョン（メジャー.マイナー.パッチ）
+   - `+N`: ビルド番号（Google Play Consoleでは必ず前回より大きい値が必要）
+
+2. **ビルドコマンド**:
+   ```bash
+   flutter build appbundle --release
+   ```
+
+3. **成果物の場所**: `build/app/outputs/bundle/release/app-release.aab`
+
 ## プロジェクト概要
 
 SmartAlarmを超える次世代アラームアプリ「NextAlarm」の開発プロジェクト。
