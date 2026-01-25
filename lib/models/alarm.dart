@@ -27,6 +27,7 @@ class Alarm {
   final String? challengeData; // phrase for voice, etc.
   final bool vibrate;
   final AlarmSound sound;
+  final bool gradualVolume; // Gradually increase volume
   final int snoozeMinutes;
   final DateTime? nextAlarmTime;
 
@@ -41,6 +42,7 @@ class Alarm {
     this.challengeData,
     this.vibrate = true,
     this.sound = AlarmSound.defaultAlarm,
+    this.gradualVolume = false,
     this.snoozeMinutes = 5,
     this.nextAlarmTime,
   }) : id = id ?? const Uuid().v4();
@@ -55,6 +57,7 @@ class Alarm {
     String? challengeData,
     bool? vibrate,
     AlarmSound? sound,
+    bool? gradualVolume,
     int? snoozeMinutes,
     DateTime? nextAlarmTime,
   }) {
@@ -69,6 +72,7 @@ class Alarm {
       challengeData: challengeData ?? this.challengeData,
       vibrate: vibrate ?? this.vibrate,
       sound: sound ?? this.sound,
+      gradualVolume: gradualVolume ?? this.gradualVolume,
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
       nextAlarmTime: nextAlarmTime ?? this.nextAlarmTime,
     );
@@ -87,6 +91,7 @@ class Alarm {
       'challengeData': challengeData,
       'vibrate': vibrate,
       'sound': sound.index,
+      'gradualVolume': gradualVolume,
       'snoozeMinutes': snoozeMinutes,
       'nextAlarmTime': nextAlarmTime?.toIso8601String(),
     };
@@ -104,6 +109,7 @@ class Alarm {
       challengeData: json['challengeData'],
       vibrate: json['vibrate'] ?? true,
       sound: AlarmSound.values[json['sound'] ?? 0],
+      gradualVolume: json['gradualVolume'] ?? false,
       snoozeMinutes: json['snoozeMinutes'] ?? 5,
       nextAlarmTime: json['nextAlarmTime'] != null
           ? DateTime.parse(json['nextAlarmTime'])

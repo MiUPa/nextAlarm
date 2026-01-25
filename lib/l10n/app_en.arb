@@ -150,5 +150,8 @@
 
 	"vibration": "Vibration",
 	"vibrationOn": "On",
-	"vibrationOff": "Off"
+	"vibrationOff": "Off",
+
+	"gradualVolume": "Gradual Volume",
+	"gradualVolumeDescription": "Slowly increase volume"
 }

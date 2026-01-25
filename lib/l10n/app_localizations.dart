@@ -517,6 +517,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Off'**
   String get vibrationOff;
+
+  /// No description provided for @gradualVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradual Volume'**
+  String get gradualVolume;
+
+  /// No description provided for @gradualVolumeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Slowly increase volume'**
+  String get gradualVolumeDescription;
 }
 
 class _AppLocalizationsDelegate

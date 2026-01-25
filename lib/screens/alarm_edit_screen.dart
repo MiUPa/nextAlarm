@@ -24,6 +24,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late int _challengeDifficulty;
 	late models.AlarmSound _sound;
 	late bool _vibrate;
+	late bool _gradualVolume;
 
 	@override
 	void initState() {
@@ -36,6 +37,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
 		_sound = widget.alarm?.sound ?? models.AlarmSound.defaultAlarm;
 		_vibrate = widget.alarm?.vibrate ?? true;
+		_gradualVolume = widget.alarm?.gradualVolume ?? false;
 	}
 
 	@override
@@ -154,6 +156,34 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							),
 						),
 
+						// Gradual volume
+						_buildSection(
+							l10n.gradualVolume,
+							Padding(
+								padding: const EdgeInsets.symmetric(horizontal: 20),
+								child: Row(
+									mainAxisAlignment: MainAxisAlignment.spaceBetween,
+									children: [
+										Expanded(
+											child: Text(
+												l10n.gradualVolumeDescription,
+												style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+													color: AppTheme.onSurfaceSecondary,
+												),
+											),
+										),
+										Switch(
+											value: _gradualVolume,
+											onChanged: (value) {
+												setState(() => _gradualVolume = value);
+												Vibration.vibrate(duration: 10);
+											},
+										),
+									],
+								),
+							),
+						),
+
 						// Wake-up challenge
 						_buildSection(
 							l10n.wakeUpChallenge,
@@ -256,6 +286,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			challengeDifficulty: _challengeDifficulty,
 			sound: _sound,
 			vibrate: _vibrate,
+			gradualVolume: _gradualVolume,
 		);
 
 		final alarmService = context.read<AlarmService>();

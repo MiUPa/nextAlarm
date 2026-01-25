@@ -231,4 +231,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get vibrationOff => 'オフ';
+
+  @override
+  String get gradualVolume => 'だんだん大きく';
+
+  @override
+  String get gradualVolumeDescription => '音量を徐々に上げる';
 }

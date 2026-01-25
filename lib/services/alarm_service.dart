@@ -55,9 +55,11 @@ class AlarmService extends ChangeNotifier {
   List<models.Alarm> _alarms = [];
   static const String _storageKey = 'alarms';
   Timer? _checkTimer;
+  Timer? _volumeTimer;
   models.Alarm? _ringingAlarm;
   final Set<String> _triggeredToday = {};
   bool _isPlayingSound = false;
+  double _currentVolume = 1.0;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
@@ -163,6 +165,15 @@ class AlarmService extends ChangeNotifier {
 
       // Get the sound type from the ringing alarm
       final sound = _ringingAlarm?.sound ?? models.AlarmSound.defaultAlarm;
+      final useGradualVolume = _ringingAlarm?.gradualVolume ?? false;
+
+      // Set initial volume based on gradual volume setting
+      if (useGradualVolume) {
+        _currentVolume = 0.1;
+        _startGradualVolumeIncrease();
+      } else {
+        _currentVolume = 1.0;
+      }
 
       // Map AlarmSound to AndroidSounds
       AndroidSound androidSound;
@@ -170,24 +181,24 @@ class AlarmService extends ChangeNotifier {
       switch (sound) {
         case models.AlarmSound.gentle:
           androidSound = AndroidSounds.notification;
-          iosSound = const IosSound(1007); // iOS subtle sound
+          iosSound = const IosSound(1007);
           break;
         case models.AlarmSound.digital:
           androidSound = AndroidSounds.alarm;
-          iosSound = const IosSound(1005); // iOS electronic sound
+          iosSound = const IosSound(1005);
           break;
         case models.AlarmSound.classic:
           androidSound = AndroidSounds.ringtone;
-          iosSound = const IosSound(1000); // iOS classic ring
+          iosSound = const IosSound(1000);
           break;
         case models.AlarmSound.nature:
           androidSound = AndroidSounds.notification;
-          iosSound = const IosSound(1013); // iOS chime sound
+          iosSound = const IosSound(1013);
           break;
         case models.AlarmSound.defaultAlarm:
         default:
           androidSound = AndroidSounds.alarm;
-          iosSound = const IosSound(1023); // iOS Alert sound
+          iosSound = const IosSound(1023);
           break;
       }
 
@@ -196,13 +207,36 @@ class AlarmService extends ChangeNotifier {
         android: androidSound,
         ios: iosSound,
         looping: true,
-        volume: 1.0,
-        asAlarm: true, // Use alarm volume stream instead of media volume
+        volume: _currentVolume,
+        asAlarm: true,
       );
-      debugPrint('🔔 Playing alarm sound: ${sound.name}');
+      debugPrint('🔔 Playing alarm sound: ${sound.name} (volume: $_currentVolume)');
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }
+  }
+
+  void _startGradualVolumeIncrease() {
+    _volumeTimer?.cancel();
+    // Increase volume every 5 seconds until max
+    _volumeTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (_currentVolume < 1.0 && _isPlayingSound) {
+        _currentVolume = (_currentVolume + 0.15).clamp(0.0, 1.0);
+
+        // Restart with new volume
+        await FlutterRingtonePlayer().stop();
+        await FlutterRingtonePlayer().play(
+          android: AndroidSounds.alarm,
+          ios: const IosSound(1023),
+          looping: true,
+          volume: _currentVolume,
+          asAlarm: true,
+        );
+        debugPrint('🔊 Volume increased to: $_currentVolume');
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   void stopRingingAlarm() {
@@ -215,6 +249,8 @@ class AlarmService extends ChangeNotifier {
     _ringingAlarm = null;
     _stopAlarmSound();
     _stopVibration();
+    _volumeTimer?.cancel();
+    _volumeTimer = null;
     notifyListeners();
   }
 
