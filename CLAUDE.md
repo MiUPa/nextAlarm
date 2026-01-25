@@ -4,17 +4,27 @@
 
 **重要**: mainブランチにマージしてリリースビルドを作成する前に、必ず以下を確認すること：
 
-1. **バージョンを上げる** - `pubspec.yaml`の`version`を更新
-   - 形式: `X.Y.Z+N` (例: `0.1.1+2`)
-   - `X.Y.Z`: セマンティックバージョン（メジャー.マイナー.パッチ）
-   - `+N`: ビルド番号（Google Play Consoleでは必ず前回より大きい値が必要）
+### 1. バージョンを上げる（`pubspec.yaml`）
 
-2. **ビルドコマンド**:
-   ```bash
-   flutter build appbundle --release
-   ```
+形式: `X.Y.Z+N` (例: `0.1.1+3`)
+- `X.Y.Z`: ユーザーに表示されるバージョン（ストア表示）
+- `+N`: ビルド番号（Google Play内部用、ユーザーには見えない）
 
-3. **成果物の場所**: `build/app/outputs/bundle/release/app-release.aab`
+**⚠️ 重要: ビルド番号（+N）のルール**
+- 一度Google Playにアップロードした番号は**二度と使えない**
+- 必ず下記の「最終リリースビルド番号」より大きい値にすること
+- X.Y.Zが同じでも、再ビルド時は+Nを増やす必要がある
+
+### 📌 最終リリースビルド番号: 3
+（リリース成功後、必ずこの値を更新すること）
+
+### 2. ビルドコマンド
+```bash
+flutter build appbundle --release
+```
+
+### 3. 成果物の場所
+`build/app/outputs/bundle/release/app-release.aab`
 
 ## プロジェクト概要
 
