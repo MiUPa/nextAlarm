@@ -153,5 +153,9 @@
 	"vibrationOff": "Off",
 
 	"gradualVolume": "Gradual Volume",
-	"gradualVolumeDescription": "Slowly increase volume"
+	"gradualVolumeDescription": "Slowly increase volume",
+
+	"deleteAlarm": "Delete Alarm",
+	"deleteAlarmConfirmation": "Are you sure you want to delete this alarm?",
+	"delete": "Delete"
 }

@@ -529,6 +529,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Slowly increase volume'**
   String get gradualVolumeDescription;
+
+  /// No description provided for @deleteAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Alarm'**
+  String get deleteAlarm;
+
+  /// No description provided for @deleteAlarmConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this alarm?'**
+  String get deleteAlarmConfirmation;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
 }
 
 class _AppLocalizationsDelegate

@@ -255,4 +255,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gradualVolumeDescription => 'Slowly increase volume';
+
+  @override
+  String get deleteAlarm => 'Delete Alarm';
+
+  @override
+  String get deleteAlarmConfirmation =>
+      'Are you sure you want to delete this alarm?';
+
+  @override
+  String get delete => 'Delete';
 }

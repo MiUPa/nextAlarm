@@ -237,4 +237,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get gradualVolumeDescription => '音量を徐々に上げる';
+
+  @override
+  String get deleteAlarm => 'アラームを削除';
+
+  @override
+  String get deleteAlarmConfirmation => 'このアラームを削除してもよろしいですか？';
+
+  @override
+  String get delete => '削除';
 }

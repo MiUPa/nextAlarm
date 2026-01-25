@@ -136,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 												onTap: () => _editAlarm(context, alarm),
 												onToggle: () => _toggleAlarm(alarm.id),
 												onDelete: () => _deleteAlarm(alarm.id),
+												onConfirmDelete: () => _confirmDeleteAlarm(context),
 											);
 										},
 										childCount: alarmService.alarms.length,
@@ -195,6 +196,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		context.read<AlarmService>().toggleAlarm(id);
 	}
 
+	Future<bool> _confirmDeleteAlarm(BuildContext context) async {
+		final l10n = AppLocalizations.of(context)!;
+		Vibration.vibrate(duration: 10);
+
+		final result = await showDialog<bool>(
+			context: context,
+			builder: (context) => AlertDialog(
+				backgroundColor: AppTheme.surface,
+				title: Text(
+					l10n.deleteAlarm,
+					style: const TextStyle(color: AppTheme.onSurface),
+				),
+				content: Text(
+					l10n.deleteAlarmConfirmation,
+					style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+				),
+				actions: [
+					TextButton(
+						onPressed: () => Navigator.of(context).pop(false),
+						child: Text(l10n.cancel),
+					),
+					TextButton(
+						onPressed: () => Navigator.of(context).pop(true),
+						style: TextButton.styleFrom(
+							foregroundColor: AppTheme.danger,
+						),
+						child: Text(l10n.delete),
+					),
+				],
+			),
+		);
+
+		return result ?? false;
+	}
+
 	void _deleteAlarm(String id) {
 		Vibration.vibrate(duration: 20, amplitude: 128);
 		context.read<AlarmService>().deleteAlarm(id);
@@ -206,12 +242,14 @@ class _AlarmCard extends StatefulWidget {
 	final VoidCallback onTap;
 	final VoidCallback onToggle;
 	final VoidCallback onDelete;
+	final Future<bool> Function() onConfirmDelete;
 
 	const _AlarmCard({
 		required this.alarm,
 		required this.onTap,
 		required this.onToggle,
 		required this.onDelete,
+		required this.onConfirmDelete,
 	});
 
 	@override
@@ -287,6 +325,7 @@ class _AlarmCardState extends State<_AlarmCard>
 							),
 							child: const Icon(Icons.delete, color: Colors.white),
 						),
+						confirmDismiss: (_) => widget.onConfirmDelete(),
 						onDismissed: (_) => widget.onDelete(),
 						child: Padding(
 							padding: const EdgeInsets.all(20),

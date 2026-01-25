@@ -89,5 +89,9 @@
 	"vibrationOff": "オフ",
 
 	"gradualVolume": "だんだん大きく",
-	"gradualVolumeDescription": "音量を徐々に上げる"
+	"gradualVolumeDescription": "音量を徐々に上げる",
+
+	"deleteAlarm": "アラームを削除",
+	"deleteAlarmConfirmation": "このアラームを削除してもよろしいですか？",
+	"delete": "削除"
 }
