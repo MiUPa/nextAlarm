@@ -56,6 +56,9 @@ dependencies:
   flutter_ringtone_player: ^4.0.0+4
   vibration: ^2.0.0
 
+  # Review prompt
+  in_app_review: ^2.0.10
+
   # Utilities
   intl: ^0.20.2
   provider: ^6.1.2

@@ -5,6 +5,7 @@ import 'package:vibration/vibration.dart';
 import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
 import '../services/notification_service.dart';
+import '../services/review_prompt_service.dart';
 import '../models/alarm.dart' as models;
 import '../theme/app_theme.dart';
 import 'alarm_edit_screen.dart';
@@ -33,12 +34,126 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		if (kIsWeb) {
 			_requestNotificationPermission();
 		}
+
+		// Check if review prompt should be shown
+		_checkReviewPrompt();
 	}
 
 	Future<void> _requestNotificationPermission() async {
 		// Wait a bit for the UI to load
 		await Future.delayed(const Duration(seconds: 1));
 		await NotificationService.requestPermission();
+	}
+
+	Future<void> _checkReviewPrompt() async {
+		// Wait for the UI to settle
+		await Future.delayed(const Duration(seconds: 2));
+		if (!mounted) return;
+
+		final shouldShow = await ReviewPromptService.shouldShowPrompt();
+		if (shouldShow && mounted) {
+			_showReviewDialog();
+		}
+	}
+
+	void _showReviewDialog() {
+		final l10n = AppLocalizations.of(context)!;
+
+		showDialog(
+			context: context,
+			builder: (context) => AlertDialog(
+				backgroundColor: AppTheme.surface,
+				shape: RoundedRectangleBorder(
+					borderRadius: BorderRadius.circular(20),
+				),
+				title: Row(
+					children: [
+						const Icon(Icons.star_rounded, color: AppTheme.warning, size: 28),
+						const SizedBox(width: 10),
+						Expanded(
+							child: Text(
+								l10n.reviewPromptTitle,
+								style: const TextStyle(
+									color: AppTheme.onSurface,
+									fontSize: 20,
+									fontWeight: FontWeight.w600,
+								),
+							),
+						),
+					],
+				),
+				content: Text(
+					l10n.reviewPromptMessage,
+					style: const TextStyle(
+						color: AppTheme.onSurfaceSecondary,
+						fontSize: 15,
+						height: 1.4,
+					),
+				),
+				actionsAlignment: MainAxisAlignment.center,
+				actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+				actions: [
+					Column(
+						crossAxisAlignment: CrossAxisAlignment.stretch,
+						children: [
+							// Rate Now button
+							ElevatedButton(
+								onPressed: () {
+									Navigator.of(context).pop();
+									ReviewPromptService.rateNow();
+								},
+								style: ElevatedButton.styleFrom(
+									backgroundColor: AppTheme.primary,
+									foregroundColor: Colors.white,
+									padding: const EdgeInsets.symmetric(vertical: 14),
+									shape: RoundedRectangleBorder(
+										borderRadius: BorderRadius.circular(12),
+									),
+								),
+								child: Text(
+									l10n.reviewPromptRate,
+									style: const TextStyle(
+										fontSize: 16,
+										fontWeight: FontWeight.w600,
+									),
+								),
+							),
+							const SizedBox(height: 8),
+							// Later button
+							TextButton(
+								onPressed: () {
+									Navigator.of(context).pop();
+									ReviewPromptService.remindLater();
+								},
+								child: Text(
+									l10n.reviewPromptLater,
+									style: const TextStyle(
+										color: AppTheme.primary,
+										fontSize: 15,
+										fontWeight: FontWeight.w500,
+									),
+								),
+							),
+							// Don't show again button
+							TextButton(
+								onPressed: () {
+									Navigator.of(context).pop();
+									ReviewPromptService.dismiss();
+								},
+								child: Text(
+									l10n.reviewPromptDismiss,
+									style: TextStyle(
+										color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+										fontSize: 13,
+										fontWeight: FontWeight.w400,
+									),
+								),
+							),
+						],
+					),
+				],
+			),
+		);
 	}
 
 	@override

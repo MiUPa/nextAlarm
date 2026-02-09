@@ -553,6 +553,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @reviewPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoying NextAlarm?'**
+  String get reviewPromptTitle;
+
+  /// No description provided for @reviewPromptMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If you like this app, please take a moment to rate it. Your feedback helps us improve!'**
+  String get reviewPromptMessage;
+
+  /// No description provided for @reviewPromptRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Now'**
+  String get reviewPromptRate;
+
+  /// No description provided for @reviewPromptLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get reviewPromptLater;
+
+  /// No description provided for @reviewPromptDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t show again'**
+  String get reviewPromptDismiss;
 }
 
 class _AppLocalizationsDelegate
