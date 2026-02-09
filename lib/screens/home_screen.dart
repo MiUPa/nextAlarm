@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
+import '../services/app_update_service.dart';
 import '../services/notification_service.dart';
 import '../models/alarm.dart' as models;
 import '../theme/app_theme.dart';
@@ -33,6 +34,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		if (kIsWeb) {
 			_requestNotificationPermission();
 		}
+
+		// Check for app updates on Android (flexible update)
+		_checkForAppUpdate();
+	}
+
+	Future<void> _checkForAppUpdate() async {
+		// Wait for the first frame to ensure context is ready
+		await Future.delayed(const Duration(seconds: 2));
+		if (!mounted) return;
+		await AppUpdateService.checkForUpdate(context);
 	}
 
 	Future<void> _requestNotificationPermission() async {
