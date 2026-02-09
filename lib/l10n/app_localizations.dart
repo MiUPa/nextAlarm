@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Nature'**
   String get soundNature;
 
+  /// No description provided for @soundSilent.
+  ///
+  /// In en, this message translates to:
+  /// **'Silent'**
+  String get soundSilent;
+
   /// No description provided for @vibration.
   ///
   /// In en, this message translates to:

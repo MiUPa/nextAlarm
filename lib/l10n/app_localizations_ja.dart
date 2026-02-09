@@ -224,6 +224,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get soundNature => '自然';
 
   @override
+  String get soundSilent => 'サイレント';
+
+  @override
   String get vibration => 'バイブレーション';
 
   @override

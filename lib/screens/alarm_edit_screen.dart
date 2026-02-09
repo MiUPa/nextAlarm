@@ -280,6 +280,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 				return l10n.soundClassic;
 			case models.AlarmSound.nature:
 				return l10n.soundNature;
+			case models.AlarmSound.silent:
+				return l10n.soundSilent;
 		}
 	}
 
