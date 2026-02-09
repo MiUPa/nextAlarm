@@ -2,60 +2,57 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 
-/// Service to handle Google Play in-app updates (flexible update flow).
+/// Service to check for Google Play updates and prompt the user to visit
+/// the Play Store when a new version is available.
 ///
-/// Flexible updates allow the user to continue using the app while the
-/// update downloads in the background. Once downloaded, a SnackBar prompts
-/// the user to restart and apply the update.
+/// Does NOT download in the background — simply notifies the user and
+/// opens the store page if they choose to update.
 class AppUpdateService {
   AppUpdateService._();
 
-  /// Check for an available update and start a flexible update if one exists.
+  /// Check whether a newer version is available on Google Play.
+  /// If so, show a SnackBar that links to the Play Store.
   ///
-  /// Should be called once during app startup (e.g., from HomeScreen.initState).
-  /// Only runs on Android — silently returns on Web and other platforms.
+  /// Only runs on Android. Silently returns on Web / iOS / desktop.
   static Future<void> checkForUpdate(BuildContext context) async {
-    // In-app updates are only available on Android via Google Play.
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
 
     try {
       final updateInfo = await InAppUpdate.checkForUpdate();
 
       if (updateInfo.updateAvailability ==
-          UpdateAvailability.updateAvailable) {
-        // Start the flexible update flow (downloads in background).
-        await InAppUpdate.startFlexibleUpdate();
-
-        // When the download completes, show a SnackBar to prompt restart.
-        if (context.mounted) {
-          _showUpdateReadySnackBar(context);
-        }
+              UpdateAvailability.updateAvailable &&
+          context.mounted) {
+        _showUpdateAvailableSnackBar(context);
       }
     } catch (e) {
-      // Failures here are non-critical (e.g., not installed via Play Store,
-      // emulator, network issues). Log and move on.
+      // Non-critical — e.g. not installed via Play Store, emulator, etc.
       debugPrint('In-app update check failed: $e');
     }
   }
 
-  /// Show a SnackBar informing the user that an update has been downloaded
-  /// and is ready to install.
-  static void _showUpdateReadySnackBar(BuildContext context) {
-    final l10n = Localizations.localeOf(context).languageCode;
-    final message = l10n == 'ja'
-        ? 'アップデートの準備ができました'
-        : 'Update ready to install';
-    final actionLabel = l10n == 'ja' ? '再起動' : 'Restart';
+  /// Show a SnackBar telling the user a new version is available.
+  /// Tapping "Update" opens the Play Store listing.
+  static void _showUpdateAvailableSnackBar(BuildContext context) {
+    final lang = Localizations.localeOf(context).languageCode;
+    final message = lang == 'ja'
+        ? '新しいバージョンが利用可能です'
+        : 'A new version is available';
+    final actionLabel = lang == 'ja' ? '更新' : 'Update';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 10),
+        duration: const Duration(seconds: 8),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: actionLabel,
           onPressed: () {
-            InAppUpdate.completeFlexibleUpdate();
+            // Opens the Play Store listing via the in_app_update plugin.
+            // This is an immediate update intent that brings up the store.
+            InAppUpdate.performImmediateUpdate().catchError((_) {
+              // User cancelled or error — ignore.
+            });
           },
         ),
       ),
