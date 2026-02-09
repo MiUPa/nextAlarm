@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:vibration/vibration.dart';
@@ -60,6 +60,7 @@ class AlarmService extends ChangeNotifier {
   final Set<String> _triggeredToday = {};
   bool _isPlayingSound = false;
   double _currentVolume = 1.0;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
@@ -72,6 +73,7 @@ class AlarmService extends ChangeNotifier {
   @override
   void dispose() {
     _checkTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -157,14 +159,37 @@ class AlarmService extends ChangeNotifier {
     }
   }
 
+  /// Map AlarmSound enum to asset file name
+  String? _getSoundAsset(models.AlarmSound sound) {
+    switch (sound) {
+      case models.AlarmSound.defaultAlarm:
+        return 'alarm_default.wav';
+      case models.AlarmSound.gentle:
+        return 'alarm_gentle.wav';
+      case models.AlarmSound.digital:
+        return 'alarm_digital.wav';
+      case models.AlarmSound.classic:
+        return 'alarm_classic.wav';
+      case models.AlarmSound.nature:
+        return 'alarm_nature.wav';
+      case models.AlarmSound.silent:
+        return null;
+    }
+  }
+
   Future<void> _playAlarmSound() async {
     if (_isPlayingSound) return;
 
     try {
-      _isPlayingSound = true;
-
-      // Get the sound type from the ringing alarm
       final sound = _ringingAlarm?.sound ?? models.AlarmSound.defaultAlarm;
+
+      // Silent mode: no sound playback
+      if (sound == models.AlarmSound.silent) {
+        debugPrint('🔇 Alarm sound: silent mode');
+        return;
+      }
+
+      _isPlayingSound = true;
       final useGradualVolume = _ringingAlarm?.gradualVolume ?? false;
 
       // Set initial volume based on gradual volume setting
@@ -175,41 +200,16 @@ class AlarmService extends ChangeNotifier {
         _currentVolume = 1.0;
       }
 
-      // Map AlarmSound to AndroidSounds
-      AndroidSound androidSound;
-      IosSound iosSound;
-      switch (sound) {
-        case models.AlarmSound.gentle:
-          androidSound = AndroidSounds.notification;
-          iosSound = const IosSound(1007);
-          break;
-        case models.AlarmSound.digital:
-          androidSound = AndroidSounds.alarm;
-          iosSound = const IosSound(1005);
-          break;
-        case models.AlarmSound.classic:
-          androidSound = AndroidSounds.ringtone;
-          iosSound = const IosSound(1000);
-          break;
-        case models.AlarmSound.nature:
-          androidSound = AndroidSounds.notification;
-          iosSound = const IosSound(1013);
-          break;
-        case models.AlarmSound.defaultAlarm:
-        default:
-          androidSound = AndroidSounds.alarm;
-          iosSound = const IosSound(1023);
-          break;
+      // Configure AudioPlayer for continuous looping
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.setVolume(_currentVolume);
+
+      // Play the alarm sound asset
+      final asset = _getSoundAsset(sound);
+      if (asset != null) {
+        await _audioPlayer.play(AssetSource('sounds/$asset'));
       }
 
-      // Play the selected alarm sound using STREAM_ALARM volume
-      await FlutterRingtonePlayer().play(
-        android: androidSound,
-        ios: iosSound,
-        looping: true,
-        volume: _currentVolume,
-        asAlarm: true,
-      );
       debugPrint('🔔 Playing alarm sound: ${sound.name} (volume: $_currentVolume)');
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
@@ -218,20 +218,11 @@ class AlarmService extends ChangeNotifier {
 
   void _startGradualVolumeIncrease() {
     _volumeTimer?.cancel();
-    // Increase volume every 5 seconds until max
+    // Increase volume every 5 seconds until max (no stop/restart needed)
     _volumeTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
       if (_currentVolume < 1.0 && _isPlayingSound) {
         _currentVolume = (_currentVolume + 0.15).clamp(0.0, 1.0);
-
-        // Restart with new volume
-        await FlutterRingtonePlayer().stop();
-        await FlutterRingtonePlayer().play(
-          android: AndroidSounds.alarm,
-          ios: const IosSound(1023),
-          looping: true,
-          volume: _currentVolume,
-          asAlarm: true,
-        );
+        await _audioPlayer.setVolume(_currentVolume);
         debugPrint('🔊 Volume increased to: $_currentVolume');
       } else {
         timer.cancel();
@@ -256,7 +247,7 @@ class AlarmService extends ChangeNotifier {
 
   Future<void> _stopAlarmSound() async {
     if (_isPlayingSound) {
-      await FlutterRingtonePlayer().stop();
+      await _audioPlayer.stop();
       _isPlayingSound = false;
       debugPrint('🔇 Alarm sound stopped');
     }

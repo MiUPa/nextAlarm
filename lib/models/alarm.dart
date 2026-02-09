@@ -14,6 +14,7 @@ enum AlarmSound {
   digital,
   classic,
   nature,
+  silent,
 }
 
 class Alarm {

@@ -147,6 +147,7 @@
 	"soundDigital": "Digital",
 	"soundClassic": "Classic",
 	"soundNature": "Nature",
+	"soundSilent": "Silent",
 
 	"vibration": "Vibration",
 	"vibrationOn": "On",
