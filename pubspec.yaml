@@ -58,6 +58,7 @@ dependencies:
 
   # In-app update
   in_app_update: ^4.2.3
+  url_launcher: ^6.2.5
 
   # Utilities
   intl: ^0.20.2

@@ -1,21 +1,34 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Service to check for Google Play updates and prompt the user to visit
 /// the Play Store when a new version is available.
 ///
-/// Does NOT download in the background — simply notifies the user and
-/// opens the store page if they choose to update.
+/// Uses [InAppUpdate.checkForUpdate] to detect updates, then directs the
+/// user to the Play Store via [url_launcher]. Does NOT download or install
+/// anything within the app.
 class AppUpdateService {
   AppUpdateService._();
+
+  static const _playStoreUrl =
+      'market://details?id=com.nextalarm.next_alarm';
+  static const _playStoreWebUrl =
+      'https://play.google.com/store/apps/details?id=com.nextalarm.next_alarm';
+
+  /// Ensures the check runs at most once per app session.
+  static bool _hasChecked = false;
 
   /// Check whether a newer version is available on Google Play.
   /// If so, show a SnackBar that links to the Play Store.
   ///
-  /// Only runs on Android. Silently returns on Web / iOS / desktop.
+  /// Only runs on Android, and only once per app session.
+  /// Silently returns on Web / iOS / desktop.
   static Future<void> checkForUpdate(BuildContext context) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    if (_hasChecked) return;
+    _hasChecked = true;
 
     try {
       final updateInfo = await InAppUpdate.checkForUpdate();
@@ -47,15 +60,37 @@ class AppUpdateService {
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: actionLabel,
-          onPressed: () {
-            // Opens the Play Store listing via the in_app_update plugin.
-            // This is an immediate update intent that brings up the store.
-            InAppUpdate.performImmediateUpdate().catchError((_) {
-              // User cancelled or error — ignore.
-            });
-          },
+          onPressed: () => _openPlayStore(),
         ),
       ),
     );
+  }
+
+  /// Open the Play Store listing for this app.
+  /// Falls back to the web URL if the market:// scheme is unavailable.
+  static Future<void> _openPlayStore() async {
+    final marketUri = Uri.parse(_playStoreUrl);
+    try {
+      final launched = await launchUrl(
+        marketUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await launchUrl(
+          Uri.parse(_playStoreWebUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (_) {
+      // Last resort — try the web URL
+      try {
+        await launchUrl(
+          Uri.parse(_playStoreWebUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      } catch (e) {
+        debugPrint('Could not open Play Store: $e');
+      }
+    }
   }
 }
