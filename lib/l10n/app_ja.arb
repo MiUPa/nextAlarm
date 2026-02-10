@@ -61,6 +61,7 @@
 	"speechNotAvailable": "音声認識が利用できません",
 
 	"walkToStop": "歩いてアラームを停止",
+	"stepSensorNotAvailable": "この端末では歩数センサーが利用できません",
 	"stepsCount": "{current} / {required} 歩",
 
 	"challengeNotImplemented": "このチャレンジはまだ実装されていません",
@@ -94,5 +95,11 @@
 
 	"deleteAlarm": "アラームを削除",
 	"deleteAlarmConfirmation": "このアラームを削除してもよろしいですか？",
-	"delete": "削除"
+	"delete": "削除",
+
+	"reviewPromptTitle": "NextAlarmはいかがですか？",
+	"reviewPromptMessage": "アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！",
+	"reviewPromptRate": "評価する",
+	"reviewPromptLater": "あとで",
+	"reviewPromptDismiss": "今後表示しない"
 }

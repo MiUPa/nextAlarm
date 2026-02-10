@@ -168,6 +168,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkToStop => '歩いてアラームを停止';
 
   @override
+  String get stepSensorNotAvailable => 'この端末では歩数センサーが利用できません';
+
+  @override
   String stepsCount(int current, int required) {
     return '$current / $required 歩';
   }
@@ -249,4 +252,20 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get delete => '削除';
+
+  @override
+  String get reviewPromptTitle => 'NextAlarmはいかがですか？';
+
+  @override
+  String get reviewPromptMessage =>
+      'アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！';
+
+  @override
+  String get reviewPromptRate => '評価する';
+
+  @override
+  String get reviewPromptLater => 'あとで';
+
+  @override
+  String get reviewPromptDismiss => '今後表示しない';
 }
