@@ -560,17 +560,17 @@ abstract class AppLocalizations {
   /// **'Enjoying NextAlarm?'**
   String get reviewPromptTitle;
 
-  /// No description provided for @reviewPromptMessage.
+  /// No description provided for @reviewPromptLoveIt.
   ///
   /// In en, this message translates to:
-  /// **'If you like this app, please take a moment to rate it. Your feedback helps us improve!'**
-  String get reviewPromptMessage;
+  /// **'Love it!'**
+  String get reviewPromptLoveIt;
 
-  /// No description provided for @reviewPromptRate.
+  /// No description provided for @reviewPromptCouldBeBetter.
   ///
   /// In en, this message translates to:
-  /// **'Rate Now'**
-  String get reviewPromptRate;
+  /// **'Could be better'**
+  String get reviewPromptCouldBeBetter;
 
   /// No description provided for @reviewPromptLater.
   ///
@@ -583,6 +583,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Don\'t show again'**
   String get reviewPromptDismiss;
+
+  /// No description provided for @reviewFeedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us how to improve'**
+  String get reviewFeedbackTitle;
+
+  /// No description provided for @reviewFeedbackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What can we do better?'**
+  String get reviewFeedbackHint;
+
+  /// No description provided for @reviewFeedbackSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get reviewFeedbackSubmit;
+
+  /// No description provided for @reviewFeedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your feedback!'**
+  String get reviewFeedbackThanks;
 }
 
 class _AppLocalizationsDelegate

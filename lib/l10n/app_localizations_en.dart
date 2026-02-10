@@ -273,15 +273,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewPromptTitle => 'Enjoying NextAlarm?';
 
   @override
-  String get reviewPromptMessage =>
-      'If you like this app, please take a moment to rate it. Your feedback helps us improve!';
+  String get reviewPromptLoveIt => 'Love it!';
 
   @override
-  String get reviewPromptRate => 'Rate Now';
+  String get reviewPromptCouldBeBetter => 'Could be better';
 
   @override
   String get reviewPromptLater => 'Later';
 
   @override
   String get reviewPromptDismiss => "Don't show again";
+
+  @override
+  String get reviewFeedbackTitle => 'Tell us how to improve';
+
+  @override
+  String get reviewFeedbackHint => 'What can we do better?';
+
+  @override
+  String get reviewFeedbackSubmit => 'Submit';
+
+  @override
+  String get reviewFeedbackThanks => 'Thank you for your feedback!';
 }

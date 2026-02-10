@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
@@ -7,15 +9,13 @@ class ReviewPromptService {
   static const String _keyNextPromptDate = 'review_next_prompt_date';
   static const String _keyDismissedUntil = 'review_dismissed_until';
   static const String _keyRated = 'review_rated';
-  static const String _keyLaterCount = 'review_later_count';
+  static const String _keyFeedbackList = 'review_feedback_list';
 
   static const int _initialDelayDays = 3;
+  static const int _laterIntervalDays = 14;
   static const int _dismissedIntervalDays = 90;
 
-  /// Progressive intervals for "Later": 7 → 14 → 30 → 60 days
-  static const List<int> _laterIntervals = [7, 14, 30, 60];
-
-  /// Check if review prompt should be shown and return true if so.
+  /// Check if review prompt should be shown.
   static Future<bool> shouldShowPrompt() async {
     if (kIsWeb) return false;
 
@@ -36,7 +36,7 @@ class ReviewPromptService {
       return false;
     }
 
-    // Check if dismissed (user selected "don't show again")
+    // Check if dismissed
     final dismissedUntilStr = prefs.getString(_keyDismissedUntil);
     if (dismissedUntilStr != null) {
       final dismissedUntil = DateTime.parse(dismissedUntilStr);
@@ -58,17 +58,11 @@ class ReviewPromptService {
     return now.isAfter(nextPromptDate);
   }
 
-  /// User chose "Later" - progressive interval (7 → 14 → 30 → 60 days).
+  /// User chose "Later" - next prompt in 14 days.
   static Future<void> remindLater() async {
     final prefs = await SharedPreferences.getInstance();
-    final laterCount = prefs.getInt(_keyLaterCount) ?? 0;
-
-    final intervalIndex = laterCount.clamp(0, _laterIntervals.length - 1);
-    final days = _laterIntervals[intervalIndex];
-
-    final nextPrompt = DateTime.now().add(Duration(days: days));
+    final nextPrompt = DateTime.now().add(const Duration(days: _laterIntervalDays));
     await prefs.setString(_keyNextPromptDate, nextPrompt.toIso8601String());
-    await prefs.setInt(_keyLaterCount, laterCount + 1);
   }
 
   /// User chose "Don't show again" - suppress for 90 days.
@@ -78,7 +72,7 @@ class ReviewPromptService {
     await prefs.setString(_keyDismissedUntil, dismissedUntil.toIso8601String());
   }
 
-  /// User chose "Rate now" - open store listing and never show again.
+  /// User is satisfied - trigger in-app review and permanently hide.
   static Future<void> rateNow() async {
     final inAppReview = InAppReview.instance;
 
@@ -86,12 +80,37 @@ class ReviewPromptService {
       await inAppReview.requestReview();
     } else {
       await inAppReview.openStoreListing(
-        appStoreId: '', // iOS App Store ID (not needed for Android)
+        appStoreId: '',
       );
     }
 
-    // Mark as rated - never show again
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyRated, true);
+  }
+
+  /// User is not satisfied - save feedback locally and suppress for 90 days.
+  static Future<void> submitFeedback(String feedback) async {
+    if (feedback.trim().isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load existing feedback list
+    final existingJson = prefs.getStringList(_keyFeedbackList) ?? [];
+    final entry = jsonEncode({
+      'text': feedback.trim(),
+      'date': DateTime.now().toIso8601String(),
+    });
+    existingJson.add(entry);
+    await prefs.setStringList(_keyFeedbackList, existingJson);
+
+    // Suppress for 90 days after feedback
+    await dismiss();
+  }
+
+  /// Get all stored feedback (for future use, e.g. settings screen export).
+  static Future<List<Map<String, dynamic>>> getFeedbackList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_keyFeedbackList) ?? [];
+    return list.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
   }
 }
