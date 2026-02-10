@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 			_requestNotificationPermission();
 		}
 
-		// Check for app updates on Android (flexible update)
+		// Check for app updates on Android
 		_checkForAppUpdate();
 	}
 
