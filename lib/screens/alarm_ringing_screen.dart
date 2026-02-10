@@ -297,23 +297,31 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 			if (status.isDenied) {
 				final result = await Permission.activityRecognition.request();
 				if (!result.isGranted) {
-					setState(() {
-						_stepError = 'permission_denied';
-					});
+					if (mounted) {
+						setState(() {
+							_stepError = 'permission_denied';
+						});
+					}
 					return;
 				}
 			} else if (status.isPermanentlyDenied) {
-				setState(() {
-					_stepError = 'permission_denied';
-				});
+				if (mounted) {
+					setState(() {
+						_stepError = 'permission_denied';
+					});
+				}
 				return;
 			}
 		}
 
+		if (!mounted) return;
+
 		_stepSubscription = Pedometer.stepCountStream.listen(
 			(event) {
+				if (!mounted) return;
 				if (!_initialStepsSet) {
-					_initialSteps = event.steps;
+					// Subtract 1 so the step that triggered this first event counts
+					_initialSteps = event.steps - 1;
 					_initialStepsSet = true;
 				}
 				setState(() {
@@ -321,10 +329,12 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 				});
 
 				if (_currentSteps >= _requiredSteps) {
+					_stepSubscription?.cancel();
 					_stopAlarm();
 				}
 			},
 			onError: (error) {
+				if (!mounted) return;
 				setState(() {
 					_stepError = error.toString();
 				});
