@@ -82,13 +82,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 						),
 					],
 				),
+				content: Text(
+					l10n.reviewPromptMessage,
+					style: const TextStyle(
+						color: AppTheme.onSurfaceSecondary,
+						fontSize: 15,
+						height: 1.4,
+					),
+				),
 				actionsAlignment: MainAxisAlignment.center,
 				actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
 				actions: [
 					Column(
 						crossAxisAlignment: CrossAxisAlignment.stretch,
 						children: [
-							// Love it! → triggers in-app review
+							// Rate Now → triggers in-app review
 							ElevatedButton(
 								onPressed: () {
 									Navigator.of(context).pop();
@@ -103,35 +111,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 									),
 								),
 								child: Text(
-									l10n.reviewPromptLoveIt,
+									l10n.reviewPromptRate,
 									style: const TextStyle(
 										fontSize: 16,
 										fontWeight: FontWeight.w600,
-									),
-								),
-							),
-							const SizedBox(height: 8),
-							// Could be better → opens feedback form
-							OutlinedButton(
-								onPressed: () {
-									Navigator.of(context).pop();
-									_showFeedbackDialog();
-								},
-								style: OutlinedButton.styleFrom(
-									foregroundColor: AppTheme.onSurface,
-									side: BorderSide(
-										color: AppTheme.onSurfaceSecondary.withOpacity(0.3),
-									),
-									padding: const EdgeInsets.symmetric(vertical: 14),
-									shape: RoundedRectangleBorder(
-										borderRadius: BorderRadius.circular(12),
-									),
-								),
-								child: Text(
-									l10n.reviewPromptCouldBeBetter,
-									style: const TextStyle(
-										fontSize: 16,
-										fontWeight: FontWeight.w500,
 									),
 								),
 							),
@@ -163,109 +146,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 										color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
 										fontSize: 13,
 										fontWeight: FontWeight.w400,
-									),
-								),
-							),
-						],
-					),
-				],
-			),
-		);
-	}
-
-	void _showFeedbackDialog() {
-		final l10n = AppLocalizations.of(context)!;
-		final feedbackController = TextEditingController();
-
-		showDialog(
-			context: context,
-			builder: (context) => AlertDialog(
-				backgroundColor: AppTheme.surface,
-				shape: RoundedRectangleBorder(
-					borderRadius: BorderRadius.circular(20),
-				),
-				title: Text(
-					l10n.reviewFeedbackTitle,
-					style: const TextStyle(
-						color: AppTheme.onSurface,
-						fontSize: 20,
-						fontWeight: FontWeight.w600,
-					),
-				),
-				content: TextField(
-					controller: feedbackController,
-					maxLines: 4,
-					autofocus: true,
-					style: const TextStyle(
-						color: AppTheme.onSurface,
-						fontSize: 15,
-					),
-					decoration: InputDecoration(
-						hintText: l10n.reviewFeedbackHint,
-						hintStyle: TextStyle(
-							color: AppTheme.onSurfaceSecondary.withOpacity(0.5),
-						),
-						filled: true,
-						fillColor: AppTheme.surfaceVariant,
-						border: OutlineInputBorder(
-							borderRadius: BorderRadius.circular(12),
-							borderSide: BorderSide.none,
-						),
-					),
-				),
-				actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-				actions: [
-					Row(
-						children: [
-							Expanded(
-								child: TextButton(
-									onPressed: () {
-										Navigator.of(context).pop();
-										ReviewPromptService.dismiss();
-									},
-									child: Text(
-										l10n.cancel,
-										style: const TextStyle(
-											color: AppTheme.onSurfaceSecondary,
-											fontSize: 15,
-										),
-									),
-								),
-							),
-							const SizedBox(width: 12),
-							Expanded(
-								child: ElevatedButton(
-									onPressed: () async {
-										final feedback = feedbackController.text;
-										Navigator.of(context).pop();
-										await ReviewPromptService.submitFeedback(feedback);
-										if (mounted) {
-											ScaffoldMessenger.of(this.context).showSnackBar(
-												SnackBar(
-													content: Text(l10n.reviewFeedbackThanks),
-													backgroundColor: AppTheme.success,
-													behavior: SnackBarBehavior.floating,
-													shape: RoundedRectangleBorder(
-														borderRadius: BorderRadius.circular(12),
-													),
-												),
-											);
-										}
-									},
-									style: ElevatedButton.styleFrom(
-										backgroundColor: AppTheme.primary,
-										foregroundColor: Colors.white,
-										padding: const EdgeInsets.symmetric(vertical: 14),
-										shape: RoundedRectangleBorder(
-											borderRadius: BorderRadius.circular(12),
-										),
-									),
-									child: Text(
-										l10n.reviewFeedbackSubmit,
-										style: const TextStyle(
-											fontSize: 16,
-											fontWeight: FontWeight.w600,
-										),
 									),
 								),
 							),

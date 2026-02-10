@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
@@ -9,7 +7,6 @@ class ReviewPromptService {
   static const String _keyNextPromptDate = 'review_next_prompt_date';
   static const String _keyDismissedUntil = 'review_dismissed_until';
   static const String _keyRated = 'review_rated';
-  static const String _keyFeedbackList = 'review_feedback_list';
 
   static const int _initialDelayDays = 3;
   static const int _laterIntervalDays = 14;
@@ -72,7 +69,7 @@ class ReviewPromptService {
     await prefs.setString(_keyDismissedUntil, dismissedUntil.toIso8601String());
   }
 
-  /// User is satisfied - trigger in-app review and permanently hide.
+  /// User chose "Rate Now" - trigger in-app review and permanently hide.
   static Future<void> rateNow() async {
     final inAppReview = InAppReview.instance;
 
@@ -86,31 +83,5 @@ class ReviewPromptService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyRated, true);
-  }
-
-  /// User is not satisfied - save feedback locally and suppress for 90 days.
-  static Future<void> submitFeedback(String feedback) async {
-    if (feedback.trim().isEmpty) return;
-
-    final prefs = await SharedPreferences.getInstance();
-
-    // Load existing feedback list
-    final existingJson = prefs.getStringList(_keyFeedbackList) ?? [];
-    final entry = jsonEncode({
-      'text': feedback.trim(),
-      'date': DateTime.now().toIso8601String(),
-    });
-    existingJson.add(entry);
-    await prefs.setStringList(_keyFeedbackList, existingJson);
-
-    // Suppress for 90 days after feedback
-    await dismiss();
-  }
-
-  /// Get all stored feedback (for future use, e.g. settings screen export).
-  static Future<List<Map<String, dynamic>>> getFeedbackList() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_keyFeedbackList) ?? [];
-    return list.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
   }
 }

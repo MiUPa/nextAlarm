@@ -254,26 +254,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reviewPromptTitle => 'NextAlarmはいかがですか？';
 
   @override
-  String get reviewPromptLoveIt => '気に入っています！';
+  String get reviewPromptMessage =>
+      'アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！';
 
   @override
-  String get reviewPromptCouldBeBetter => '改善してほしい';
+  String get reviewPromptRate => '評価する';
 
   @override
   String get reviewPromptLater => 'あとで';
 
   @override
   String get reviewPromptDismiss => '今後表示しない';
-
-  @override
-  String get reviewFeedbackTitle => 'ご意見をお聞かせください';
-
-  @override
-  String get reviewFeedbackHint => 'どのように改善できますか？';
-
-  @override
-  String get reviewFeedbackSubmit => '送信';
-
-  @override
-  String get reviewFeedbackThanks => 'フィードバックありがとうございます！';
 }
