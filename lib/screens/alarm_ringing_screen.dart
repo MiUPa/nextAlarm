@@ -589,7 +589,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 					color: Colors.white.withOpacity(0.8),
 				),
 				const SizedBox(height: 40),
-				if (_stepError != null)
+				if (_stepError != null) ...[
 					Padding(
 						padding: const EdgeInsets.only(bottom: 20),
 						child: Text(
@@ -601,33 +601,51 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 							textAlign: TextAlign.center,
 						),
 					),
-				Text(
-					l10n.stepsCount(_currentSteps, _requiredSteps),
-					style: const TextStyle(
-						fontSize: 48,
-						fontWeight: FontWeight.w300,
-						color: Colors.white,
+					const SizedBox(height: 20),
+					ElevatedButton(
+						onPressed: _stopAlarm,
+						style: ElevatedButton.styleFrom(
+							backgroundColor: AppTheme.error,
+							foregroundColor: Colors.white,
+							padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
+							shape: RoundedRectangleBorder(
+								borderRadius: BorderRadius.circular(30),
+							),
+						),
+						child: Text(
+							l10n.stopAlarm,
+							style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+						),
 					),
-				),
-				const SizedBox(height: 20),
-				Container(
-					width: 200,
-					height: 10,
-					decoration: BoxDecoration(
-						borderRadius: BorderRadius.circular(5),
-						color: Colors.white.withOpacity(0.2),
+				] else ...[
+					Text(
+						l10n.stepsCount(_currentSteps, _requiredSteps),
+						style: const TextStyle(
+							fontSize: 48,
+							fontWeight: FontWeight.w300,
+							color: Colors.white,
+						),
 					),
-					child: FractionallySizedBox(
-						alignment: Alignment.centerLeft,
-						widthFactor: progress.clamp(0.0, 1.0),
-						child: Container(
-							decoration: BoxDecoration(
-								borderRadius: BorderRadius.circular(5),
-								color: AppTheme.primary,
+					const SizedBox(height: 20),
+					Container(
+						width: 200,
+						height: 10,
+						decoration: BoxDecoration(
+							borderRadius: BorderRadius.circular(5),
+							color: Colors.white.withOpacity(0.2),
+						),
+						child: FractionallySizedBox(
+							alignment: Alignment.centerLeft,
+							widthFactor: progress.clamp(0.0, 1.0),
+							child: Container(
+								decoration: BoxDecoration(
+									borderRadius: BorderRadius.circular(5),
+									color: AppTheme.primary,
+								),
 							),
 						),
 					),
-				),
+				],
 			],
 		);
 	}
