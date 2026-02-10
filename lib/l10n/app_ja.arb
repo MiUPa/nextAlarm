@@ -95,5 +95,11 @@
 
 	"deleteAlarm": "アラームを削除",
 	"deleteAlarmConfirmation": "このアラームを削除してもよろしいですか？",
-	"delete": "削除"
+	"delete": "削除",
+
+	"reviewPromptTitle": "NextAlarmはいかがですか？",
+	"reviewPromptMessage": "アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！",
+	"reviewPromptRate": "評価する",
+	"reviewPromptLater": "あとで",
+	"reviewPromptDismiss": "今後表示しない"
 }

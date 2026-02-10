@@ -168,6 +168,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkToStop => '歩いてアラームを停止';
 
   @override
+  String get stepSensorNotAvailable => 'この端末では歩数センサーが利用できません';
+
+  @override
   String stepsCount(int current, int required) {
     return '$current / $required 歩';
   }

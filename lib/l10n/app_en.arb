@@ -159,5 +159,11 @@
 
 	"deleteAlarm": "Delete Alarm",
 	"deleteAlarmConfirmation": "Are you sure you want to delete this alarm?",
-	"delete": "Delete"
+	"delete": "Delete",
+
+	"reviewPromptTitle": "Enjoying NextAlarm?",
+	"reviewPromptMessage": "If you like this app, please take a moment to rate it. Your feedback helps us improve!",
+	"reviewPromptRate": "Rate Now",
+	"reviewPromptLater": "Later",
+	"reviewPromptDismiss": "Don't show again"
 }

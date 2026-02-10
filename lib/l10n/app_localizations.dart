@@ -392,6 +392,12 @@ abstract class AppLocalizations {
   /// **'Walk to stop the alarm'**
   String get walkToStop;
 
+  /// No description provided for @stepSensorNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Step sensor not available on this device'**
+  String get stepSensorNotAvailable;
+
   /// No description provided for @stepsCount.
   ///
   /// In en, this message translates to:

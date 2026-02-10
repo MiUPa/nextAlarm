@@ -186,6 +186,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkToStop => 'Walk to stop the alarm';
 
   @override
+  String get stepSensorNotAvailable =>
+      'Step sensor not available on this device';
+
+  @override
   String stepsCount(int current, int required) {
     return '$current / $required steps';
   }
@@ -283,5 +287,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewPromptLater => 'Later';
 
   @override
-  String get reviewPromptDismiss => "Don't show again";
+  String get reviewPromptDismiss => 'Don\'t show again';
 }
