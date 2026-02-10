@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AlarmRingingScreen extends StatefulWidget {
 	final Alarm alarm;
@@ -45,8 +47,10 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 	// Step challenge
 	StreamSubscription<StepCount>? _stepSubscription;
 	int _initialSteps = 0;
+	bool _initialStepsSet = false;
 	int _currentSteps = 0;
 	int _requiredSteps = 0;
+	String? _stepError;
 
 	@override
 	void initState() {
@@ -283,22 +287,59 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 	}
 
 	// === Step Challenge ===
-	void _initStepChallenge() {
+	Future<void> _initStepChallenge() async {
 		final difficulty = widget.alarm.challengeDifficulty;
 		_requiredSteps = 5 + (difficulty * 10); // 15/25/35 steps based on difficulty
 
-		_stepSubscription = Pedometer.stepCountStream.listen((event) {
-			if (_initialSteps == 0) {
-				_initialSteps = event.steps;
+		// Request activity recognition permission on Android 10+
+		if (!kIsWeb) {
+			final status = await Permission.activityRecognition.status;
+			if (status.isDenied) {
+				final result = await Permission.activityRecognition.request();
+				if (!result.isGranted) {
+					if (mounted) {
+						setState(() {
+							_stepError = 'permission_denied';
+						});
+					}
+					return;
+				}
+			} else if (status.isPermanentlyDenied) {
+				if (mounted) {
+					setState(() {
+						_stepError = 'permission_denied';
+					});
+				}
+				return;
 			}
-			setState(() {
-				_currentSteps = event.steps - _initialSteps;
-			});
+		}
 
-			if (_currentSteps >= _requiredSteps) {
-				_stopAlarm();
-			}
-		});
+		if (!mounted) return;
+
+		_stepSubscription = Pedometer.stepCountStream.listen(
+			(event) {
+				if (!mounted) return;
+				if (!_initialStepsSet) {
+					// Subtract 1 so the step that triggered this first event counts
+					_initialSteps = event.steps - 1;
+					_initialStepsSet = true;
+				}
+				setState(() {
+					_currentSteps = event.steps - _initialSteps;
+				});
+
+				if (_currentSteps >= _requiredSteps) {
+					_stepSubscription?.cancel();
+					_stopAlarm();
+				}
+			},
+			onError: (error) {
+				if (!mounted) return;
+				setState(() {
+					_stepError = error.toString();
+				});
+			},
+		);
 	}
 
 	Widget _buildChallengeContent() {
@@ -527,7 +568,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 
 	Widget _buildStepChallenge() {
 		final l10n = AppLocalizations.of(context)!;
-		final progress = _currentSteps / _requiredSteps;
+		final progress = _requiredSteps > 0
+			? _currentSteps / _requiredSteps
+			: 0.0;
 		return Column(
 			mainAxisSize: MainAxisSize.min,
 			children: [
@@ -546,33 +589,63 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 					color: Colors.white.withOpacity(0.8),
 				),
 				const SizedBox(height: 40),
-				Text(
-					l10n.stepsCount(_currentSteps, _requiredSteps),
-					style: const TextStyle(
-						fontSize: 48,
-						fontWeight: FontWeight.w300,
-						color: Colors.white,
+				if (_stepError != null) ...[
+					Padding(
+						padding: const EdgeInsets.only(bottom: 20),
+						child: Text(
+							l10n.stepSensorNotAvailable,
+							style: const TextStyle(
+								fontSize: 16,
+								color: Colors.redAccent,
+							),
+							textAlign: TextAlign.center,
+						),
 					),
-				),
-				const SizedBox(height: 20),
-				Container(
-					width: 200,
-					height: 10,
-					decoration: BoxDecoration(
-						borderRadius: BorderRadius.circular(5),
-						color: Colors.white.withOpacity(0.2),
+					const SizedBox(height: 20),
+					ElevatedButton(
+						onPressed: _stopAlarm,
+						style: ElevatedButton.styleFrom(
+							backgroundColor: AppTheme.error,
+							foregroundColor: Colors.white,
+							padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
+							shape: RoundedRectangleBorder(
+								borderRadius: BorderRadius.circular(30),
+							),
+						),
+						child: Text(
+							l10n.stopAlarm,
+							style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+						),
 					),
-					child: FractionallySizedBox(
-						alignment: Alignment.centerLeft,
-						widthFactor: progress.clamp(0.0, 1.0),
-						child: Container(
-							decoration: BoxDecoration(
-								borderRadius: BorderRadius.circular(5),
-								color: AppTheme.primary,
+				] else ...[
+					Text(
+						l10n.stepsCount(_currentSteps, _requiredSteps),
+						style: const TextStyle(
+							fontSize: 48,
+							fontWeight: FontWeight.w300,
+							color: Colors.white,
+						),
+					),
+					const SizedBox(height: 20),
+					Container(
+						width: 200,
+						height: 10,
+						decoration: BoxDecoration(
+							borderRadius: BorderRadius.circular(5),
+							color: Colors.white.withOpacity(0.2),
+						),
+						child: FractionallySizedBox(
+							alignment: Alignment.centerLeft,
+							widthFactor: progress.clamp(0.0, 1.0),
+							child: Container(
+								decoration: BoxDecoration(
+									borderRadius: BorderRadius.circular(5),
+									color: AppTheme.primary,
+								),
 							),
 						),
 					),
-				),
+				],
 			],
 		);
 	}

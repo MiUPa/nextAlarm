@@ -61,6 +61,7 @@
 	"speechNotAvailable": "音声認識が利用できません",
 
 	"walkToStop": "歩いてアラームを停止",
+	"stepSensorNotAvailable": "この端末では歩数センサーが利用できません",
 	"stepsCount": "{current} / {required} 歩",
 
 	"challengeNotImplemented": "このチャレンジはまだ実装されていません",
