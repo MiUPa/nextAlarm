@@ -115,6 +115,7 @@
 	"speechNotAvailable": "Speech recognition not available",
 
 	"walkToStop": "Walk to stop the alarm",
+	"stepSensorNotAvailable": "Step sensor not available on this device",
 	"stepsCount": "{current} / {required} steps",
 	"@stepsCount": {
 		"placeholders": {
