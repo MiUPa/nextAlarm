@@ -2,14 +2,14 @@
 
 ## 結論
 
-- Google広告では、Play Storeのアプリを **Appキャンペーン** で配信できます。citeturn1search5
+- Google広告では、Play Storeのアプリを **Appキャンペーン** で配信できます。
 - ただし現状は有料（110円）なので、広告でインストールを買うと **ほぼ確実に赤字** になります（CPIが110円を下回るのは相当難しい）。まずは「無料で母数を作る」設計に寄せるのが現実的です。
 
 ## まずやること（アカウント作業）
 
 1. Google Adsで「アプリを宣伝（App campaign）」を作る（目標は最初は「インストール」）。
-2. 計測を入れる（任意だが強く推奨）: GA4 / Firebase を連携して、インストール後の行動（例: アラーム作成、起床チャレンジ完了）をコンバージョンとして最適化できるようにする。citeturn1search0
-3. クリエイティブを複数入れる（後述の文言をコピペ）。テキスト資産は見出し30文字、長い見出し90文字、説明文60/90文字の枠がある。citeturn1search3
+2. 計測を入れる（任意だが強く推奨）: GA4 / Firebase を連携して、インストール後の行動（例: アラーム作成、起床チャレンジ完了）をコンバージョンとして最適化できるようにする。
+3. クリエイティブを複数入れる（後述の文言をコピペ）。
 
 ## 予算と運用（最小）
 
@@ -19,7 +19,7 @@
 
 ## Play Store側（広告と連動）
 
-- Google Adsの広告グループごとに、Play Consoleの **カスタムストアリスティング** を作って、広告の訴求とスクショ/説明文を一致させるのが効きます。citeturn1search2
+- Google Adsの広告グループごとに、Play Consoleの **カスタムストアリスティング** を作って、広告の訴求とスクショ/説明文を一致させるのが効きます。
 
 ---
 
@@ -102,3 +102,13 @@
 3. Unlimited alarms and repeat schedules.
 4. Japanese and English supported.
 
+---
+
+## 参考（公式ヘルプ）
+
+- Play Console Help: Set up your app's prices
+  - 有料→無料は可能だが、無料にした後に有料へ戻すことはできない
+- Play Console Help: Create promotions
+  - 有料アプリを無料で配れるプロモコード（上限あり）
+- Play Console Help: Create sales for paid apps
+  - 一時的な $0 セール（無料化とは別扱い）
