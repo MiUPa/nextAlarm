@@ -1,0 +1,4 @@
+interface:
+  display_name: "NextAlarm Play Release"
+  short_description: "Build and upload Android Play releases safely"
+  default_prompt: "Use $nextalarm-playstore-release to run preflight checks, build the AAB, and prepare Play release metadata."
