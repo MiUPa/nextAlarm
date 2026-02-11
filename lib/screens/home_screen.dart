@@ -197,8 +197,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 							title: Text(
 								l10n.alarms,
 								style: const TextStyle(
-									fontSize: 34,
-									fontWeight: FontWeight.w700,
+									fontSize: 13,
+									fontWeight: FontWeight.w400,
 									color: AppTheme.onSurface,
 								),
 							),
@@ -275,19 +275,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 			),
 
 			// Floating Action Button with scale animation
-			floatingActionButton: ScaleTransition(
-				scale: CurvedAnimation(
-					parent: _fabController,
-					curve: Curves.elasticOut,
+				floatingActionButton: ScaleTransition(
+					scale: CurvedAnimation(
+						parent: _fabController,
+						curve: Curves.elasticOut,
+					),
+					child: FloatingActionButton(
+						onPressed: () => _addAlarm(context),
+						elevation: 8,
+						child: const Icon(Icons.add, size: 24),
+					),
 				),
-				child: FloatingActionButton.large(
-					onPressed: () => _addAlarm(context),
-					elevation: 8,
-					child: const Icon(Icons.add, size: 32),
-				),
-			),
-		);
-	}
+			);
+		}
 
 	void _openSettings(BuildContext context) {
 		Navigator.of(context).push(

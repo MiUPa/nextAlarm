@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Google Play publishing credentials (do not commit)
+/android/play-service-account.json
+/android/play-service-account*.json
