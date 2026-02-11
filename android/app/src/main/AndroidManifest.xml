@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="Next Alarm (Alarm Clock)"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

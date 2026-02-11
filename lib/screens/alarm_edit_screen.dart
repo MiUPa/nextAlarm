@@ -49,10 +49,18 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	@override
 	Widget build(BuildContext context) {
 		final l10n = AppLocalizations.of(context)!;
+		const isCompactLayout = true;
+		const sectionTopPadding = 14.0;
+		const sectionBottomPadding = 8.0;
+		const timePickerHeight = 140.0;
+		const timePickerVerticalPadding = 20.0;
+		const timeFontSize = 64.0;
+		const contentBottomSpacing = 12.0;
 
 		return Scaffold(
 			backgroundColor: AppTheme.background,
 			appBar: AppBar(
+				centerTitle: true,
 				leading: IconButton(
 					icon: const Icon(Icons.close),
 					onPressed: () {
@@ -60,7 +68,14 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						Navigator.pop(context);
 					},
 				),
-				title: Text(widget.alarm == null ? l10n.addAlarm : l10n.editAlarm),
+				title: widget.alarm != null
+					? IconButton(
+						onPressed: _deleteAlarm,
+						icon: const Icon(Icons.delete_outline),
+						color: AppTheme.danger,
+						tooltip: l10n.deleteAlarm,
+					)
+					: null,
 				actions: [
 					TextButton(
 						onPressed: _saveAlarm,
@@ -68,20 +83,21 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 					),
 				],
 			),
-			body: SingleChildScrollView(
+			body: SafeArea(
+				top: false,
 				child: Column(
 					children: [
 						// Time Picker - Android style
 						GestureDetector(
 							onTap: () => _showTimePicker(context),
 							child: Container(
-								height: 180,
-								padding: const EdgeInsets.symmetric(vertical: 30),
+								height: timePickerHeight,
+								padding: const EdgeInsets.symmetric(vertical: timePickerVerticalPadding),
 								child: Center(
 									child: Text(
 										'${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
 										style: const TextStyle(
-											fontSize: 72,
+											fontSize: timeFontSize,
 											fontWeight: FontWeight.w300,
 											color: AppTheme.onSurface,
 											letterSpacing: 2,
@@ -91,11 +107,11 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							),
 						),
 
-						const SizedBox(height: 8),
+						const SizedBox(height: 6),
 
 						// Label
 						Padding(
-							padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+							padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
 							child: Row(
 								children: [
 									Text(
@@ -133,16 +149,20 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							l10n.repeat,
 							_RepeatDaysSelector(
 								selectedDays: _repeatDays,
+								compact: isCompactLayout,
 								onChanged: (days) {
 									setState(() => _repeatDays = days);
 									Vibration.vibrate(duration: 10);
 								},
 							),
+							topPadding: sectionTopPadding,
+							bottomPadding: sectionBottomPadding,
 						),
 
 						// Alarm sound
 						ListTile(
-							contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+							contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+							visualDensity: const VisualDensity(vertical: -2),
 							title: Text(
 								l10n.alarmSound,
 								style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -175,6 +195,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						// Vibration toggle
 						SwitchListTile(
 							contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+							dense: true,
+							visualDensity: const VisualDensity(vertical: -2),
 							title: Text(
 								l10n.vibration,
 								style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -196,6 +218,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						// Gradual volume
 						SwitchListTile(
 							contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+							dense: true,
+							visualDensity: const VisualDensity(vertical: -2),
 							title: Text(
 								l10n.gradualVolume,
 								style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -223,11 +247,14 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							l10n.wakeUpChallenge,
 							_ChallengeSelector(
 								selected: _challenge,
+								compact: isCompactLayout,
 								onChanged: (challenge) {
 									setState(() => _challenge = challenge);
 									Vibration.vibrate(duration: 10);
 								},
 							),
+							topPadding: sectionTopPadding,
+							bottomPadding: sectionBottomPadding,
 						),
 
 						// Challenge difficulty
@@ -236,25 +263,33 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 								l10n.difficulty,
 								_DifficultySelector(
 									difficulty: _challengeDifficulty,
+									compact: isCompactLayout,
 									onChanged: (value) {
 										setState(() => _challengeDifficulty = value);
 									},
 								),
+								topPadding: sectionTopPadding,
+								bottomPadding: sectionBottomPadding,
 							),
 
-						const SizedBox(height: 40),
+						const SizedBox(height: contentBottomSpacing),
 					],
 				),
 			),
 		);
 	}
 
-	Widget _buildSection(String title, Widget child) {
+	Widget _buildSection(
+		String title,
+		Widget child, {
+		double topPadding = 24,
+		double bottomPadding = 12,
+	}) {
 		return Column(
 			crossAxisAlignment: CrossAxisAlignment.start,
 			children: [
 				Padding(
-					padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+					padding: EdgeInsets.fromLTRB(20, topPadding, 20, bottomPadding),
 					child: Text(
 						title,
 						style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -366,6 +401,45 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		}
 	}
 
+	Future<void> _deleteAlarm() async {
+		Vibration.vibrate(duration: 10);
+		final l10n = AppLocalizations.of(context)!;
+
+		final confirmed = await showDialog<bool>(
+			context: context,
+			builder: (context) => AlertDialog(
+				backgroundColor: AppTheme.surface,
+				title: Text(
+					l10n.deleteAlarm,
+					style: const TextStyle(color: AppTheme.onSurface),
+				),
+				content: Text(
+					l10n.deleteAlarmConfirmation,
+					style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+				),
+				actions: [
+					TextButton(
+						onPressed: () => Navigator.of(context).pop(false),
+						child: Text(l10n.cancel),
+					),
+					TextButton(
+						onPressed: () => Navigator.of(context).pop(true),
+						style: TextButton.styleFrom(
+							foregroundColor: AppTheme.danger,
+						),
+						child: Text(l10n.delete),
+					),
+				],
+			),
+		);
+
+		if (confirmed == true && mounted) {
+			Vibration.vibrate(duration: 20, amplitude: 128);
+			context.read<AlarmService>().deleteAlarm(widget.alarm!.id);
+			Navigator.pop(context);
+		}
+	}
+
 	void _saveAlarm() async {
 		Vibration.vibrate(duration: 15);
 
@@ -397,10 +471,12 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 
 class _RepeatDaysSelector extends StatelessWidget {
 	final Set<int> selectedDays;
+	final bool compact;
 	final ValueChanged<Set<int>> onChanged;
 
 	const _RepeatDaysSelector({
 		required this.selectedDays,
+		this.compact = false,
 		required this.onChanged,
 	});
 
@@ -416,6 +492,8 @@ class _RepeatDaysSelector extends StatelessWidget {
 			l10n.daySaturday,
 			l10n.daySunday,
 		];
+		final chipSize = compact ? 40.0 : 44.0;
+		final dayFontSize = compact ? 12.0 : 14.0;
 
 		return Padding(
 			padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -436,8 +514,8 @@ class _RepeatDaysSelector extends StatelessWidget {
 							onChanged(newDays);
 						},
 						child: Container(
-							width: 44,
-							height: 44,
+							width: chipSize,
+							height: chipSize,
 							decoration: BoxDecoration(
 								shape: BoxShape.circle,
 								color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
@@ -447,6 +525,7 @@ class _RepeatDaysSelector extends StatelessWidget {
 									days[index],
 									style: TextStyle(
 										color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
+										fontSize: dayFontSize,
 										fontWeight: FontWeight.w600,
 									),
 								),
@@ -461,10 +540,12 @@ class _RepeatDaysSelector extends StatelessWidget {
 
 class _ChallengeSelector extends StatelessWidget {
 	final models.WakeUpChallenge selected;
+	final bool compact;
 	final ValueChanged<models.WakeUpChallenge> onChanged;
 
 	const _ChallengeSelector({
 		required this.selected,
+		this.compact = false,
 		required this.onChanged,
 	});
 
@@ -478,9 +559,15 @@ class _ChallengeSelector extends StatelessWidget {
 			(models.WakeUpChallenge.shake, Icons.phone_android, l10n.challengeShake),
 			(models.WakeUpChallenge.steps, Icons.directions_walk, l10n.challengeSteps),
 		];
+		final selectorHeight = compact ? 88.0 : 100.0;
+		final itemWidth = compact ? 72.0 : 80.0;
+		final itemMargin = compact ? 3.0 : 4.0;
+		final iconSize = compact ? 28.0 : 32.0;
+		final iconLabelSpacing = compact ? 6.0 : 8.0;
+		final labelFontSize = compact ? 11.0 : 12.0;
 
 		return SizedBox(
-			height: 100,
+			height: selectorHeight,
 			child: ListView.builder(
 				scrollDirection: Axis.horizontal,
 				padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -492,8 +579,8 @@ class _ChallengeSelector extends StatelessWidget {
 					return GestureDetector(
 						onTap: () => onChanged(challenge),
 						child: Container(
-							width: 80,
-							margin: const EdgeInsets.symmetric(horizontal: 4),
+							width: itemWidth,
+							margin: EdgeInsets.symmetric(horizontal: itemMargin),
 							decoration: BoxDecoration(
 								color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
 								borderRadius: BorderRadius.circular(16),
@@ -504,14 +591,14 @@ class _ChallengeSelector extends StatelessWidget {
 									Icon(
 										icon,
 										color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
-										size: 32,
+										size: iconSize,
 									),
-									const SizedBox(height: 8),
+									SizedBox(height: iconLabelSpacing),
 									Text(
 										label,
 										style: TextStyle(
 											color: isSelected ? Colors.white : AppTheme.onSurfaceSecondary,
-											fontSize: 12,
+											fontSize: labelFontSize,
 											fontWeight: FontWeight.w600,
 										),
 									),
@@ -527,16 +614,21 @@ class _ChallengeSelector extends StatelessWidget {
 
 class _DifficultySelector extends StatelessWidget {
 	final int difficulty;
+	final bool compact;
 	final ValueChanged<int> onChanged;
 
 	const _DifficultySelector({
 		required this.difficulty,
+		this.compact = false,
 		required this.onChanged,
 	});
 
 	@override
 	Widget build(BuildContext context) {
 		final l10n = AppLocalizations.of(context)!;
+		final sliderTrackHeight = compact ? 3.0 : 4.0;
+		final valueLabelSpacing = compact ? 12.0 : 16.0;
+		final valueLabelWidth = compact ? 56.0 : 60.0;
 
 		return Padding(
 			padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -549,7 +641,7 @@ class _DifficultySelector extends StatelessWidget {
 								inactiveTrackColor: AppTheme.surfaceVariant,
 								thumbColor: AppTheme.primary,
 								overlayColor: AppTheme.primary.withOpacity(0.2),
-								trackHeight: 4,
+								trackHeight: sliderTrackHeight,
 							),
 							child: Slider(
 								value: difficulty.toDouble(),
@@ -561,9 +653,9 @@ class _DifficultySelector extends StatelessWidget {
 							),
 						),
 					),
-					const SizedBox(width: 16),
+					SizedBox(width: valueLabelSpacing),
 					SizedBox(
-						width: 60,
+						width: valueLabelWidth,
 						child: Text(
 							_getDifficultyLabel(l10n, difficulty),
 							style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -590,4 +682,3 @@ class _DifficultySelector extends StatelessWidget {
 		}
 	}
 }
-

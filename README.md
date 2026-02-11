@@ -190,6 +190,12 @@ flutter run
 # Android APK
 flutter build apk --release
 
+# Android AAB (Play Store)
+flutter build appbundle --release
+
+# Signed AAB helper (checks key.properties then builds)
+./scripts/release_android_playstore.sh
+
 # iOS (Macのみ)
 flutter build ios --release
 
