@@ -47,3 +47,4 @@ app.*.map.json
 # Google Play publishing credentials (do not commit)
 /android/play-service-account.json
 /android/play-service-account*.json
+/android/next-alarm-*.json
