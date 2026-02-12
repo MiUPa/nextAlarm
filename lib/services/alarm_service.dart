@@ -135,33 +135,49 @@ class AlarmService extends ChangeNotifier {
 
   Timer? _vibrationTimer;
 
-  // Maximally unpleasant vibration pattern combining rapid bursts,
-  // irregular rhythm, and sudden intensity changes.
+  // Maximally unpleasant ~12s vibration pattern.
+  // Combines rapid bursts, irregular rhythm, fake pauses, and sudden slams.
   // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
   static const List<int> _aggressivePattern = [
-    // Phase 1: Rapid insect-like crawling bursts
-    0, 50, 30, 50, 30, 80, 20, 50, 30, 120,
-    // Phase 2: Arrhythmic heartbeat (unsettling irregular rhythm)
+    // Phase 1: Insect-crawl opener (rapid micro-bursts) ~530ms
+    0, 50, 30, 50, 30, 80, 20, 50, 30, 120, 40, 30,
+    // Phase 2: Arrhythmic heartbeat ~980ms
     100, 150, 60, 100, 200, 250, 40, 80,
-    // Phase 3: Machine-gun staccato
-    30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40,
-    // Phase 4: Heavy slam + aftershock
-    80, 400, 50, 60, 30, 60, 150, 500,
-    // Phase 5: Erratic panic crescendo
-    20, 80, 40, 120, 20, 200, 30, 300, 20, 500,
+    // Phase 3: Fake calm — "is it over?" ~1200ms
+    800, 60, 340,
+    // Phase 4: SURPRISE slam out of silence ~1080ms
+    0, 500, 80, 200, 100, 200,
+    // Phase 5: Machine-gun staccato ~840ms
+    30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40,
+    // Phase 6: Heavy slam + aftershock tremor ~1330ms
+    80, 400, 50, 60, 30, 60, 30, 40, 30, 40, 150, 360,
+    // Phase 7: Second fake calm — longer this time ~1600ms
+    1200, 40, 360,
+    // Phase 8: Erratic panic crescendo ~2300ms
+    0, 80, 60, 120, 40, 200, 30, 300, 20, 400, 50, 500, 20, 80, 20, 80, 20, 80, 20, 80,
+    // Phase 9: Final desperation — sustained max buzz ~1800ms
+    100, 800, 50, 300, 50, 500,
   ];
 
   static const List<int> _aggressiveIntensities = [
     // Phase 1: Flickering low-high
-    0, 120, 0, 200, 0, 255, 0, 100, 0, 255,
+    0, 120, 0, 200, 0, 255, 0, 100, 0, 255, 0, 180,
     // Phase 2: Pulsing strong-weak
     0, 255, 0, 128, 0, 255, 0, 200,
-    // Phase 3: Full intensity rapid fire
-    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
-    // Phase 4: Max power slam
-    0, 255, 0, 180, 0, 128, 0, 255,
-    // Phase 5: Building to max
-    0, 140, 0, 180, 0, 210, 0, 240, 0, 255,
+    // Phase 3: Fake calm — faint tickle
+    0, 80, 0,
+    // Phase 4: SURPRISE — full power from silence
+    0, 255, 0, 255, 0, 255,
+    // Phase 5: Full intensity rapid fire
+    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    // Phase 6: Slam max, aftershock decay
+    0, 255, 0, 200, 0, 160, 0, 120, 0, 100, 0, 255,
+    // Phase 7: Barely there — false hope
+    0, 60, 0,
+    // Phase 8: Building panic — intensity ramps up
+    0, 100, 0, 140, 0, 180, 0, 210, 0, 240, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    // Phase 9: Sustained max — no escape
+    0, 255, 0, 255, 0, 255,
   ];
 
   void _startVibration(models.Alarm alarm) {
@@ -170,8 +186,8 @@ class AlarmService extends ChangeNotifier {
     _vibrationTimer?.cancel();
     _fireVibrationPattern();
 
-    // The pattern duration is ~4.3 seconds. Repeat it in a loop.
-    const patternDuration = Duration(milliseconds: 4350);
+    // Full pattern is ~11.7s. Repeat in a loop.
+    const patternDuration = Duration(milliseconds: 11700);
     _vibrationTimer = Timer.periodic(patternDuration, (timer) {
       if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
         _fireVibrationPattern();
