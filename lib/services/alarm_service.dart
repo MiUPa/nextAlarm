@@ -135,22 +135,57 @@ class AlarmService extends ChangeNotifier {
 
   Timer? _vibrationTimer;
 
+  // Maximally unpleasant vibration pattern combining rapid bursts,
+  // irregular rhythm, and sudden intensity changes.
+  // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
+  static const List<int> _aggressivePattern = [
+    // Phase 1: Rapid insect-like crawling bursts
+    0, 50, 30, 50, 30, 80, 20, 50, 30, 120,
+    // Phase 2: Arrhythmic heartbeat (unsettling irregular rhythm)
+    100, 150, 60, 100, 200, 250, 40, 80,
+    // Phase 3: Machine-gun staccato
+    30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40,
+    // Phase 4: Heavy slam + aftershock
+    80, 400, 50, 60, 30, 60, 150, 500,
+    // Phase 5: Erratic panic crescendo
+    20, 80, 40, 120, 20, 200, 30, 300, 20, 500,
+  ];
+
+  static const List<int> _aggressiveIntensities = [
+    // Phase 1: Flickering low-high
+    0, 120, 0, 200, 0, 255, 0, 100, 0, 255,
+    // Phase 2: Pulsing strong-weak
+    0, 255, 0, 128, 0, 255, 0, 200,
+    // Phase 3: Full intensity rapid fire
+    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    // Phase 4: Max power slam
+    0, 255, 0, 180, 0, 128, 0, 255,
+    // Phase 5: Building to max
+    0, 140, 0, 180, 0, 210, 0, 240, 0, 255,
+  ];
+
   void _startVibration(models.Alarm alarm) {
     if (!alarm.vibrate) return;
 
-    // Vibrate in a pattern: 500ms on, 1000ms off
     _vibrationTimer?.cancel();
-    _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (
-      timer,
-    ) {
+    _fireVibrationPattern();
+
+    // The pattern duration is ~4.3 seconds. Repeat it in a loop.
+    const patternDuration = Duration(milliseconds: 4350);
+    _vibrationTimer = Timer.periodic(patternDuration, (timer) {
       if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
-        Vibration.vibrate(duration: 500);
+        _fireVibrationPattern();
       } else {
         timer.cancel();
       }
     });
-    // Initial vibration
-    Vibration.vibrate(duration: 500);
+  }
+
+  void _fireVibrationPattern() {
+    Vibration.vibrate(
+      pattern: _aggressivePattern,
+      intensities: _aggressiveIntensities,
+    );
   }
 
   void _stopVibration() {
