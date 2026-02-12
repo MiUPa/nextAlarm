@@ -135,22 +135,110 @@ class AlarmService extends ChangeNotifier {
 
   Timer? _vibrationTimer;
 
+  // Maximally unpleasant ~12s vibration pattern.
+  // Combines rapid bursts, irregular rhythm, fake pauses, and sudden slams.
+  // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
+  static const List<int> _aggressivePattern = [
+    // Phase 1: Insect-crawl opener (rapid micro-bursts) ~530ms
+    0, 50, 30, 50, 30, 80, 20, 50, 30, 120, 40, 30,
+    // Phase 2: Arrhythmic heartbeat ~980ms
+    100, 150, 60, 100, 200, 250, 40, 80,
+    // Phase 3: Fake calm — "is it over?" ~1200ms
+    800, 60, 340,
+    // Phase 4: SURPRISE slam out of silence ~1080ms
+    0, 500, 80, 200, 100, 200,
+    // Phase 5: Machine-gun staccato ~840ms
+    30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40,
+    // Phase 6: Heavy slam + aftershock tremor ~1330ms
+    80, 400, 50, 60, 30, 60, 30, 40, 30, 40, 150, 360,
+    // Phase 7: Second fake calm — longer this time ~1600ms
+    1200, 40, 360,
+    // Phase 8: Erratic panic crescendo ~2300ms
+    0, 80, 60, 120, 40, 200, 30, 300, 20, 400, 50, 500, 20, 80, 20, 80, 20, 80, 20, 80,
+    // Phase 9: Final desperation — sustained max buzz ~1800ms
+    100, 800, 50, 300, 50, 500,
+  ];
+
+  static const List<int> _aggressiveIntensities = [
+    // Phase 1: Flickering low-high
+    0, 120, 0, 200, 0, 255, 0, 100, 0, 255, 0, 180,
+    // Phase 2: Pulsing strong-weak
+    0, 255, 0, 128, 0, 255, 0, 200,
+    // Phase 3: Fake calm — faint tickle
+    0, 80, 0,
+    // Phase 4: SURPRISE — full power from silence
+    0, 255, 0, 255, 0, 255,
+    // Phase 5: Full intensity rapid fire
+    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    // Phase 6: Slam max, aftershock decay
+    0, 255, 0, 200, 0, 160, 0, 120, 0, 100, 0, 255,
+    // Phase 7: Barely there — false hope
+    0, 60, 0,
+    // Phase 8: Building panic — intensity ramps up
+    0, 100, 0, 140, 0, 180, 0, 210, 0, 240, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    // Phase 9: Sustained max — no escape
+    0, 255, 0, 255, 0, 255,
+  ];
+
+
   void _startVibration(models.Alarm alarm) {
     if (!alarm.vibrate) return;
 
-    // Vibrate in a pattern: 500ms on, 1000ms off
     _vibrationTimer?.cancel();
-    _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (
-      timer,
-    ) {
+    _fireVibrationPattern(alarm.vibrationIntensity);
+
+    final patternDuration = _vibrationPatternDuration;
+    _vibrationTimer = Timer.periodic(patternDuration, (timer) {
       if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
-        Vibration.vibrate(duration: 500);
+        _fireVibrationPattern(_ringingAlarm!.vibrationIntensity);
       } else {
         timer.cancel();
       }
     });
-    // Initial vibration
-    Vibration.vibrate(duration: 500);
+  }
+
+  void _fireVibrationPattern(models.VibrationIntensity vibrationIntensity) {
+    final intensityScale = switch (vibrationIntensity) {
+      models.VibrationIntensity.gentle => 0.4,
+      models.VibrationIntensity.standard => 0.7,
+      models.VibrationIntensity.aggressive => 1.0,
+    };
+
+    Vibration.vibrate(
+      pattern: _aggressivePattern,
+      intensities: _scaleIntensities(intensityScale),
+    );
+  }
+
+  Duration get _vibrationPatternDuration => Duration(
+    milliseconds: _aggressivePattern.fold(0, (sum, value) => sum + value),
+  );
+
+  List<int> _scaleIntensities(double intensityScale) {
+    final base = _normalizedAggressiveIntensities;
+    if (intensityScale >= 1.0) return base;
+
+    return base.map((value) {
+      if (value == 0) return 0;
+      return (value * intensityScale).round().clamp(1, 255);
+    }).toList(growable: false);
+  }
+
+  List<int> get _normalizedAggressiveIntensities {
+    if (_aggressiveIntensities.length == _aggressivePattern.length) {
+      return _aggressiveIntensities;
+    }
+
+    final normalized = List<int>.from(_aggressiveIntensities, growable: true);
+    while (normalized.length < _aggressivePattern.length) {
+      normalized.add(normalized.length.isEven ? 0 : 255);
+    }
+
+    if (normalized.length > _aggressivePattern.length) {
+      return normalized.sublist(0, _aggressivePattern.length);
+    }
+
+    return normalized;
   }
 
   void _stopVibration() {

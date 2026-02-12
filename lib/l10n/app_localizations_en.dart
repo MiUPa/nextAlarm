@@ -258,6 +258,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vibrationOff => 'Off';
 
   @override
+  String get vibrationIntensity => 'Vibration Intensity';
+
+  @override
+  String get vibrationIntensityGentle => 'Gentle';
+
+  @override
+  String get vibrationIntensityStandard => 'Standard';
+
+  @override
+  String get vibrationIntensityAggressive => 'Aggressive';
+
+  @override
   String get gradualVolume => 'Gradual Volume';
 
   @override

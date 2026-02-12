@@ -24,6 +24,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	late int _challengeDifficulty;
 	late models.AlarmSound _sound;
 	late bool _vibrate;
+	late models.VibrationIntensity _vibrationIntensity;
 	late bool _gradualVolume;
 
 	@override
@@ -37,6 +38,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		_challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
 		_sound = widget.alarm?.sound ?? models.AlarmSound.defaultAlarm;
 		_vibrate = widget.alarm?.vibrate ?? true;
+		_vibrationIntensity =
+				widget.alarm?.vibrationIntensity ?? models.VibrationIntensity.standard;
 		_gradualVolume = widget.alarm?.gradualVolume ?? false;
 	}
 
@@ -193,6 +196,38 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							},
 						),
 
+						if (_vibrate)
+							ListTile(
+								contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+								title: Text(
+									l10n.vibrationIntensity,
+									style: Theme.of(context).textTheme.titleSmall?.copyWith(
+										color: AppTheme.onSurfaceSecondary,
+										letterSpacing: 0.5,
+									),
+								),
+								trailing: Row(
+									mainAxisSize: MainAxisSize.min,
+									children: [
+										Text(
+											_getVibrationIntensityName(l10n, _vibrationIntensity),
+											style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+												color: AppTheme.onSurface,
+											),
+										),
+										const SizedBox(width: 4),
+										const Icon(
+											Icons.chevron_right,
+											color: AppTheme.onSurfaceSecondary,
+										),
+									],
+								),
+								onTap: () {
+									Vibration.vibrate(duration: 10);
+									_showVibrationIntensityPicker(context);
+								},
+							),
+
 						// Gradual volume
 						SwitchListTile(
 							contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -268,6 +303,21 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		);
 	}
 
+
+	String _getVibrationIntensityName(
+		AppLocalizations l10n,
+		models.VibrationIntensity intensity,
+	) {
+		switch (intensity) {
+			case models.VibrationIntensity.gentle:
+				return l10n.vibrationIntensityGentle;
+			case models.VibrationIntensity.standard:
+				return l10n.vibrationIntensityStandard;
+			case models.VibrationIntensity.aggressive:
+				return l10n.vibrationIntensityAggressive;
+		}
+	}
+
 	String _getSoundName(AppLocalizations l10n, models.AlarmSound sound) {
 		switch (sound) {
 			case models.AlarmSound.defaultAlarm:
@@ -317,6 +367,51 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							activeColor: AppTheme.primary,
 							onChanged: (value) {
 								setState(() => _sound = value!);
+								Vibration.vibrate(duration: 10);
+								Navigator.pop(context);
+							},
+						),
+					),
+					const SizedBox(height: 16),
+				],
+			),
+		);
+	}
+
+
+	void _showVibrationIntensityPicker(BuildContext context) {
+		final l10n = AppLocalizations.of(context)!;
+		showModalBottomSheet(
+			context: context,
+			backgroundColor: AppTheme.surface,
+			shape: const RoundedRectangleBorder(
+				borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+			),
+			builder: (context) => Column(
+				mainAxisSize: MainAxisSize.min,
+				children: [
+					const SizedBox(height: 8),
+					Container(
+						width: 40,
+						height: 4,
+						decoration: BoxDecoration(
+							color: AppTheme.onSurfaceSecondary.withOpacity(0.4),
+							borderRadius: BorderRadius.circular(2),
+						),
+					),
+					const SizedBox(height: 8),
+					...models.VibrationIntensity.values.map((intensity) =>
+						RadioListTile<models.VibrationIntensity>(
+							title: Text(
+								_getVibrationIntensityName(l10n, intensity),
+								style: const TextStyle(color: AppTheme.onSurface),
+							),
+							value: intensity,
+							groupValue: _vibrationIntensity,
+							activeColor: AppTheme.primary,
+							onChanged: (value) {
+								if (value == null) return;
+								setState(() => _vibrationIntensity = value);
 								Vibration.vibrate(duration: 10);
 								Navigator.pop(context);
 							},
@@ -380,6 +475,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			challengeDifficulty: _challengeDifficulty,
 			sound: _sound,
 			vibrate: _vibrate,
+			vibrationIntensity: _vibrationIntensity,
 			gradualVolume: _gradualVolume,
 		);
 

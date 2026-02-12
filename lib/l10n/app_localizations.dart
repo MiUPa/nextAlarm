@@ -530,6 +530,30 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get vibrationOff;
 
+  /// No description provided for @vibrationIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration Intensity'**
+  String get vibrationIntensity;
+
+  /// No description provided for @vibrationIntensityGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle'**
+  String get vibrationIntensityGentle;
+
+  /// No description provided for @vibrationIntensityStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get vibrationIntensityStandard;
+
+  /// No description provided for @vibrationIntensityAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get vibrationIntensityAggressive;
+
   /// No description provided for @gradualVolume.
   ///
   /// In en, this message translates to:

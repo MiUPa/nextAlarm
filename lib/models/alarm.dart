@@ -17,6 +17,12 @@ enum AlarmSound {
   silent,
 }
 
+enum VibrationIntensity {
+  gentle,
+  standard,
+  aggressive,
+}
+
 class Alarm {
   final String id;
   final TimeOfDay time;
@@ -27,6 +33,7 @@ class Alarm {
   final int challengeDifficulty; // 1-5
   final String? challengeData; // phrase for voice, etc.
   final bool vibrate;
+  final VibrationIntensity vibrationIntensity;
   final AlarmSound sound;
   final bool gradualVolume; // Gradually increase volume
   final int snoozeMinutes;
@@ -42,6 +49,7 @@ class Alarm {
     this.challengeDifficulty = 3,
     this.challengeData,
     this.vibrate = true,
+    this.vibrationIntensity = VibrationIntensity.standard,
     this.sound = AlarmSound.defaultAlarm,
     this.gradualVolume = false,
     this.snoozeMinutes = 5,
@@ -57,6 +65,7 @@ class Alarm {
     int? challengeDifficulty,
     String? challengeData,
     bool? vibrate,
+    VibrationIntensity? vibrationIntensity,
     AlarmSound? sound,
     bool? gradualVolume,
     int? snoozeMinutes,
@@ -72,6 +81,7 @@ class Alarm {
       challengeDifficulty: challengeDifficulty ?? this.challengeDifficulty,
       challengeData: challengeData ?? this.challengeData,
       vibrate: vibrate ?? this.vibrate,
+      vibrationIntensity: vibrationIntensity ?? this.vibrationIntensity,
       sound: sound ?? this.sound,
       gradualVolume: gradualVolume ?? this.gradualVolume,
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
@@ -91,6 +101,7 @@ class Alarm {
       'challengeDifficulty': challengeDifficulty,
       'challengeData': challengeData,
       'vibrate': vibrate,
+      'vibrationIntensity': vibrationIntensity.index,
       'sound': sound.index,
       'gradualVolume': gradualVolume,
       'snoozeMinutes': snoozeMinutes,
@@ -109,6 +120,9 @@ class Alarm {
       challengeDifficulty: json['challengeDifficulty'] ?? 3,
       challengeData: json['challengeData'],
       vibrate: json['vibrate'] ?? true,
+      vibrationIntensity: _vibrationIntensityFromJson(
+        json['vibrationIntensity'],
+      ),
       sound: AlarmSound.values[json['sound'] ?? 0],
       gradualVolume: json['gradualVolume'] ?? false,
       snoozeMinutes: json['snoozeMinutes'] ?? 5,
@@ -163,6 +177,15 @@ class Alarm {
         return 'Walk steps';
     }
   }
+}
+
+
+VibrationIntensity _vibrationIntensityFromJson(dynamic rawValue) {
+  if (rawValue is! int) return VibrationIntensity.standard;
+  if (rawValue < 0 || rawValue >= VibrationIntensity.values.length) {
+    return VibrationIntensity.standard;
+  }
+  return VibrationIntensity.values[rawValue];
 }
 
 class TimeOfDay {
