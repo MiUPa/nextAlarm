@@ -1,0 +1,18 @@
+Next Alarm is an alarm clock app for people who can't wake up with a normal alarm.
+
+To stop the alarm, you can choose a wake-up challenge:
+- Math problems
+- Voice recognition
+- Shake your phone
+- Walk a number of steps
+
+Other features:
+- Unlimited alarms
+- Repeat by day of week
+- Japanese / English
+
+Permissions:
+- Notifications: to show alarm notifications
+- Exact alarms / wake lock: to ring on time
+- Microphone (optional): for the voice challenge
+- Activity recognition (optional): for the step challenge

@@ -1,0 +1,4 @@
+interface:
+  display_name: "NextAlarm Challenge Workflow"
+  short_description: "Implement challenge changes without integration gaps"
+  default_prompt: "Use $nextalarm-challenge-feature-workflow to add or modify an alarm challenge and verify all integration points."

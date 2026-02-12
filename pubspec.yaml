@@ -39,7 +39,6 @@ dependencies:
 
   # Alarm & Notifications
   flutter_local_notifications: ^18.0.1
-  android_alarm_manager_plus: ^4.0.3
 
   # Permissions
   permission_handler: ^11.3.1

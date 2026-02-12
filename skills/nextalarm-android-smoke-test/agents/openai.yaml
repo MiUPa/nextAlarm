@@ -1,0 +1,4 @@
+interface:
+  display_name: "NextAlarm Android Smoke Test"
+  short_description: "Run repeatable Android smoke tests with evidence"
+  default_prompt: "Use $nextalarm-android-smoke-test to install a build, grant baseline permissions, and capture smoke-test evidence."
