@@ -4,35 +4,29 @@
 	"@appTitle": {
 		"description": "The title of the application"
 	},
-
 	"alarms": "Alarms",
 	"@alarms": {
 		"description": "Title for the alarms list screen"
 	},
 	"noAlarmsYet": "No alarms yet",
 	"tapToCreateAlarm": "Tap + to create your first alarm",
-
 	"addAlarm": "Add Alarm",
 	"editAlarm": "Edit Alarm",
 	"save": "Save",
 	"cancel": "Cancel",
-
 	"label": "Label",
 	"labelHint": "Alarm name",
 	"repeat": "Repeat",
 	"wakeUpChallenge": "Wake-up Challenge",
 	"difficulty": "Difficulty",
-
 	"challengeNone": "None",
 	"challengeMath": "Math",
 	"challengeVoice": "Voice",
 	"challengeShake": "Shake",
 	"challengeSteps": "Steps",
-
 	"difficultyEasy": "Easy",
 	"difficultyNormal": "Normal",
 	"difficultyHard": "Hard",
-
 	"dayMonday": "M",
 	"dayTuesday": "T",
 	"dayWednesday": "W",
@@ -40,12 +34,10 @@
 	"dayFriday": "F",
 	"daySaturday": "S",
 	"daySunday": "S",
-
 	"repeatOnce": "Once",
 	"repeatEveryDay": "Every day",
 	"repeatWeekdays": "Weekdays",
 	"repeatWeekends": "Weekends",
-
 	"inDays": "in {count} {count, plural, =1{day} other{days}}",
 	"@inDays": {
 		"placeholders": {
@@ -81,13 +73,11 @@
 			}
 		}
 	},
-
 	"stopAlarm": "Stop Alarm",
 	"solveMathToStop": "Solve the math problem to stop the alarm",
 	"enterAnswer": "Enter answer",
 	"confirm": "Confirm",
 	"wrongAnswer": "Wrong! Try again.",
-
 	"shakeToStop": "Shake your phone to stop the alarm",
 	"shakesCount": "{current} / {required}",
 	"@shakesCount": {
@@ -100,7 +90,6 @@
 			}
 		}
 	},
-
 	"speakToStop": "Say the phrase to stop the alarm",
 	"tapMicrophone": "Tap microphone",
 	"listening": "Listening...",
@@ -113,7 +102,6 @@
 		}
 	},
 	"speechNotAvailable": "Speech recognition not available",
-
 	"walkToStop": "Walk to stop the alarm",
 	"stepSensorNotAvailable": "Step sensor not available on this device",
 	"stepsCount": "{current} / {required} steps",
@@ -127,21 +115,17 @@
 			}
 		}
 	},
-
 	"challengeNotImplemented": "This challenge is not implemented yet",
-
 	"settings": "Settings",
 	"language": "Language",
 	"languageSystem": "System default",
 	"languageEnglish": "English",
 	"languageJapanese": "Japanese",
-
 	"tongueTwister1": "Peter Piper picked a peck of pickled peppers",
 	"tongueTwister2": "She sells seashells by the seashore",
 	"tongueTwister3": "How much wood would a woodchuck chuck",
 	"tongueTwister4": "Red lorry yellow lorry",
 	"tongueTwister5": "Unique New York",
-
 	"alarmSound": "Alarm Sound",
 	"soundDefault": "Default",
 	"soundGentle": "Gentle",
@@ -149,18 +133,18 @@
 	"soundClassic": "Classic",
 	"soundNature": "Nature",
 	"soundSilent": "Silent",
-
 	"vibration": "Vibration",
 	"vibrationOn": "On",
 	"vibrationOff": "Off",
-
+	"vibrationIntensity": "Vibration Intensity",
+	"vibrationIntensityGentle": "Gentle",
+	"vibrationIntensityStandard": "Standard",
+	"vibrationIntensityAggressive": "Aggressive",
 	"gradualVolume": "Gradual Volume",
 	"gradualVolumeDescription": "Slowly increase volume",
-
 	"deleteAlarm": "Delete Alarm",
 	"deleteAlarmConfirmation": "Are you sure you want to delete this alarm?",
 	"delete": "Delete",
-
 	"reviewPromptTitle": "Enjoying NextAlarm?",
 	"reviewPromptMessage": "If you like this app, please take a moment to rate it. Your feedback helps us improve!",
 	"reviewPromptRate": "Rate Now",
