@@ -239,6 +239,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get vibrationOff => 'オフ';
 
   @override
+  String get vibrationIntensity => 'バイブの強さ';
+
+  @override
+  String get vibrationIntensityGentle => '弱め';
+
+  @override
+  String get vibrationIntensityStandard => '標準';
+
+  @override
+  String get vibrationIntensityAggressive => '強め';
+
+  @override
   String get gradualVolume => 'だんだん大きく';
 
   @override

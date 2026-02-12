@@ -180,28 +180,65 @@ class AlarmService extends ChangeNotifier {
     0, 255, 0, 255, 0, 255,
   ];
 
+
   void _startVibration(models.Alarm alarm) {
     if (!alarm.vibrate) return;
 
     _vibrationTimer?.cancel();
-    _fireVibrationPattern();
+    _fireVibrationPattern(alarm.vibrationIntensity);
 
-    // Full pattern is ~11.7s. Repeat in a loop.
-    const patternDuration = Duration(milliseconds: 11700);
+    final patternDuration = _vibrationPatternDuration;
     _vibrationTimer = Timer.periodic(patternDuration, (timer) {
       if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
-        _fireVibrationPattern();
+        _fireVibrationPattern(_ringingAlarm!.vibrationIntensity);
       } else {
         timer.cancel();
       }
     });
   }
 
-  void _fireVibrationPattern() {
+  void _fireVibrationPattern(models.VibrationIntensity vibrationIntensity) {
+    final intensityScale = switch (vibrationIntensity) {
+      models.VibrationIntensity.gentle => 0.4,
+      models.VibrationIntensity.standard => 0.7,
+      models.VibrationIntensity.aggressive => 1.0,
+    };
+
     Vibration.vibrate(
       pattern: _aggressivePattern,
-      intensities: _aggressiveIntensities,
+      intensities: _scaleIntensities(intensityScale),
     );
+  }
+
+  Duration get _vibrationPatternDuration => Duration(
+    milliseconds: _aggressivePattern.fold(0, (sum, value) => sum + value),
+  );
+
+  List<int> _scaleIntensities(double intensityScale) {
+    final base = _normalizedAggressiveIntensities;
+    if (intensityScale >= 1.0) return base;
+
+    return base.map((value) {
+      if (value == 0) return 0;
+      return (value * intensityScale).round().clamp(1, 255);
+    }).toList(growable: false);
+  }
+
+  List<int> get _normalizedAggressiveIntensities {
+    if (_aggressiveIntensities.length == _aggressivePattern.length) {
+      return _aggressiveIntensities;
+    }
+
+    final normalized = List<int>.from(_aggressiveIntensities, growable: true);
+    while (normalized.length < _aggressivePattern.length) {
+      normalized.add(normalized.length.isEven ? 0 : 255);
+    }
+
+    if (normalized.length > _aggressivePattern.length) {
+      return normalized.sublist(0, _aggressivePattern.length);
+    }
+
+    return normalized;
   }
 
   void _stopVibration() {
