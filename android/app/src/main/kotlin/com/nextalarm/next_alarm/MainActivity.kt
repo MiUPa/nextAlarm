@@ -3,6 +3,7 @@ package com.nextalarm.next_alarm
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -71,6 +72,15 @@ class MainActivity : FlutterActivity() {
 						stopAlarmService()
 						AlarmPrefs.clearPendingRingingAlarmId(applicationContext)
 						result.success(true)
+					}
+					"getRingerMode" -> {
+						val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+						val mode = when (audioManager.ringerMode) {
+							AudioManager.RINGER_MODE_SILENT -> "silent"
+							AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
+							else -> "normal"
+						}
+						result.success(mode)
 					}
 					else -> result.notImplemented()
 				}

@@ -305,6 +305,16 @@ class AlarmService extends ChangeNotifier {
         return;
       }
 
+      // Respect device silent/vibrate mode on Android
+      if (_useAndroidPlatformScheduler) {
+        final ringerMode = await AndroidAlarmPlatformService.getRingerMode();
+        if (ringerMode != 'normal') {
+          debugPrint('🔇 Device in $ringerMode mode — skipping alarm audio');
+          _activePlatformSound = null;
+          return;
+        }
+      }
+
       _isPlayingSound = true;
       _activePlatformSound = platformSound;
       final useGradualVolume = _ringingAlarm?.gradualVolume ?? false;
