@@ -1,55 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:vibration/vibration.dart';
 import '../models/alarm.dart' as models;
+import 'android_alarm_platform_service.dart';
+import 'app_navigation_service.dart';
 import 'notification_service.dart';
-
-/// Global notification plugin instance (shared with main.dart)
-final FlutterLocalNotificationsPlugin _notificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
-/// Static callback for AndroidAlarmManager - triggers the alarm
-@pragma('vm:entry-point')
-Future<void> alarmCallback(int id) async {
-  debugPrint('🔔 Alarm callback triggered for ID: $id');
-
-  // Show full-screen notification to wake up the device
-  await _showFullScreenAlarmNotification(id);
-}
-
-/// Show a full-screen notification that wakes the device
-Future<void> _showFullScreenAlarmNotification(int alarmId) async {
-  const androidDetails = AndroidNotificationDetails(
-    'alarm_channel',
-    'Alarm Notifications',
-    channelDescription: 'Notifications for alarms',
-    importance: Importance.max,
-    priority: Priority.max,
-    fullScreenIntent: true,
-    category: AndroidNotificationCategory.alarm,
-    visibility: NotificationVisibility.public,
-    playSound: false, // We handle sound separately
-    enableVibration: true,
-    ongoing: true,
-    autoCancel: false,
-  );
-
-  const notificationDetails = NotificationDetails(android: androidDetails);
-
-  await _notificationsPlugin.show(
-    alarmId,
-    'Alarm',
-    'Wake up!',
-    notificationDetails,
-    payload: alarmId.toString(),
-  );
-}
 
 class AlarmService extends ChangeNotifier {
   List<models.Alarm> _alarms = [];
@@ -59,13 +17,25 @@ class AlarmService extends ChangeNotifier {
   models.Alarm? _ringingAlarm;
   final Set<String> _triggeredToday = {};
   bool _isPlayingSound = false;
+  bool _isPollingPlatformAlarm = false;
   double _currentVolume = 1.0;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
 
+  bool get _useAndroidPlatformScheduler =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   AlarmService() {
-    _loadAlarms();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _loadAlarms();
+    if (_useAndroidPlatformScheduler) {
+      await _syncPlatformAlarms();
+      await _consumePendingPlatformAlarm();
+    }
     _startAlarmChecker();
   }
 
@@ -78,8 +48,25 @@ class AlarmService extends ChangeNotifier {
   void _startAlarmChecker() {
     _checkTimer?.cancel();
     _checkTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _checkAlarms();
+      if (_useAndroidPlatformScheduler) {
+        _consumePendingPlatformAlarm();
+      } else {
+        _checkAlarms();
+      }
     });
+  }
+
+  Future<void> _consumePendingPlatformAlarm() async {
+    if (_isPollingPlatformAlarm || _ringingAlarm != null) return;
+    _isPollingPlatformAlarm = true;
+    try {
+      final alarmId =
+          await AndroidAlarmPlatformService.consumePendingRingingAlarmId();
+      if (alarmId == null) return;
+      triggerAlarmById(alarmId);
+    } finally {
+      _isPollingPlatformAlarm = false;
+    }
   }
 
   void _checkAlarms() {
@@ -96,7 +83,8 @@ class AlarmService extends ChangeNotifier {
       // Check if this is the right time and not triggered yet today
       if (alarmMinute == currentMinute && !_triggeredToday.contains(alarmKey)) {
         // Check if today matches repeat days
-        if (alarm.repeatDays.isEmpty || alarm.repeatDays.contains(now.weekday)) {
+        if (alarm.repeatDays.isEmpty ||
+            alarm.repeatDays.contains(now.weekday)) {
           _triggerAlarm(alarm);
           _triggeredToday.add(alarmKey);
 
@@ -111,6 +99,7 @@ class AlarmService extends ChangeNotifier {
 
   void _triggerAlarm(models.Alarm alarm) {
     _ringingAlarm = alarm;
+    AppNavigationService.popToRoot();
     _playAlarmSound();
     _startVibration(alarm);
 
@@ -132,7 +121,9 @@ class AlarmService extends ChangeNotifier {
 
     // Vibrate in a pattern: 500ms on, 1000ms off
     _vibrationTimer?.cancel();
-    _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+    _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (
+      timer,
+    ) {
       if (_ringingAlarm != null && _ringingAlarm!.vibrate) {
         Vibration.vibrate(duration: 500);
       } else {
@@ -154,6 +145,8 @@ class AlarmService extends ChangeNotifier {
     final alarm = getAlarm(alarmId);
     if (alarm != null) {
       _triggerAlarm(alarm);
+    } else if (_useAndroidPlatformScheduler) {
+      AndroidAlarmPlatformService.stopAlarmRinging();
     }
   }
 
@@ -196,7 +189,6 @@ class AlarmService extends ChangeNotifier {
           iosSound = const IosSound(1013);
           break;
         case models.AlarmSound.defaultAlarm:
-        default:
           androidSound = AndroidSounds.alarm;
           iosSound = const IosSound(1023);
           break;
@@ -210,7 +202,9 @@ class AlarmService extends ChangeNotifier {
         volume: _currentVolume,
         asAlarm: true,
       );
-      debugPrint('🔔 Playing alarm sound: ${sound.name} (volume: $_currentVolume)');
+      debugPrint(
+        '🔔 Playing alarm sound: ${sound.name} (volume: $_currentVolume)',
+      );
     } catch (e) {
       debugPrint('Error playing alarm sound: $e');
     }
@@ -240,17 +234,14 @@ class AlarmService extends ChangeNotifier {
   }
 
   void stopRingingAlarm() {
-    // Cancel the notification
-    if (_ringingAlarm != null) {
-      final notificationId = _ringingAlarm!.id.hashCode.abs() % 2147483647;
-      _notificationsPlugin.cancel(notificationId);
-    }
-
     _ringingAlarm = null;
     _stopAlarmSound();
     _stopVibration();
     _volumeTimer?.cancel();
     _volumeTimer = null;
+    if (_useAndroidPlatformScheduler) {
+      AndroidAlarmPlatformService.stopAlarmRinging();
+    }
     notifyListeners();
   }
 
@@ -277,13 +268,6 @@ class AlarmService extends ChangeNotifier {
       return aMinutes.compareTo(bMinutes);
     });
 
-    // Re-schedule all enabled alarms
-    for (final alarm in _alarms) {
-      if (alarm.isEnabled) {
-        await _scheduleBackgroundAlarm(alarm);
-      }
-    }
-
     notifyListeners();
   }
 
@@ -296,45 +280,10 @@ class AlarmService extends ChangeNotifier {
     await prefs.setStringList(_storageKey, alarmsJson);
   }
 
-  /// Schedule a background alarm using AndroidAlarmManager
-  Future<void> _scheduleBackgroundAlarm(models.Alarm alarm) async {
-    if (kIsWeb) return;
-
-    final nextTime = calculateNextAlarmTime(alarm);
-    final alarmId = alarm.id.hashCode.abs() % 2147483647; // Ensure positive int
-
-    try {
-      // Cancel existing alarm first
-      await AndroidAlarmManager.cancel(alarmId);
-
-      // Schedule new alarm
-      await AndroidAlarmManager.oneShotAt(
-        nextTime,
-        alarmId,
-        alarmCallback,
-        exact: true,
-        wakeup: true,
-        rescheduleOnReboot: true,
-        alarmClock: true,
-      );
-
-      debugPrint('⏰ Scheduled alarm ${alarm.id} for $nextTime (ID: $alarmId)');
-    } catch (e) {
-      debugPrint('Error scheduling background alarm: $e');
-    }
-  }
-
-  /// Cancel a background alarm
-  Future<void> _cancelBackgroundAlarm(models.Alarm alarm) async {
-    if (kIsWeb) return;
-
-    final alarmId = alarm.id.hashCode.abs() % 2147483647;
-    try {
-      await AndroidAlarmManager.cancel(alarmId);
-      debugPrint('⏰ Cancelled alarm ${alarm.id} (ID: $alarmId)');
-    } catch (e) {
-      debugPrint('Error cancelling background alarm: $e');
-    }
+  Future<void> _syncPlatformAlarms() async {
+    if (!_useAndroidPlatformScheduler) return;
+    final enabledAlarms = _alarms.where((alarm) => alarm.isEnabled).toList();
+    await AndroidAlarmPlatformService.syncAlarms(enabledAlarms);
   }
 
   Future<void> addAlarm(models.Alarm alarm) async {
@@ -348,11 +297,7 @@ class AlarmService extends ChangeNotifier {
     });
 
     await _saveAlarms();
-
-    // Schedule background alarm if enabled
-    if (alarm.isEnabled) {
-      await _scheduleBackgroundAlarm(alarm);
-    }
+    await _syncPlatformAlarms();
 
     notifyListeners();
   }
@@ -360,7 +305,6 @@ class AlarmService extends ChangeNotifier {
   Future<void> updateAlarm(models.Alarm alarm) async {
     final index = _alarms.indexWhere((a) => a.id == alarm.id);
     if (index != -1) {
-      final oldAlarm = _alarms[index];
       _alarms[index] = alarm;
 
       // Re-sort after update
@@ -371,43 +315,27 @@ class AlarmService extends ChangeNotifier {
       });
 
       await _saveAlarms();
-
-      // Update background alarm
-      await _cancelBackgroundAlarm(oldAlarm);
-      if (alarm.isEnabled) {
-        await _scheduleBackgroundAlarm(alarm);
-      }
+      await _syncPlatformAlarms();
 
       notifyListeners();
     }
   }
 
   Future<void> deleteAlarm(String id) async {
-    final alarm = getAlarm(id);
-    if (alarm != null) {
-      await _cancelBackgroundAlarm(alarm);
-    }
-
     _alarms.removeWhere((alarm) => alarm.id == id);
     await _saveAlarms();
+    await _syncPlatformAlarms();
     notifyListeners();
   }
 
   Future<void> toggleAlarm(String id) async {
     final index = _alarms.indexWhere((a) => a.id == id);
     if (index != -1) {
-      final oldAlarm = _alarms[index];
       _alarms[index] = _alarms[index].copyWith(
         isEnabled: !_alarms[index].isEnabled,
       );
       await _saveAlarms();
-
-      // Update background alarm
-      if (_alarms[index].isEnabled) {
-        await _scheduleBackgroundAlarm(_alarms[index]);
-      } else {
-        await _cancelBackgroundAlarm(oldAlarm);
-      }
+      await _syncPlatformAlarms();
 
       notifyListeners();
     }

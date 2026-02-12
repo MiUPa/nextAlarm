@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'services/alarm_service.dart';
+import 'services/app_navigation_service.dart';
 import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/alarm_ringing_screen.dart';
@@ -31,7 +31,9 @@ Future<void> _requestMicrophonePermission() async {
 Future<void> _initializeNotifications() async {
   if (kIsWeb) return;
 
-  const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+  const androidSettings = AndroidInitializationSettings(
+    '@mipmap/launcher_icon',
+  );
   const initSettings = InitializationSettings(android: androidSettings);
 
   await flutterLocalNotificationsPlugin.initialize(
@@ -44,17 +46,14 @@ Future<void> _initializeNotifications() async {
 
   // Request notification permission for Android 13+
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.requestNotificationsPermission();
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Android Alarm Manager for background alarms
-  if (!kIsWeb) {
-    await AndroidAlarmManager.initialize();
-  }
 
   // Initialize notifications
   await _initializeNotifications();
@@ -96,6 +95,7 @@ class NextAlarmApp extends StatelessWidget {
           return MaterialApp(
             title: 'NextAlarm',
             debugShowCheckedModeBanner: false,
+            navigatorKey: AppNavigationService.navigatorKey,
             theme: AppTheme.darkTheme,
             locale: localeService.locale,
             supportedLocales: LocaleService.supportedLocales,
