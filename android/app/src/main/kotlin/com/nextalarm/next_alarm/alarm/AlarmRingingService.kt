@@ -11,7 +11,9 @@ import android.media.AudioAttributes
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -22,6 +24,17 @@ class AlarmRingingService : Service() {
     private var ringtone: Ringtone? = null
     private var vibrator: Vibrator? = null
     private var notificationId: Int = BASE_NOTIFICATION_ID
+    private val loopHandler = Handler(Looper.getMainLooper())
+    private val loopCheckRunnable = object : Runnable {
+        override fun run() {
+            ringtone?.let {
+                if (!it.isPlaying) {
+                    it.play()
+                }
+            }
+            loopHandler.postDelayed(this, LOOP_CHECK_INTERVAL_MS)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -110,9 +123,15 @@ class AlarmRingingService : Service() {
             }
             play()
         }
+        // For pre-API 28 devices that lack Ringtone.isLooping, poll and restart
+        // the ringtone when it finishes to achieve seamless looping.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            loopHandler.postDelayed(loopCheckRunnable, LOOP_CHECK_INTERVAL_MS)
+        }
     }
 
     private fun stopRingtone() {
+        loopHandler.removeCallbacks(loopCheckRunnable)
         ringtone?.stop()
         ringtone = null
     }
@@ -169,5 +188,6 @@ class AlarmRingingService : Service() {
         const val ACTION_STOP = "com.nextalarm.next_alarm.ALARM_RINGING_STOP"
         private const val CHANNEL_ID = "alarm_ringing_channel"
         private const val BASE_NOTIFICATION_ID = 42000
+        private const val LOOP_CHECK_INTERVAL_MS = 1000L
     }
 }
