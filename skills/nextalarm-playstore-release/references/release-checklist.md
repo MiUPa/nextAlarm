@@ -45,6 +45,8 @@ Use this checklist for Android Play Store releases in this repository.
 `skills/nextalarm-playstore-release/scripts/release_runbook.sh build-upload --track internal --service-account /abs/path/play.json`
 6. Direct repo script (equivalent):
 `./scripts/release_android_playstore.sh <command>`
+7. Promote helper (after internal verification):
+`skills/nextalarm-playstore-release/scripts/release_runbook.sh promote --from-track internal --to-track production --service-account /abs/path/play.json --internal-verified`
 
 ## Post Build Validation
 
@@ -65,4 +67,5 @@ Use this checklist for Android Play Store releases in this repository.
 
 1. Verify policy declarations for exact alarms and foreground service.
 2. Verify Data safety and permissions disclosures.
-3. Roll out via internal testing before production unless explicitly overridden.
+3. Use internal testing first.
+4. Promote to production only after internal real-device verification (`--internal-verified`).

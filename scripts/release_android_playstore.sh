@@ -20,6 +20,9 @@ UPDATE_PRIORITY="${PLAY_UPDATE_PRIORITY:-}"
 FROM_TRACK=""
 TO_TRACK=""
 FLUTTER_BUILD_ARGS=()
+INTERNAL_VERIFIED=0
+ALLOW_DIRECT_PRODUCTION=0
+ENFORCE_INTERNAL_FIRST="${PLAY_ENFORCE_INTERNAL_FIRST:-1}"
 
 required_keys=(storeFile storePassword keyAlias keyPassword)
 
@@ -44,6 +47,8 @@ Options:
   --release-status <val>   completed|draft|halted|inProgress (default: completed).
   --user-fraction <num>    Required for inProgress staged rollout (e.g. 0.1).
   --update-priority <int>  In-app update priority (0-5).
+  --internal-verified      Confirm internal testing on real devices is done.
+  --allow-direct-production  Allow direct production upload/promote (override policy).
   --skip-build             Skip build step for upload/build-upload.
   --no-commit              Dry run for Play edit changes (Gradle Play Publisher).
   --                Treat the rest as flutter build appbundle arguments.
@@ -57,12 +62,13 @@ Optional env vars:
   PLAY_RELEASE_STATUS         Default release status when --release-status is omitted.
   PLAY_USER_FRACTION          Default user fraction when --user-fraction is omitted.
   PLAY_UPDATE_PRIORITY        Default update priority when --update-priority is omitted.
+  PLAY_ENFORCE_INTERNAL_FIRST Set to 0 to disable internal->production policy guard.
 
 Examples:
   scripts/release_android_playstore.sh build
   scripts/release_android_playstore.sh upload --track internal
-  PLAY_SERVICE_ACCOUNT_JSON=/path/play.json scripts/release_android_playstore.sh build-upload --track production
-  PLAY_SERVICE_ACCOUNT_JSON=/path/play.json scripts/release_android_playstore.sh promote --from-track internal --to-track production
+  PLAY_SERVICE_ACCOUNT_JSON=/path/play.json scripts/release_android_playstore.sh build-upload --track internal
+  PLAY_SERVICE_ACCOUNT_JSON=/path/play.json scripts/release_android_playstore.sh promote --from-track internal --to-track production --internal-verified
 EOF
 }
 
@@ -159,9 +165,46 @@ build_aab() {
 	ls -lh "$AAB_PATH"
 }
 
+validate_production_upload_policy() {
+	if [[ "$TRACK" != "production" ]]; then
+		return
+	fi
+
+	if [[ "$INTERNAL_VERIFIED" -ne 1 ]]; then
+		log_error "Production upload requires --internal-verified after real-device internal testing."
+		exit 1
+	fi
+
+	if [[ "$ENFORCE_INTERNAL_FIRST" == "1" && "$ALLOW_DIRECT_PRODUCTION" -ne 1 ]]; then
+		log_error "Direct upload to production is blocked by policy."
+		log_error "Use internal testing first, then promote to production."
+		log_error "If you must bypass, pass --allow-direct-production."
+		exit 1
+	fi
+}
+
+validate_production_promote_policy() {
+	if [[ "$TO_TRACK" != "production" ]]; then
+		return
+	fi
+
+	if [[ "$INTERNAL_VERIFIED" -ne 1 ]]; then
+		log_error "Promoting to production requires --internal-verified."
+		exit 1
+	fi
+
+	if [[ "$ENFORCE_INTERNAL_FIRST" == "1" && "$FROM_TRACK" != "internal" && "$ALLOW_DIRECT_PRODUCTION" -ne 1 ]]; then
+		log_error "Policy requires internal -> production promotion."
+		log_error "Given: --from-track $FROM_TRACK --to-track $TO_TRACK"
+		log_error "If you must bypass, pass --allow-direct-production."
+		exit 1
+	fi
+}
+
 upload_to_play() {
 	validate_signing
 	resolve_service_account_path
+	validate_production_upload_policy
 
 	if [[ "$SKIP_BUILD" -eq 0 ]]; then
 		build_aab
@@ -199,6 +242,7 @@ promote_release() {
 		log_error "promote requires --from-track and --to-track."
 		exit 1
 	fi
+	validate_production_promote_policy
 
 	local gradle_args=(
 		":app:promoteReleaseArtifact"
@@ -288,6 +332,14 @@ parse_args() {
 					exit 1
 				fi
 				shift 2
+				;;
+			--internal-verified)
+				INTERNAL_VERIFIED=1
+				shift
+				;;
+			--allow-direct-production)
+				ALLOW_DIRECT_PRODUCTION=1
+				shift
 				;;
 			--skip-build)
 				SKIP_BUILD=1
