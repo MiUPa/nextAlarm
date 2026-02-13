@@ -63,11 +63,4 @@ class AndroidAlarmPlatformService {
     if (!_isAndroid) return;
     await _channel.invokeMethod<void>('stopAlarmRinging');
   }
-
-  /// Returns the device ringer mode: "normal", "vibrate", or "silent".
-  /// Returns "normal" on non-Android platforms.
-  static Future<String> getRingerMode() async {
-    if (!_isAndroid) return 'normal';
-    return (await _channel.invokeMethod<String>('getRingerMode')) ?? 'normal';
-  }
 }
