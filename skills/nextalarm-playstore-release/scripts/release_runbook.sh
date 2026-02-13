@@ -7,10 +7,13 @@ cd "$ROOT_DIR"
 HELPER_SCRIPT="./scripts/release_android_playstore.sh"
 CMD=""
 TRACK="${PLAY_TRACK:-internal}"
+FROM_TRACK=""
+TO_TRACK=""
 SERVICE_ACCOUNT="${PLAY_SERVICE_ACCOUNT_JSON:-}"
 RUN_TESTS=0
 ALLOW_ANALYZE_ISSUES=0
 DRY_RUN=0
+INTERNAL_VERIFIED=0
 FLUTTER_BUILD_ARGS=()
 
 usage() {
@@ -20,19 +23,24 @@ Usage:
   skills/nextalarm-playstore-release/scripts/release_runbook.sh build [-- <flutter args...>]
   skills/nextalarm-playstore-release/scripts/release_runbook.sh upload --track <track> --service-account <json>
   skills/nextalarm-playstore-release/scripts/release_runbook.sh build-upload --track <track> --service-account <json> [-- <flutter args...>]
+  skills/nextalarm-playstore-release/scripts/release_runbook.sh promote --from-track internal --to-track production --service-account <json> --internal-verified
 
 Commands:
   preflight     Run local checks (analyze and optional test).
   build         Build signed AAB using repository release script.
   upload        Upload existing AAB to Play track.
   build-upload  Build signed AAB then upload to Play track.
+  promote       Promote release artifact between tracks (recommended: internal -> production).
 
 Options:
   --with-tests                Run flutter test in preflight.
   --allow-analyze-issues      Continue even if flutter analyze is non-zero.
   --dry-run                   Print commands without executing.
   --track <track>             Play track. Default: internal.
+  --from-track <track>        Source track for promote.
+  --to-track <track>          Destination track for promote.
   --service-account <json>    Path to Play service account JSON.
+  --internal-verified         Confirm internal testing is complete before production.
   --                          Remaining args are passed to flutter build appbundle.
 EOF
 }
@@ -100,31 +108,58 @@ run_build() {
 run_upload() {
   ensure_repo_script
   [[ -n "$SERVICE_ACCOUNT" ]] || die "--service-account or PLAY_SERVICE_ACCOUNT_JSON is required for upload."
+  local verified_arg=()
+  if [[ "$INTERNAL_VERIFIED" -eq 1 ]]; then
+    verified_arg+=("--internal-verified")
+  fi
   if [[ "$DRY_RUN" -eq 1 ]]; then
-    echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" upload --track \"$TRACK\""
+    echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" upload --track \"$TRACK\" ${verified_arg[*]}"
   else
     PLAY_SERVICE_ACCOUNT_JSON="$SERVICE_ACCOUNT" PLAY_TRACK="$TRACK" \
-      "$HELPER_SCRIPT" upload --track "$TRACK"
+      "$HELPER_SCRIPT" upload --track "$TRACK" "${verified_arg[@]}"
   fi
 }
 
 run_build_upload() {
   ensure_repo_script
   [[ -n "$SERVICE_ACCOUNT" ]] || die "--service-account or PLAY_SERVICE_ACCOUNT_JSON is required for build-upload."
+  local verified_arg=()
+  if [[ "$INTERNAL_VERIFIED" -eq 1 ]]; then
+    verified_arg+=("--internal-verified")
+  fi
   if [[ ${#FLUTTER_BUILD_ARGS[@]} -gt 0 ]]; then
     if [[ "$DRY_RUN" -eq 1 ]]; then
-      echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" build-upload --track \"$TRACK\" -- ${FLUTTER_BUILD_ARGS[*]}"
+      echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" build-upload --track \"$TRACK\" ${verified_arg[*]} -- ${FLUTTER_BUILD_ARGS[*]}"
     else
       PLAY_SERVICE_ACCOUNT_JSON="$SERVICE_ACCOUNT" PLAY_TRACK="$TRACK" \
-        "$HELPER_SCRIPT" build-upload --track "$TRACK" -- "${FLUTTER_BUILD_ARGS[@]}"
+        "$HELPER_SCRIPT" build-upload --track "$TRACK" "${verified_arg[@]}" -- "${FLUTTER_BUILD_ARGS[@]}"
     fi
   else
     if [[ "$DRY_RUN" -eq 1 ]]; then
-      echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" build-upload --track \"$TRACK\""
+      echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" PLAY_TRACK=\"$TRACK\" \"$HELPER_SCRIPT\" build-upload --track \"$TRACK\" ${verified_arg[*]}"
     else
       PLAY_SERVICE_ACCOUNT_JSON="$SERVICE_ACCOUNT" PLAY_TRACK="$TRACK" \
-        "$HELPER_SCRIPT" build-upload --track "$TRACK"
+        "$HELPER_SCRIPT" build-upload --track "$TRACK" "${verified_arg[@]}"
     fi
+  fi
+}
+
+run_promote() {
+  ensure_repo_script
+  [[ -n "$SERVICE_ACCOUNT" ]] || die "--service-account or PLAY_SERVICE_ACCOUNT_JSON is required for promote."
+  [[ -n "$FROM_TRACK" ]] || die "--from-track is required for promote."
+  [[ -n "$TO_TRACK" ]] || die "--to-track is required for promote."
+
+  local verified_arg=()
+  if [[ "$INTERNAL_VERIFIED" -eq 1 ]]; then
+    verified_arg+=("--internal-verified")
+  fi
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[DRY-RUN] PLAY_SERVICE_ACCOUNT_JSON=\"$SERVICE_ACCOUNT\" \"$HELPER_SCRIPT\" promote --from-track \"$FROM_TRACK\" --to-track \"$TO_TRACK\" ${verified_arg[*]}"
+  else
+    PLAY_SERVICE_ACCOUNT_JSON="$SERVICE_ACCOUNT" \
+      "$HELPER_SCRIPT" promote --from-track "$FROM_TRACK" --to-track "$TO_TRACK" "${verified_arg[@]}"
   fi
 }
 
@@ -132,7 +167,7 @@ parse_args() {
   [[ $# -gt 0 ]] || { usage; exit 1; }
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      preflight|build|upload|build-upload)
+      preflight|build|upload|build-upload|promote)
         [[ -z "$CMD" ]] || die "Command already set to '$CMD'"
         CMD="$1"
         shift
@@ -154,10 +189,24 @@ parse_args() {
         [[ -n "$TRACK" ]] || die "--track requires a value"
         shift 2
         ;;
+      --from-track)
+        FROM_TRACK="${2:-}"
+        [[ -n "$FROM_TRACK" ]] || die "--from-track requires a value"
+        shift 2
+        ;;
+      --to-track)
+        TO_TRACK="${2:-}"
+        [[ -n "$TO_TRACK" ]] || die "--to-track requires a value"
+        shift 2
+        ;;
       --service-account)
         SERVICE_ACCOUNT="${2:-}"
         [[ -n "$SERVICE_ACCOUNT" ]] || die "--service-account requires a value"
         shift 2
+        ;;
+      --internal-verified)
+        INTERNAL_VERIFIED=1
+        shift
         ;;
       --)
         shift
@@ -191,6 +240,9 @@ main() {
       ;;
     build-upload)
       run_build_upload
+      ;;
+    promote)
+      run_promote
       ;;
     *)
       usage
