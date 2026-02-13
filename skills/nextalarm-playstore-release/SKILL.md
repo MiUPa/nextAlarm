@@ -38,6 +38,8 @@ Confirm these values before running commands:
 - Build: `./scripts/release_android_playstore.sh build`
 - Upload only: `PLAY_SERVICE_ACCOUNT_JSON=/abs/path/play.json ./scripts/release_android_playstore.sh upload --track internal`
 - Build and upload: `PLAY_SERVICE_ACCOUNT_JSON=/abs/path/play.json ./scripts/release_android_playstore.sh build-upload --track internal`
+- Promote to production after internal verification:
+`PLAY_SERVICE_ACCOUNT_JSON=/abs/path/play.json ./scripts/release_android_playstore.sh promote --from-track internal --to-track production --internal-verified`
 
 4. Verify release artifact.
 - Confirm `build/app/outputs/bundle/release/app-release.aab` exists.
@@ -54,4 +56,5 @@ Confirm these values before running commands:
 
 - Never commit `android/key.properties` or service-account JSON.
 - Stop and resolve analyzer/build errors before upload.
-- Use internal testing first unless user explicitly requests direct production rollout.
+- Default policy is `internal -> production` with real-device verification in between.
+- Production promotion requires explicit confirmation (`--internal-verified`).

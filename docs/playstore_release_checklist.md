@@ -35,7 +35,7 @@
   - Build and upload in one command:
     - `PLAY_SERVICE_ACCOUNT_JSON=/path/to/play-service-account.json ./scripts/release_android_playstore.sh build-upload --track internal`
   - Promote release between tracks:
-    - `PLAY_SERVICE_ACCOUNT_JSON=/path/to/play-service-account.json ./scripts/release_android_playstore.sh promote --from-track internal --to-track production`
+    - `PLAY_SERVICE_ACCOUNT_JSON=/path/to/play-service-account.json ./scripts/release_android_playstore.sh promote --from-track internal --to-track production --internal-verified`
 - Required:
   - Play service account JSON with `Google Play Android Developer` access for this app.
   - Environment variable:
@@ -67,9 +67,13 @@
   - Alarm fires while app is backgrounded.
   - Lock-screen ringing flow.
   - Notification behavior on Android 13+.
+- Gate:
+  - Do not publish to `production` until internal real-device verification is complete.
+  - CLI policy now requires `--internal-verified` for production promotion.
 
 ## 8. Production Release
-- Create production release from tested artifact.
+- Promote tested internal artifact to production.
+  - `PLAY_SERVICE_ACCOUNT_JSON=/path/to/play-service-account.json ./scripts/release_android_playstore.sh promote --from-track internal --to-track production --internal-verified`
 - Add release notes.
 - Roll out staged percentage first (recommended), then 100%.
 
