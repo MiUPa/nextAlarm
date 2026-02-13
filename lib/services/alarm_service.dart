@@ -341,7 +341,8 @@ class AlarmService extends ChangeNotifier {
         }
 
         _currentVolume = (_currentVolume + 0.15).clamp(0.0, 1.0);
-        await FlutterRingtonePlayer().stop();
+        // Call play() directly without stop() first to avoid audible gap.
+        // FlutterRingtonePlayer replaces the current playback internally.
         await _playPlatformSound(platformSound, volume: _currentVolume);
         debugPrint('🔊 Volume increased to: $_currentVolume');
       } else {
