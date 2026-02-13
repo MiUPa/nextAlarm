@@ -21,6 +21,7 @@ class AlarmScheduler(private val context: Context) {
         val isEnabled: Boolean,
         val repeatDays: Set<Int>,
         val label: String,
+        val sound: Int, // AlarmSound enum index from Dart (5 = silent)
     )
 
     fun syncAlarms(rawAlarms: List<Map<String, Any?>>) {
@@ -86,6 +87,7 @@ class AlarmScheduler(private val context: Context) {
             isEnabled = item.optBoolean("isEnabled", true),
             repeatDays = repeatDays,
             label = item.optString("label", ""),
+            sound = item.optInt("sound", 0),
         )
     }
 
@@ -102,6 +104,8 @@ class AlarmScheduler(private val context: Context) {
             (it as? Number)?.toInt()?.takeIf { day -> day in 1..7 }
         }.toSet()
 
+        val sound = (item["sound"] as? Number)?.toInt() ?: 0
+
         return AlarmPayload(
             id = id,
             hour = hour,
@@ -109,6 +113,7 @@ class AlarmScheduler(private val context: Context) {
             isEnabled = isEnabled,
             repeatDays = repeatDays,
             label = label,
+            sound = sound,
         )
     }
 
@@ -119,6 +124,7 @@ class AlarmScheduler(private val context: Context) {
             action = AlarmReceiver.ACTION_TRIGGER
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarm.id)
             putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, alarm.label)
+            putExtra(AlarmReceiver.EXTRA_ALARM_SOUND, alarm.sound)
         }
         val alarmPendingIntent = PendingIntent.getBroadcast(
             context,
