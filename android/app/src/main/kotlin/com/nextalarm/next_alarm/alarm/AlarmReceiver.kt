@@ -14,6 +14,7 @@ class AlarmReceiver : BroadcastReceiver() {
         if (alarmId.isNullOrBlank()) return
 
         val label = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: ""
+        val sound = intent.getIntExtra(EXTRA_ALARM_SOUND, 0)
         val scheduler = AlarmScheduler(context)
         scheduler.rescheduleAlarmById(alarmId)
         AlarmPrefs.setPendingRingingAlarmId(context, alarmId)
@@ -22,6 +23,7 @@ class AlarmReceiver : BroadcastReceiver() {
             action = AlarmRingingService.ACTION_START
             putExtra(EXTRA_ALARM_ID, alarmId)
             putExtra(EXTRA_ALARM_LABEL, label)
+            putExtra(EXTRA_ALARM_SOUND, sound)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -37,6 +39,7 @@ class AlarmReceiver : BroadcastReceiver() {
         const val ACTION_TRIGGER = "com.nextalarm.next_alarm.ALARM_TRIGGER"
         const val EXTRA_ALARM_ID = "alarm_id"
         const val EXTRA_ALARM_LABEL = "alarm_label"
+        const val EXTRA_ALARM_SOUND = "alarm_sound"
         private const val TAG = "AlarmReceiver"
     }
 }

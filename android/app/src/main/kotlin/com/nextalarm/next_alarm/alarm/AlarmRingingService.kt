@@ -48,13 +48,17 @@ class AlarmRingingService : Service() {
     private fun startRinging(intent: Intent?) {
         val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID) ?: return
         val label = intent.getStringExtra(AlarmReceiver.EXTRA_ALARM_LABEL).orEmpty()
+        val sound = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_SOUND, 0)
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
 
         notificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
         val notification = buildNotification(alarmId, label)
         startForeground(notificationId, notification)
 
-        startRingtone()
+        // AlarmSound.silent index == 5 in Dart enum
+        if (sound != SOUND_SILENT) {
+            startRingtone()
+        }
         startVibration()
     }
 
@@ -177,5 +181,6 @@ class AlarmRingingService : Service() {
         const val ACTION_STOP = "com.nextalarm.next_alarm.ALARM_RINGING_STOP"
         private const val CHANNEL_ID = "alarm_ringing_channel"
         private const val BASE_NOTIFICATION_ID = 42000
+        private const val SOUND_SILENT = 5 // AlarmSound.silent index in Dart enum
     }
 }
