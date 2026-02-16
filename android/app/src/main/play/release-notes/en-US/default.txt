@@ -1,1 +1,2 @@
-Renamed the app to WakeShock.
+Added vibration intensity settings (Gentle/Standard/Aggressive) for alarms.
+Improved Android alarm audio/vibration behavior with better Bluetooth and Do Not Disturb handling.

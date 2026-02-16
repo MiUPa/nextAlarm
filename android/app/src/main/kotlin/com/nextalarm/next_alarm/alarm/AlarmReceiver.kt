@@ -15,6 +15,8 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val label = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: ""
         val sound = intent.getIntExtra(EXTRA_ALARM_SOUND, 0)
+        val vibrate = intent.getBooleanExtra(EXTRA_ALARM_VIBRATE, true)
+        val vibrationIntensity = intent.getIntExtra(EXTRA_ALARM_VIBRATION_INTENSITY, 1)
         val scheduler = AlarmScheduler(context)
         scheduler.rescheduleAlarmById(alarmId)
         AlarmPrefs.setPendingRingingAlarmId(context, alarmId)
@@ -24,6 +26,8 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra(EXTRA_ALARM_ID, alarmId)
             putExtra(EXTRA_ALARM_LABEL, label)
             putExtra(EXTRA_ALARM_SOUND, sound)
+            putExtra(EXTRA_ALARM_VIBRATE, vibrate)
+            putExtra(EXTRA_ALARM_VIBRATION_INTENSITY, vibrationIntensity)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -40,6 +44,8 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_ALARM_ID = "alarm_id"
         const val EXTRA_ALARM_LABEL = "alarm_label"
         const val EXTRA_ALARM_SOUND = "alarm_sound"
+        const val EXTRA_ALARM_VIBRATE = "alarm_vibrate"
+        const val EXTRA_ALARM_VIBRATION_INTENSITY = "alarm_vibration_intensity"
         private const val TAG = "AlarmReceiver"
     }
 }

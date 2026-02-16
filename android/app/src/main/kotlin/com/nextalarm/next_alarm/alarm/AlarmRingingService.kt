@@ -61,6 +61,8 @@ class AlarmRingingService : Service() {
         val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID) ?: return
         val label = intent.getStringExtra(AlarmReceiver.EXTRA_ALARM_LABEL).orEmpty()
         val sound = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_SOUND, 0)
+        val vibrate = intent.getBooleanExtra(AlarmReceiver.EXTRA_ALARM_VIBRATE, true)
+        val vibrationIntensity = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_VIBRATION_INTENSITY, 1)
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
 
         notificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
@@ -71,7 +73,9 @@ class AlarmRingingService : Service() {
         if (sound != SOUND_SILENT) {
             startRingtone()
         }
-        startVibration()
+        if (vibrate) {
+            startVibration(vibrationIntensity)
+        }
     }
 
     private fun buildNotification(alarmId: String, label: String): Notification {
@@ -110,6 +114,10 @@ class AlarmRingingService : Service() {
             .setAutoCancel(false)
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+            // Sound and vibration are handled manually with USAGE_ALARM
+            .setSound(null)
+            .setVibrate(null)
+            .setSilent(true)
             .build()
     }
 
@@ -140,7 +148,11 @@ class AlarmRingingService : Service() {
         ringtone = null
     }
 
-    private fun startVibration() {
+    /**
+     * @param intensityIndex  VibrationIntensity enum index from Dart:
+     *                        0 = gentle, 1 = standard, 2 = aggressive
+     */
+    private fun startVibration(intensityIndex: Int = 1) {
         stopVibration()
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val manager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -150,9 +162,40 @@ class AlarmRingingService : Service() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
-        val pattern = longArrayOf(0, 500, 500)
+        // Aggressive repeating pattern: rapid bursts, pauses, slams.
+        // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
+        // Repeats from index 0.
+        val pattern = longArrayOf(
+            // Rapid bursts
+            0, 100, 50, 100, 50, 200, 100, 100,
+            // Strong slam
+            200, 500, 100, 300,
+            // Brief pause then staccato
+            400, 80, 40, 80, 40, 80, 40, 80, 40, 80,
+            // Final sustained buzz
+            200, 600, 100, 400,
+        )
+
+        // Scale amplitude based on intensity: gentle=40%, standard=70%, aggressive=100%
+        val scale = when (intensityIndex) {
+            0 -> 0.4
+            1 -> 0.7
+            else -> 1.0
+        }
+        // Amplitudes: even indices = pause (0), odd indices = vibrate (scaled)
+        val amplitudes = IntArray(pattern.size) { i ->
+            if (i % 2 == 0) 0 else (255 * scale).toInt().coerceIn(1, 255)
+        }
+
+        val alarmAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            vibrator?.vibrate(
+                VibrationEffect.createWaveform(pattern, amplitudes, 0),
+                alarmAttributes,
+            )
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(pattern, 0)
@@ -183,6 +226,11 @@ class AlarmRingingService : Service() {
         ).apply {
             description = "Channel for alarm ringing and full-screen alarm UI"
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            // Disable channel-level sound and vibration — we handle both
+            // manually via Ringtone and Vibrator with USAGE_ALARM attributes
+            // so they bypass DND and work with Bluetooth audio.
+            setSound(null, null)
+            enableVibration(false)
         }
         manager.createNotificationChannel(channel)
     }

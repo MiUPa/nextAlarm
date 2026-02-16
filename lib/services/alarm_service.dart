@@ -107,8 +107,16 @@ class AlarmService extends ChangeNotifier {
   void _triggerAlarm(models.Alarm alarm) {
     _ringingAlarm = alarm;
     AppNavigationService.popToRoot();
-    _playAlarmSound();
-    _startVibration(alarm);
+
+    if (_useAndroidPlatformScheduler) {
+      // On Android, AlarmRingingService already handles sound and vibration
+      // natively with proper AudioAttributes.USAGE_ALARM.
+      // Do NOT start Flutter-side sound/vibration to avoid cancelling the
+      // native vibrator and losing USAGE_ALARM attribution.
+    } else {
+      _playAlarmSound();
+      _startVibration(alarm);
+    }
 
     // Send browser notification if on Web
     if (kIsWeb) {
