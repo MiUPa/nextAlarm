@@ -61,6 +61,7 @@ class AlarmRingingService : Service() {
         val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID) ?: return
         val label = intent.getStringExtra(AlarmReceiver.EXTRA_ALARM_LABEL).orEmpty()
         val sound = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_SOUND, 0)
+        val vibrate = intent.getBooleanExtra(AlarmReceiver.EXTRA_ALARM_VIBRATE, true)
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
 
         notificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
@@ -71,7 +72,9 @@ class AlarmRingingService : Service() {
         if (sound != SOUND_SILENT) {
             startRingtone()
         }
-        startVibration()
+        if (vibrate) {
+            startVibration()
+        }
     }
 
     private fun buildNotification(alarmId: String, label: String): Notification {
@@ -150,9 +153,29 @@ class AlarmRingingService : Service() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
-        val pattern = longArrayOf(0, 500, 500)
+        // Aggressive repeating pattern: rapid bursts, pauses, slams.
+        // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
+        // Repeats from index 0.
+        val pattern = longArrayOf(
+            // Rapid bursts
+            0, 100, 50, 100, 50, 200, 100, 100,
+            // Strong slam
+            200, 500, 100, 300,
+            // Brief pause then staccato
+            400, 80, 40, 80, 40, 80, 40, 80, 40, 80,
+            // Final sustained buzz
+            200, 600, 100, 400,
+        )
+
+        val alarmAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            vibrator?.vibrate(
+                VibrationEffect.createWaveform(pattern, 0),
+                alarmAttributes,
+            )
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(pattern, 0)
