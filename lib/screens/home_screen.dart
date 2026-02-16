@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vibration/vibration.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
 import '../services/app_update_service.dart';
@@ -313,7 +313,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	}
 
 	void _addAlarm(BuildContext context) async {
-		Vibration.vibrate(duration: 10);
 		await Navigator.of(context).push(
 			MaterialPageRoute(
 				builder: (context) => const AlarmEditScreen(),
@@ -323,7 +322,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	}
 
 	void _editAlarm(BuildContext context, models.Alarm alarm) async {
-		Vibration.vibrate(duration: 10);
 		await Navigator.of(context).push(
 			MaterialPageRoute(
 				builder: (context) => AlarmEditScreen(alarm: alarm),
@@ -333,13 +331,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	}
 
 	void _toggleAlarm(String id) {
-		Vibration.vibrate(duration: 10);
 		context.read<AlarmService>().toggleAlarm(id);
 	}
 
 	Future<bool> _confirmDeleteAlarm(BuildContext context) async {
 		final l10n = AppLocalizations.of(context)!;
-		Vibration.vibrate(duration: 10);
 
 		final result = await showDialog<bool>(
 			context: context,
@@ -373,7 +369,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	}
 
 	void _deleteAlarm(String id) {
-		Vibration.vibrate(duration: 20, amplitude: 128);
 		context.read<AlarmService>().deleteAlarm(id);
 	}
 }

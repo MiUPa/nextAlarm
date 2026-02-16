@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vibration/vibration.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
 import '../services/alarm_service.dart';
@@ -67,7 +67,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 				leading: IconButton(
 					icon: const Icon(Icons.close),
 					onPressed: () {
-						Vibration.vibrate(duration: 10);
 						Navigator.pop(context);
 					},
 				),
@@ -155,7 +154,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 								compact: isCompactLayout,
 								onChanged: (days) {
 									setState(() => _repeatDays = days);
-									Vibration.vibrate(duration: 10);
 								},
 							),
 							topPadding: sectionTopPadding,
@@ -190,7 +188,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 								],
 							),
 							onTap: () {
-								Vibration.vibrate(duration: 10);
 								_showSoundPicker(context);
 							},
 						),
@@ -212,9 +209,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							activeColor: Colors.white,
 							onChanged: (value) {
 								setState(() => _vibrate = value);
-								if (value) {
-									Vibration.vibrate(duration: 50);
-								}
 							},
 						),
 
@@ -245,7 +239,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 									],
 								),
 								onTap: () {
-									Vibration.vibrate(duration: 10);
 									_showVibrationIntensityPicker(context);
 								},
 							),
@@ -273,7 +266,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							activeColor: Colors.white,
 							onChanged: (value) {
 								setState(() => _gradualVolume = value);
-								Vibration.vibrate(duration: 10);
 							},
 						),
 
@@ -285,7 +277,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 								compact: isCompactLayout,
 								onChanged: (challenge) {
 									setState(() => _challenge = challenge);
-									Vibration.vibrate(duration: 10);
 								},
 							),
 							topPadding: sectionTopPadding,
@@ -402,7 +393,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							activeColor: AppTheme.primary,
 							onChanged: (value) {
 								setState(() => _sound = value!);
-								Vibration.vibrate(duration: 10);
 								Navigator.pop(context);
 							},
 						),
@@ -447,7 +437,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							onChanged: (value) {
 								if (value == null) return;
 								setState(() => _vibrationIntensity = value);
-								Vibration.vibrate(duration: 10);
 								Navigator.pop(context);
 							},
 						),
@@ -459,7 +448,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	}
 
 	Future<void> _showTimePicker(BuildContext context) async {
-		Vibration.vibrate(duration: 10);
 		final TimeOfDay? picked = await showTimePicker(
 			context: context,
 			initialTime: TimeOfDay(hour: _hour, minute: _minute),
@@ -499,7 +487,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	}
 
 	Future<void> _deleteAlarm() async {
-		Vibration.vibrate(duration: 10);
 		final l10n = AppLocalizations.of(context)!;
 
 		final confirmed = await showDialog<bool>(
@@ -531,14 +518,12 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		);
 
 		if (confirmed == true && mounted) {
-			Vibration.vibrate(duration: 20, amplitude: 128);
 			context.read<AlarmService>().deleteAlarm(widget.alarm!.id);
 			Navigator.pop(context);
 		}
 	}
 
 	void _saveAlarm() async {
-		Vibration.vibrate(duration: 15);
 
 		final alarm = models.Alarm(
 			id: widget.alarm?.id,
