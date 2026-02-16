@@ -352,10 +352,8 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 				return _buildShakeChallenge();
 			case WakeUpChallenge.steps:
 				return _buildStepChallenge();
-			case WakeUpChallenge.none:
-				return _buildSimpleStop();
 			default:
-				return _buildPlaceholderChallenge();
+				return _buildSimpleStop();
 		}
 	}
 
@@ -646,54 +644,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 						),
 					),
 				],
-			],
-		);
-	}
-
-	Widget _buildPlaceholderChallenge() {
-		final l10n = AppLocalizations.of(context)!;
-		final challengeName = widget.alarm.challenge.toString().split('.').last;
-		return Column(
-			mainAxisSize: MainAxisSize.min,
-			children: [
-				Icon(
-					Icons.construction,
-					size: 64,
-					color: Colors.white.withOpacity(0.5),
-				),
-				const SizedBox(height: 20),
-				Text(
-					'$challengeName Challenge',
-					style: const TextStyle(
-						fontSize: 24,
-						fontWeight: FontWeight.w600,
-						color: Colors.white,
-					),
-				),
-				const SizedBox(height: 12),
-				Text(
-					l10n.challengeNotImplemented,
-					style: const TextStyle(
-						fontSize: 16,
-						color: Colors.white70,
-					),
-				),
-				const SizedBox(height: 40),
-				ElevatedButton(
-					onPressed: _stopAlarm,
-					style: ElevatedButton.styleFrom(
-						backgroundColor: AppTheme.error,
-						foregroundColor: Colors.white,
-						padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
-						shape: RoundedRectangleBorder(
-							borderRadius: BorderRadius.circular(30),
-						),
-					),
-					child: Text(
-						l10n.stopAlarm,
-						style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-					),
-				),
 			],
 		);
 	}

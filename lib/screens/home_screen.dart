@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +23,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	late AnimationController _fabController;
+	Timer? _appUpdateTimer;
+	Timer? _notificationPermissionTimer;
+	Timer? _reviewPromptTimer;
 
 	@override
 	void initState() {
@@ -43,28 +48,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		_checkReviewPrompt();
 	}
 
-	Future<void> _checkForAppUpdate() async {
-		// Wait for the first frame to ensure context is ready
-		await Future.delayed(const Duration(seconds: 2));
-		if (!mounted) return;
-		await AppUpdateService.checkForUpdate(context);
+	void _checkForAppUpdate() {
+		// Wait for the first frame to ensure context is ready.
+		_appUpdateTimer?.cancel();
+		_appUpdateTimer = Timer(const Duration(seconds: 2), () async {
+			if (!mounted) return;
+			await AppUpdateService.checkForUpdate(context);
+		});
 	}
 
-	Future<void> _requestNotificationPermission() async {
-		// Wait a bit for the UI to load
-		await Future.delayed(const Duration(seconds: 1));
-		await NotificationService.requestPermission();
+	void _requestNotificationPermission() {
+		// Wait a bit for the UI to load.
+		_notificationPermissionTimer?.cancel();
+		_notificationPermissionTimer = Timer(const Duration(seconds: 1), () async {
+			if (!mounted) return;
+			await NotificationService.requestPermission();
+		});
 	}
 
-	Future<void> _checkReviewPrompt() async {
-		// Wait for the UI to settle
-		await Future.delayed(const Duration(seconds: 2));
-		if (!mounted) return;
+	void _checkReviewPrompt() {
+		// Wait for the UI to settle.
+		_reviewPromptTimer?.cancel();
+		_reviewPromptTimer = Timer(const Duration(seconds: 2), () async {
+			if (!mounted) return;
 
-		final shouldShow = await ReviewPromptService.shouldShowPrompt();
-		if (shouldShow && mounted) {
-			_showReviewDialog();
-		}
+			final shouldShow = await ReviewPromptService.shouldShowPrompt();
+			if (shouldShow && mounted) {
+				_showReviewDialog();
+			}
+		});
 	}
 
 	void _showReviewDialog() {
@@ -169,6 +181,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 	@override
 	void dispose() {
+		_appUpdateTimer?.cancel();
+		_notificationPermissionTimer?.cancel();
+		_reviewPromptTimer?.cancel();
 		_fabController.dispose();
 		super.dispose();
 	}
@@ -385,7 +400,6 @@ class _AlarmCard extends StatefulWidget {
 class _AlarmCardState extends State<_AlarmCard>
 		with SingleTickerProviderStateMixin {
 	late AnimationController _controller;
-	bool _isPressed = false;
 
 	@override
 	void initState() {
@@ -420,16 +434,13 @@ class _AlarmCardState extends State<_AlarmCard>
 			},
 			child: GestureDetector(
 				onTapDown: (_) {
-					setState(() => _isPressed = true);
 					_controller.forward();
 				},
 				onTapUp: (_) {
-					setState(() => _isPressed = false);
 					_controller.reverse();
 					widget.onTap();
 				},
 				onTapCancel: () {
-					setState(() => _isPressed = false);
 					_controller.reverse();
 				},
 				child: Container(
