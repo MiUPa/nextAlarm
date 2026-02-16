@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'services/alarm_service.dart';
 import 'services/app_navigation_service.dart';
+import 'services/alarm_settings_service.dart';
 import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/alarm_ringing_screen.dart';
@@ -89,6 +90,7 @@ class NextAlarmApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AlarmService()),
         ChangeNotifierProvider(create: (_) => LocaleService()),
+        ChangeNotifierProvider(create: (_) => AlarmSettingsService()),
       ],
       child: Consumer<LocaleService>(
         builder: (context, localeService, child) {

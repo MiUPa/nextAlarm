@@ -300,4 +300,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reviewPromptDismiss => 'Don\'t show again';
+
+  @override
+  String get silenceAfter => 'Silence after';
+
+  @override
+  String silenceAfterValue(int minutes) {
+    return '$minutes minutes';
+  }
+
+  @override
+  String get silenceAfterNever => 'Never';
+
+  @override
+  String get alarmVolume => 'Alarm volume';
+
+  @override
+  String get graduallyIncreaseVolume => 'Gradually increase volume';
+
+  @override
+  String get graduallyIncreaseVolumeOff => 'Off';
+
+  @override
+  String graduallyIncreaseVolumeSeconds(int seconds) {
+    return '$seconds seconds';
+  }
+
+  @override
+  String get volumeButtons => 'Volume buttons';
+
+  @override
+  String get volumeButtonStop => 'Stop';
+
+  @override
+  String get volumeButtonStopChallengeNote => 'Disabled when challenge is set';
+
+  @override
+  String get volumeButtonAdjustVolume => 'Adjust volume';
+
+  @override
+  String get volumeButtonNothing => 'Nothing';
+
+  @override
+  String get startWeekOn => 'Start week on';
+
+  @override
+  String get startWeekOnSunday => 'Sunday';
+
+  @override
+  String get startWeekOnMonday => 'Monday';
+
+  @override
+  String get startWeekOnSaturday => 'Saturday';
+
+  @override
+  String get alarmSettings => 'Alarm settings';
 }

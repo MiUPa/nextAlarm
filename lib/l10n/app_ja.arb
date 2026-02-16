@@ -85,5 +85,23 @@
 	"reviewPromptMessage": "アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！",
 	"reviewPromptRate": "評価する",
 	"reviewPromptLater": "あとで",
-	"reviewPromptDismiss": "今後表示しない"
+	"reviewPromptDismiss": "今後表示しない",
+
+	"silenceAfter": "自動消音",
+	"silenceAfterValue": "{minutes}分",
+	"silenceAfterNever": "なし",
+	"alarmVolume": "アラームの音量",
+	"graduallyIncreaseVolume": "段階的に音量を上げる",
+	"graduallyIncreaseVolumeOff": "オフ",
+	"graduallyIncreaseVolumeSeconds": "{seconds}秒",
+	"volumeButtons": "音量ボタン",
+	"volumeButtonStop": "停止",
+	"volumeButtonStopChallengeNote": "チャレンジ設定時は無効",
+	"volumeButtonAdjustVolume": "音量調整",
+	"volumeButtonNothing": "何もしない",
+	"startWeekOn": "週の始まり",
+	"startWeekOnSunday": "日曜日",
+	"startWeekOnMonday": "月曜日",
+	"startWeekOnSaturday": "土曜日",
+	"alarmSettings": "アラーム設定"
 }

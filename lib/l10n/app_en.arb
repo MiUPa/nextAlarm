@@ -149,5 +149,37 @@
 	"reviewPromptMessage": "If you like this app, please take a moment to rate it. Your feedback helps us improve!",
 	"reviewPromptRate": "Rate Now",
 	"reviewPromptLater": "Later",
-	"reviewPromptDismiss": "Don't show again"
+	"reviewPromptDismiss": "Don't show again",
+
+	"silenceAfter": "Silence after",
+	"silenceAfterValue": "{minutes} minutes",
+	"@silenceAfterValue": {
+		"placeholders": {
+			"minutes": {
+				"type": "int"
+			}
+		}
+	},
+	"silenceAfterNever": "Never",
+	"alarmVolume": "Alarm volume",
+	"graduallyIncreaseVolume": "Gradually increase volume",
+	"graduallyIncreaseVolumeOff": "Off",
+	"graduallyIncreaseVolumeSeconds": "{seconds} seconds",
+	"@graduallyIncreaseVolumeSeconds": {
+		"placeholders": {
+			"seconds": {
+				"type": "int"
+			}
+		}
+	},
+	"volumeButtons": "Volume buttons",
+	"volumeButtonStop": "Stop",
+	"volumeButtonStopChallengeNote": "Disabled when challenge is set",
+	"volumeButtonAdjustVolume": "Adjust volume",
+	"volumeButtonNothing": "Nothing",
+	"startWeekOn": "Start week on",
+	"startWeekOnSunday": "Sunday",
+	"startWeekOnMonday": "Monday",
+	"startWeekOnSaturday": "Saturday",
+	"alarmSettings": "Alarm settings"
 }

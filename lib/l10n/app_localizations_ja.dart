@@ -280,4 +280,59 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reviewPromptDismiss => '今後表示しない';
+
+  @override
+  String get silenceAfter => '自動消音';
+
+  @override
+  String silenceAfterValue(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String get silenceAfterNever => 'なし';
+
+  @override
+  String get alarmVolume => 'アラームの音量';
+
+  @override
+  String get graduallyIncreaseVolume => '段階的に音量を上げる';
+
+  @override
+  String get graduallyIncreaseVolumeOff => 'オフ';
+
+  @override
+  String graduallyIncreaseVolumeSeconds(int seconds) {
+    return '$seconds秒';
+  }
+
+  @override
+  String get volumeButtons => '音量ボタン';
+
+  @override
+  String get volumeButtonStop => '停止';
+
+  @override
+  String get volumeButtonStopChallengeNote => 'チャレンジ設定時は無効';
+
+  @override
+  String get volumeButtonAdjustVolume => '音量調整';
+
+  @override
+  String get volumeButtonNothing => '何もしない';
+
+  @override
+  String get startWeekOn => '週の始まり';
+
+  @override
+  String get startWeekOnSunday => '日曜日';
+
+  @override
+  String get startWeekOnMonday => '月曜日';
+
+  @override
+  String get startWeekOnSaturday => '土曜日';
+
+  @override
+  String get alarmSettings => 'アラーム設定';
 }

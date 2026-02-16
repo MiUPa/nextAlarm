@@ -613,6 +613,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Don\'t show again'**
   String get reviewPromptDismiss;
+
+  /// No description provided for @silenceAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Silence after'**
+  String get silenceAfter;
+
+  /// No description provided for @silenceAfterValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes'**
+  String silenceAfterValue(int minutes);
+
+  /// No description provided for @silenceAfterNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get silenceAfterNever;
+
+  /// No description provided for @alarmVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm volume'**
+  String get alarmVolume;
+
+  /// No description provided for @graduallyIncreaseVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradually increase volume'**
+  String get graduallyIncreaseVolume;
+
+  /// No description provided for @graduallyIncreaseVolumeOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get graduallyIncreaseVolumeOff;
+
+  /// No description provided for @graduallyIncreaseVolumeSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} seconds'**
+  String graduallyIncreaseVolumeSeconds(int seconds);
+
+  /// No description provided for @volumeButtons.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume buttons'**
+  String get volumeButtons;
+
+  /// No description provided for @volumeButtonStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get volumeButtonStop;
+
+  /// No description provided for @volumeButtonStopChallengeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled when challenge is set'**
+  String get volumeButtonStopChallengeNote;
+
+  /// No description provided for @volumeButtonAdjustVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust volume'**
+  String get volumeButtonAdjustVolume;
+
+  /// No description provided for @volumeButtonNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get volumeButtonNothing;
+
+  /// No description provided for @startWeekOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Start week on'**
+  String get startWeekOn;
+
+  /// No description provided for @startWeekOnSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get startWeekOnSunday;
+
+  /// No description provided for @startWeekOnMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get startWeekOnMonday;
+
+  /// No description provided for @startWeekOnSaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get startWeekOnSaturday;
+
+  /// No description provided for @alarmSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm settings'**
+  String get alarmSettings;
 }
 
 class _AppLocalizationsDelegate

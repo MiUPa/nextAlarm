@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../services/alarm_settings_service.dart';
 import '../services/android_alarm_platform_service.dart';
 import '../services/locale_service.dart';
 import '../theme/app_theme.dart';
@@ -24,6 +25,11 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          _buildSection(
+            context,
+            l10n.alarmSettings,
+            const _AlarmSettingsSection(),
+          ),
           _buildSection(
             context,
             l10n.language,
@@ -56,6 +62,289 @@ class SettingsScreen extends StatelessWidget {
         ),
         child,
       ],
+    );
+  }
+}
+
+class _AlarmSettingsSection extends StatelessWidget {
+  const _AlarmSettingsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final settings = context.watch<AlarmSettingsService>();
+
+    return Column(
+      children: [
+        // Silence after
+        _SettingsTile(
+          title: l10n.silenceAfter,
+          value: settings.silenceAfterMinutes == 0
+              ? l10n.silenceAfterNever
+              : l10n.silenceAfterValue(settings.silenceAfterMinutes),
+          onTap: () => _showSilenceAfterDialog(context, settings, l10n),
+        ),
+        // Alarm volume
+        _VolumeSliderTile(
+          title: l10n.alarmVolume,
+          value: settings.alarmVolume,
+          onChanged: (v) => settings.setAlarmVolume(v),
+        ),
+        // Gradually increase volume
+        _SettingsTile(
+          title: l10n.graduallyIncreaseVolume,
+          value: settings.graduallyIncreaseVolumeSeconds == 0
+              ? l10n.graduallyIncreaseVolumeOff
+              : l10n.graduallyIncreaseVolumeSeconds(
+                  settings.graduallyIncreaseVolumeSeconds),
+          onTap: () =>
+              _showGraduallyIncreaseDialog(context, settings, l10n),
+        ),
+        // Volume buttons
+        _SettingsTile(
+          title: l10n.volumeButtons,
+          value: _volumeButtonLabel(settings.volumeButtonBehavior, l10n),
+          onTap: () => _showVolumeButtonsDialog(context, settings, l10n),
+        ),
+        // Start week on
+        _SettingsTile(
+          title: l10n.startWeekOn,
+          value: _startWeekOnLabel(settings.startWeekOn, l10n),
+          onTap: () => _showStartWeekOnDialog(context, settings, l10n),
+        ),
+      ],
+    );
+  }
+
+  String _volumeButtonLabel(VolumeButtonBehavior behavior, AppLocalizations l10n) {
+    switch (behavior) {
+      case VolumeButtonBehavior.stop:
+        return l10n.volumeButtonStop;
+      case VolumeButtonBehavior.adjustVolume:
+        return l10n.volumeButtonAdjustVolume;
+      case VolumeButtonBehavior.nothing:
+        return l10n.volumeButtonNothing;
+    }
+  }
+
+  String _startWeekOnLabel(StartWeekOn startWeekOn, AppLocalizations l10n) {
+    switch (startWeekOn) {
+      case StartWeekOn.sunday:
+        return l10n.startWeekOnSunday;
+      case StartWeekOn.monday:
+        return l10n.startWeekOnMonday;
+      case StartWeekOn.saturday:
+        return l10n.startWeekOnSaturday;
+    }
+  }
+
+  void _showSilenceAfterDialog(
+      BuildContext context, AlarmSettingsService settings, AppLocalizations l10n) {
+    final options = [1, 5, 10, 15, 20, 25, 0]; // 0 = never
+    _showSelectionDialog<int>(
+      context: context,
+      title: l10n.silenceAfter,
+      options: options,
+      currentValue: settings.silenceAfterMinutes,
+      labelBuilder: (v) =>
+          v == 0 ? l10n.silenceAfterNever : l10n.silenceAfterValue(v),
+      onSelected: (v) => settings.setSilenceAfterMinutes(v),
+    );
+  }
+
+  void _showGraduallyIncreaseDialog(
+      BuildContext context, AlarmSettingsService settings, AppLocalizations l10n) {
+    final options = [0, 15, 30, 60]; // 0 = off
+    _showSelectionDialog<int>(
+      context: context,
+      title: l10n.graduallyIncreaseVolume,
+      options: options,
+      currentValue: settings.graduallyIncreaseVolumeSeconds,
+      labelBuilder: (v) => v == 0
+          ? l10n.graduallyIncreaseVolumeOff
+          : l10n.graduallyIncreaseVolumeSeconds(v),
+      onSelected: (v) => settings.setGraduallyIncreaseVolumeSeconds(v),
+    );
+  }
+
+  void _showVolumeButtonsDialog(
+      BuildContext context, AlarmSettingsService settings, AppLocalizations l10n) {
+    final options = VolumeButtonBehavior.values;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          l10n.volumeButtons,
+          style: const TextStyle(color: AppTheme.onSurface, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options.map((option) {
+            final isSelected = option == settings.volumeButtonBehavior;
+            final label = _volumeButtonLabel(option, l10n);
+            final subtitle = option == VolumeButtonBehavior.stop
+                ? l10n.volumeButtonStopChallengeNote
+                : null;
+            return ListTile(
+              title: Text(
+                label,
+                style: TextStyle(
+                  color: AppTheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              subtitle: subtitle != null
+                  ? Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    )
+                  : null,
+              trailing: isSelected
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () {
+                settings.setVolumeButtonBehavior(option);
+                Navigator.pop(ctx);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showStartWeekOnDialog(
+      BuildContext context, AlarmSettingsService settings, AppLocalizations l10n) {
+    final options = StartWeekOn.values;
+    _showSelectionDialog<StartWeekOn>(
+      context: context,
+      title: l10n.startWeekOn,
+      options: options,
+      currentValue: settings.startWeekOn,
+      labelBuilder: (v) => _startWeekOnLabel(v, l10n),
+      onSelected: (v) => settings.setStartWeekOn(v),
+    );
+  }
+
+  void _showSelectionDialog<T>({
+    required BuildContext context,
+    required String title,
+    required List<T> options,
+    required T currentValue,
+    required String Function(T) labelBuilder,
+    required void Function(T) onSelected,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: const TextStyle(color: AppTheme.onSurface, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options.map((option) {
+            final isSelected = option == currentValue;
+            return ListTile(
+              title: Text(
+                labelBuilder(option),
+                style: TextStyle(
+                  color: AppTheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              trailing: isSelected
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () {
+                onSelected(option);
+                Navigator.pop(ctx);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  const _SettingsTile({
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        title,
+        style: const TextStyle(color: AppTheme.onSurface),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+class _VolumeSliderTile extends StatelessWidget {
+  final String title;
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _VolumeSliderTile({
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              title,
+              style: const TextStyle(color: AppTheme.onSurface, fontSize: 16),
+            ),
+          ),
+          Row(
+            children: [
+              const Icon(Icons.volume_mute, color: AppTheme.onSurfaceSecondary, size: 20),
+              Expanded(
+                child: Slider(
+                  value: value,
+                  min: 0.0,
+                  max: 1.0,
+                  activeColor: AppTheme.primary,
+                  inactiveColor: AppTheme.onSurfaceSecondary.withOpacity(0.3),
+                  onChanged: onChanged,
+                ),
+              ),
+              const Icon(Icons.volume_up, color: AppTheme.onSurfaceSecondary, size: 20),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

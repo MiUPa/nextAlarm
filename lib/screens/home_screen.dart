@@ -202,9 +202,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 						pinned: true,
 						backgroundColor: Colors.transparent,
 						actions: [
-							IconButton(
-								icon: const Icon(Icons.settings, color: AppTheme.onSurface),
-								onPressed: () => _openSettings(context),
+							PopupMenuButton<String>(
+								icon: const Icon(Icons.more_vert, color: AppTheme.onSurface),
+								color: AppTheme.surface,
+								shape: RoundedRectangleBorder(
+									borderRadius: BorderRadius.circular(12),
+								),
+								onSelected: (value) {
+									if (value == 'settings') {
+										_openSettings(context);
+									}
+								},
+								itemBuilder: (context) {
+									final l10nMenu = AppLocalizations.of(context)!;
+									return [
+										PopupMenuItem<String>(
+											value: 'settings',
+											child: Row(
+												children: [
+													const Icon(Icons.settings, color: AppTheme.onSurface, size: 20),
+													const SizedBox(width: 12),
+													Text(
+														l10nMenu.settings,
+														style: const TextStyle(color: AppTheme.onSurface),
+													),
+												],
+											),
+										),
+									];
+								},
 							),
 						],
 						flexibleSpace: FlexibleSpaceBar(
