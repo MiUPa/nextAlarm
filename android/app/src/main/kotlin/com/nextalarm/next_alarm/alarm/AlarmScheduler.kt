@@ -23,6 +23,7 @@ class AlarmScheduler(private val context: Context) {
         val label: String,
         val sound: Int, // AlarmSound enum index from Dart (5 = silent)
         val vibrate: Boolean,
+        val vibrationIntensity: Int, // 0 = gentle, 1 = standard, 2 = aggressive
     )
 
     fun syncAlarms(rawAlarms: List<Map<String, Any?>>) {
@@ -90,6 +91,7 @@ class AlarmScheduler(private val context: Context) {
             label = item.optString("label", ""),
             sound = item.optInt("sound", 0),
             vibrate = item.optBoolean("vibrate", true),
+            vibrationIntensity = item.optInt("vibrationIntensity", 1),
         )
     }
 
@@ -108,6 +110,7 @@ class AlarmScheduler(private val context: Context) {
 
         val sound = (item["sound"] as? Number)?.toInt() ?: 0
         val vibrate = item["vibrate"] as? Boolean ?: true
+        val vibrationIntensity = (item["vibrationIntensity"] as? Number)?.toInt() ?: 1
 
         return AlarmPayload(
             id = id,
@@ -118,6 +121,7 @@ class AlarmScheduler(private val context: Context) {
             label = label,
             sound = sound,
             vibrate = vibrate,
+            vibrationIntensity = vibrationIntensity,
         )
     }
 
@@ -130,6 +134,7 @@ class AlarmScheduler(private val context: Context) {
             putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, alarm.label)
             putExtra(AlarmReceiver.EXTRA_ALARM_SOUND, alarm.sound)
             putExtra(AlarmReceiver.EXTRA_ALARM_VIBRATE, alarm.vibrate)
+            putExtra(AlarmReceiver.EXTRA_ALARM_VIBRATION_INTENSITY, alarm.vibrationIntensity)
         }
         val alarmPendingIntent = PendingIntent.getBroadcast(
             context,
