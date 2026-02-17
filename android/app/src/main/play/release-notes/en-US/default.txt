@@ -1,2 +1,2 @@
-Added vibration intensity settings (Gentle/Standard/Aggressive) for alarms.
-Improved Android alarm audio/vibration behavior with better Bluetooth and Do Not Disturb handling.
+Removed UI tap vibration feedback for a cleaner alarm setup experience.
+Alarm vibration behavior during ringing remains unchanged.
