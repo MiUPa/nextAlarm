@@ -650,7 +650,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 
 	@override
 	Widget build(BuildContext context) {
-		return Scaffold(
+		return PopScope(
+			canPop: false,
+			child: Scaffold(
 			body: Container(
 				decoration: const BoxDecoration(
 					gradient: LinearGradient(
@@ -728,6 +730,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 					),
 				),
 			),
-		);
+		));
 	}
 }
