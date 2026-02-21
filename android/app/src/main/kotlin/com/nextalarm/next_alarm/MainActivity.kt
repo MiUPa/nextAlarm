@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
-import android.view.WindowManager
 import com.nextalarm.next_alarm.alarm.AlarmPrefs
 import com.nextalarm.next_alarm.alarm.AlarmReceiver
 import com.nextalarm.next_alarm.alarm.AlarmRingingService
@@ -27,11 +26,13 @@ class MainActivity : FlutterActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		applyAlarmWindowBehavior(intent)
 		cachePendingAlarmFromIntent(intent)
 	}
 
 	override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
+		applyAlarmWindowBehavior(intent)
 		cachePendingAlarmFromIntent(intent)
 	}
 
@@ -73,7 +74,6 @@ class MainActivity : FlutterActivity() {
 					"stopAlarmRinging" -> {
 						stopAlarmService()
 						AlarmPrefs.clearPendingRingingAlarmId(applicationContext)
-						disableShowOverLockScreen()
 						result.success(true)
 					}
 					else -> result.notImplemented()
@@ -85,40 +85,26 @@ class MainActivity : FlutterActivity() {
 		val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID)
 		if (!alarmId.isNullOrBlank()) {
 			AlarmPrefs.setPendingRingingAlarmId(applicationContext, alarmId)
-			enableShowOverLockScreen()
 		}
 	}
 
-	private fun enableShowOverLockScreen() {
+	private fun applyAlarmWindowBehavior(intent: Intent?) {
+		val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID)
+		if (alarmId.isNullOrBlank()) return
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
 			setShowWhenLocked(true)
 			setTurnScreenOn(true)
-			val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-			keyguardManager.requestDismissKeyguard(this, null)
+			val keyguardManager = getSystemService(KeyguardManager::class.java)
+			keyguardManager?.requestDismissKeyguard(this, null)
 		} else {
 			@Suppress("DEPRECATION")
 			window.addFlags(
-				WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-					WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-					WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+				android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+					android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+					android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
 			)
 		}
-		window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-	}
-
-	private fun disableShowOverLockScreen() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-			setShowWhenLocked(false)
-			setTurnScreenOn(false)
-		} else {
-			@Suppress("DEPRECATION")
-			window.clearFlags(
-				WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-					WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-					WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-			)
-		}
-		window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 	}
 
 	private fun canScheduleExactAlarms(): Boolean {
