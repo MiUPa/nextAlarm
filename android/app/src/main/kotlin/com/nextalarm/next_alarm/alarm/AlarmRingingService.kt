@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -23,6 +24,7 @@ import com.nextalarm.next_alarm.R
 class AlarmRingingService : Service() {
     private var ringtone: Ringtone? = null
     private var vibrator: Vibrator? = null
+    private var wakeLock: PowerManager.WakeLock? = null
     private var notificationId: Int = BASE_NOTIFICATION_ID
     private val loopHandler = Handler(Looper.getMainLooper())
     private val loopCheckRunnable = object : Runnable {
@@ -46,7 +48,7 @@ class AlarmRingingService : Service() {
             ACTION_STOP -> stopAlarmAndSelf()
             else -> startRinging(intent)
         }
-        return START_NOT_STICKY
+        return START_REDELIVER_INTENT
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -54,6 +56,7 @@ class AlarmRingingService : Service() {
     override fun onDestroy() {
         stopRingtone()
         stopVibration()
+        releaseWakeLock()
         super.onDestroy()
     }
 
@@ -68,6 +71,8 @@ class AlarmRingingService : Service() {
         notificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
         val notification = buildNotification(alarmId, label)
         startForeground(notificationId, notification)
+        acquireWakeLock()
+        launchAlarmUi(alarmId, label)
 
         // AlarmSound.silent index == 5 in Dart enum
         if (sound != SOUND_SILENT) {
@@ -76,6 +81,38 @@ class AlarmRingingService : Service() {
         if (vibrate) {
             startVibration(vibrationIntensity)
         }
+    }
+
+    private fun launchAlarmUi(alarmId: String, label: String) {
+        val launchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
+            putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label)
+        }
+        startActivity(launchIntent)
+    }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "$packageName:alarm-ringing",
+        ).apply {
+            setReferenceCounted(false)
+            acquire(WAKE_LOCK_TIMEOUT_MS)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
+        wakeLock = null
     }
 
     private fun buildNotification(alarmId: String, label: String): Notification {
@@ -200,6 +237,7 @@ class AlarmRingingService : Service() {
         AlarmPrefs.clearPendingRingingAlarmId(this)
         stopRingtone()
         stopVibration()
+        releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -231,5 +269,6 @@ class AlarmRingingService : Service() {
         private const val BASE_NOTIFICATION_ID = 42000
         private const val SOUND_SILENT = 5 // AlarmSound.silent index in Dart enum
         private const val LOOP_CHECK_INTERVAL_MS = 1000L
+        private const val WAKE_LOCK_TIMEOUT_MS = 30 * 60 * 1000L
     }
 }
