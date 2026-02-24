@@ -203,6 +203,32 @@ flutter build ios --release
 flutter build web
 ```
 
+### Internal Test 自動配信（GitHub Actions）
+
+`release-internal` または `release/internal-*` ブランチへ push すると、GitHub Actions が自動で Play Console の `internal` トラックへ AAB をアップロードします。
+
+- Workflow: `.github/workflows/release-internal-play.yml`
+- 実行コマンド: `./scripts/release_android_playstore.sh build-upload --track internal`
+
+#### 必須 Secrets（Repository Secrets）
+
+- `ANDROID_UPLOAD_KEYSTORE_BASE64`（upload keystore を base64 化した文字列）
+- `ANDROID_UPLOAD_STORE_PASSWORD`
+- `ANDROID_UPLOAD_KEY_ALIAS`
+- `ANDROID_UPLOAD_KEY_PASSWORD`
+- `PLAY_SERVICE_ACCOUNT_JSON_BASE64`（Play service account JSON を base64 化した文字列）
+
+#### 公開リポジトリでのセキュリティ注意点
+
+この構成は公開リポジトリでも運用可能ですが、次の前提が必須です。
+
+1. 秘密情報（keystore / `key.properties` / service account JSON）をリポジトリにコミットしない  
+2. `release-internal` / `release/internal-*` へ push できる人を最小化する（Branch protection 推奨）  
+3. Play service account は最小権限にし、定期的に鍵ローテーションする  
+4. Secrets は GitHub Actions の Secrets だけで管理し、ログ出力させない
+
+補足: Fork からの Pull Request では通常 Secrets は渡されませんが、**リポジトリに push 権限があるユーザー**は workflow を変更して Secrets にアクセスできるため、push 権限管理が最重要です。
+
 ---
 
 ## 📸 スクリーンショット

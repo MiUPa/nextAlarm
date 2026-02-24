@@ -48,3 +48,6 @@ app.*.map.json
 /android/play-service-account.json
 /android/play-service-account*.json
 /android/next-alarm-*.json
+/android/key.properties
+/android/*.jks
+/android/*.keystore
