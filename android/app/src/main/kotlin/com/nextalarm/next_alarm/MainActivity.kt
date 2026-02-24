@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.view.WindowManager
 import com.nextalarm.next_alarm.alarm.AlarmPrefs
 import com.nextalarm.next_alarm.alarm.AlarmReceiver
 import com.nextalarm.next_alarm.alarm.AlarmRingingService
@@ -74,6 +75,7 @@ class MainActivity : FlutterActivity() {
 					"stopAlarmRinging" -> {
 						stopAlarmService()
 						AlarmPrefs.clearPendingRingingAlarmId(applicationContext)
+						clearAlarmWindowBehavior()
 						result.success(true)
 					}
 					else -> result.notImplemented()
@@ -100,11 +102,27 @@ class MainActivity : FlutterActivity() {
 		} else {
 			@Suppress("DEPRECATION")
 			window.addFlags(
-				android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-					android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-					android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
+				WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+					WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+					WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
 			)
 		}
+		window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+	}
+
+	private fun clearAlarmWindowBehavior() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+			setShowWhenLocked(false)
+			setTurnScreenOn(false)
+		} else {
+			@Suppress("DEPRECATION")
+			window.clearFlags(
+				WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+					WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+					WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
+			)
+		}
+		window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 	}
 
 	private fun canScheduleExactAlarms(): Boolean {
