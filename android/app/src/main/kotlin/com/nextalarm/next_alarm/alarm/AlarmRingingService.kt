@@ -18,6 +18,7 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.nextalarm.next_alarm.R
 
@@ -91,7 +92,11 @@ class AlarmRingingService : Service() {
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
             putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label)
         }
-        startActivity(launchIntent)
+        try {
+            startActivity(launchIntent)
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to launch alarm UI from service", error)
+        }
     }
 
     private fun acquireWakeLock() {
@@ -270,5 +275,6 @@ class AlarmRingingService : Service() {
         private const val SOUND_SILENT = 5 // AlarmSound.silent index in Dart enum
         private const val LOOP_CHECK_INTERVAL_MS = 1000L
         private const val WAKE_LOCK_TIMEOUT_MS = 30 * 60 * 1000L
+        private const val TAG = "AlarmRingingService"
     }
 }
