@@ -1,0 +1,86 @@
+name: Release Internal to Play
+
+on:
+  push:
+    branches:
+      - release-internal
+      - release/internal-*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-internal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upload-internal:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+          for key in \
+            ANDROID_UPLOAD_KEYSTORE_BASE64 \
+            ANDROID_UPLOAD_STORE_PASSWORD \
+            ANDROID_UPLOAD_KEY_ALIAS \
+            ANDROID_UPLOAD_KEY_PASSWORD \
+            PLAY_SERVICE_ACCOUNT_JSON_BASE64; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "::error::Missing required secret: $key"
+              exit 1
+            fi
+          done
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+
+      - name: Restore signing keystore and key.properties
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$GITHUB_WORKSPACE/android/upload-keystore.jks"
+          echo "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          cat > "$GITHUB_WORKSPACE/android/key.properties" <<EOF
+          storePassword=${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          storeFile=$KEYSTORE_PATH
+          EOF
+          chmod 600 "$GITHUB_WORKSPACE/android/key.properties"
+
+      - name: Restore Play service account JSON
+        run: |
+          set -euo pipefail
+          PLAY_JSON_PATH="$RUNNER_TEMP/play-service-account.json"
+          echo "${{ secrets.PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}" | base64 --decode > "$PLAY_JSON_PATH"
+          chmod 600 "$PLAY_JSON_PATH"
+          echo "PLAY_JSON_PATH=$PLAY_JSON_PATH" >> "$GITHUB_ENV"
+
+      - name: Build and upload to Play internal track
+        run: |
+          set -euo pipefail
+          chmod +x ./scripts/release_android_playstore.sh
+          PLAY_SERVICE_ACCOUNT_JSON="$PLAY_JSON_PATH" \
+            ./scripts/release_android_playstore.sh build-upload --track internal
+
