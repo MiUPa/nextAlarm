@@ -1,26 +1,59 @@
-name: Release Internal to Play
+name: Release Internal to Play (Manual)
 
 on:
-  push:
-    branches:
-      - release-internal
-      - release/internal-*
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for this internal release"
+        required: true
+        default: "Manual internal test release"
 
 permissions:
   contents: read
 
 concurrency:
-  group: play-internal-${{ github.ref }}
+  group: play-internal-manual
   cancel-in-progress: true
 
 jobs:
   upload-internal:
+    if: github.ref == 'refs/heads/main'
+    environment: play-internal
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Allow only approved actors
+        run: |
+          set -euo pipefail
+          if [[ -z "${ALLOWED_ACTORS:-}" ]]; then
+            echo "::error::Repository variable INTERNAL_RELEASE_ALLOWED_ACTORS is not set."
+            echo "::error::Set comma-separated GitHub usernames allowed to run this workflow."
+            exit 1
+          fi
+
+          actor="${GITHUB_ACTOR}"
+          allowed=0
+          IFS=',' read -ra users <<< "$ALLOWED_ACTORS"
+          for user in "${users[@]}"; do
+            trimmed="$(echo "$user" | xargs)"
+            if [[ -n "$trimmed" && "$trimmed" == "$actor" ]]; then
+              allowed=1
+              break
+            fi
+          done
+
+          if [[ "$allowed" -ne 1 ]]; then
+            echo "::error::Actor '$actor' is not in INTERNAL_RELEASE_ALLOWED_ACTORS."
+            exit 1
+          fi
+        env:
+          ALLOWED_ACTORS: ${{ vars.INTERNAL_RELEASE_ALLOWED_ACTORS }}
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -83,4 +116,3 @@ jobs:
           chmod +x ./scripts/release_android_playstore.sh
           PLAY_SERVICE_ACCOUNT_JSON="$PLAY_JSON_PATH" \
             ./scripts/release_android_playstore.sh build-upload --track internal
-

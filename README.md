@@ -203,14 +203,18 @@ flutter build ios --release
 flutter build web
 ```
 
-### Internal Test 自動配信（GitHub Actions）
+### Internal Test 手動リリース（GitHub Actions）
 
-`release-internal` または `release/internal-*` ブランチへ push すると、GitHub Actions が自動で Play Console の `internal` トラックへ AAB をアップロードします。
+無料プラン運用向けに、Internal Test への配信は自動 push ではなく **手動実行のみ** にしています。
 
 - Workflow: `.github/workflows/release-internal-play.yml`
+- 実行方式: `workflow_dispatch`（GitHub Actions 画面から手動実行）
+- ビルド対象: `main` 固定
 - 実行コマンド: `./scripts/release_android_playstore.sh build-upload --track internal`
 
-#### 必須 Secrets（Repository Secrets）
+#### 必須設定（Repository Secrets / Variables）
+
+Repository Secrets:
 
 - `ANDROID_UPLOAD_KEYSTORE_BASE64`（upload keystore を base64 化した文字列）
 - `ANDROID_UPLOAD_STORE_PASSWORD`
@@ -218,16 +222,31 @@ flutter build web
 - `ANDROID_UPLOAD_KEY_PASSWORD`
 - `PLAY_SERVICE_ACCOUNT_JSON_BASE64`（Play service account JSON を base64 化した文字列）
 
+Repository Variables:
+
+- `INTERNAL_RELEASE_ALLOWED_ACTORS`（実行を許可する GitHub ユーザー名をカンマ区切り）
+  - 例: `your-id,teammate-id`
+
+#### Internal Test リリース手順
+
+1. `main` にリリース対象の変更をマージする（versionCode 未使用を確認）
+2. GitHub の Actions で `Release Internal to Play (Manual)` を開く
+3. Branch を `main` にして `Run workflow`
+4. ジョブ成功後、Play Console の internal track で `versionCode` を確認する
+
+CLI で実行する場合:
+
+```bash
+gh workflow run "Release Internal to Play (Manual)" --ref main -f reason="internal test release"
+gh run list --workflow "Release Internal to Play (Manual)" --limit 5
+```
+
 #### 公開リポジトリでのセキュリティ注意点
 
-この構成は公開リポジトリでも運用可能ですが、次の前提が必須です。
-
 1. 秘密情報（keystore / `key.properties` / service account JSON）をリポジトリにコミットしない  
-2. `release-internal` / `release/internal-*` へ push できる人を最小化する（Branch protection 推奨）  
-3. Play service account は最小権限にし、定期的に鍵ローテーションする  
-4. Secrets は GitHub Actions の Secrets だけで管理し、ログ出力させない
-
-補足: Fork からの Pull Request では通常 Secrets は渡されませんが、**リポジトリに push 権限があるユーザー**は workflow を変更して Secrets にアクセスできるため、push 権限管理が最重要です。
+2. Secrets は GitHub Actions の Secrets だけで管理し、ログに出さない  
+3. `INTERNAL_RELEASE_ALLOWED_ACTORS` を最小人数に保つ  
+4. Play service account は最小権限にし、定期的に鍵ローテーションする
 
 ---
 
