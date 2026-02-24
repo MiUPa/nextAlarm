@@ -2,6 +2,7 @@ package com.nextalarm.next_alarm
 
 import android.app.AlarmManager
 import android.app.KeyguardManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 
@@ -12,6 +13,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager
+import androidx.core.app.NotificationManagerCompat
 import com.nextalarm.next_alarm.alarm.AlarmPrefs
 import com.nextalarm.next_alarm.alarm.AlarmReceiver
 import com.nextalarm.next_alarm.alarm.AlarmRingingService
@@ -65,6 +67,18 @@ class MainActivity : FlutterActivity() {
 					}
 					"openExactAlarmSettings" -> {
 						result.success(openExactAlarmSettings())
+					}
+					"canUseFullScreenIntent" -> {
+						result.success(canUseFullScreenIntent())
+					}
+					"openFullScreenIntentSettings" -> {
+						result.success(openFullScreenIntentSettings())
+					}
+					"areNotificationsEnabled" -> {
+						result.success(areNotificationsEnabled())
+					}
+					"openNotificationSettings" -> {
+						result.success(openNotificationSettings())
 					}
 					"isIgnoringBatteryOptimizations" -> {
 						result.success(isIgnoringBatteryOptimizations())
@@ -146,6 +160,63 @@ class MainActivity : FlutterActivity() {
 			true
 		} catch (error: Exception) {
 			Log.w(TAG, "Failed to open exact alarm settings", error)
+			false
+		}
+	}
+
+	private fun canUseFullScreenIntent(): Boolean {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+			return true
+		}
+		val manager = getSystemService(NotificationManager::class.java)
+		return manager?.canUseFullScreenIntent() ?: false
+	}
+
+	private fun openFullScreenIntentSettings(): Boolean {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+			return true
+		}
+		return try {
+			val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+				data = Uri.parse("package:$packageName")
+				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+			}
+			startActivity(intent)
+			true
+		} catch (error: Exception) {
+			Log.w(TAG, "Failed to open full-screen intent settings", error)
+			openAppDetailsSettings()
+		}
+	}
+
+	private fun areNotificationsEnabled(): Boolean {
+		return NotificationManagerCompat.from(applicationContext).areNotificationsEnabled()
+	}
+
+	private fun openNotificationSettings(): Boolean {
+		return try {
+			val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+				putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+			}
+			startActivity(intent)
+			true
+		} catch (error: Exception) {
+			Log.w(TAG, "Failed to open notification settings", error)
+			openAppDetailsSettings()
+		}
+	}
+
+	private fun openAppDetailsSettings(): Boolean {
+		return try {
+			val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+				data = Uri.parse("package:$packageName")
+				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+			}
+			startActivity(intent)
+			true
+		} catch (error: Exception) {
+			Log.w(TAG, "Failed to open app details settings", error)
 			false
 		}
 	}

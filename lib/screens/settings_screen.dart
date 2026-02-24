@@ -71,6 +71,8 @@ class _AndroidAlarmReliabilitySection extends StatefulWidget {
 class _AndroidAlarmReliabilitySectionState
     extends State<_AndroidAlarmReliabilitySection> {
   bool? _canScheduleExactAlarms;
+  bool? _notificationsEnabled;
+  bool? _canUseFullScreenIntent;
   bool? _ignoringBatteryOptimization;
   bool _loading = true;
 
@@ -82,14 +84,18 @@ class _AndroidAlarmReliabilitySectionState
 
   Future<void> _refreshStatus() async {
     setState(() => _loading = true);
-    final canSchedule =
-        await AndroidAlarmPlatformService.canScheduleExactAlarms();
-    final ignoringBattery =
-        await AndroidAlarmPlatformService.isIgnoringBatteryOptimizations();
+    final results = await Future.wait<bool>([
+      AndroidAlarmPlatformService.canScheduleExactAlarms(),
+      AndroidAlarmPlatformService.areNotificationsEnabled(),
+      AndroidAlarmPlatformService.canUseFullScreenIntent(),
+      AndroidAlarmPlatformService.isIgnoringBatteryOptimizations(),
+    ]);
     if (!mounted) return;
     setState(() {
-      _canScheduleExactAlarms = canSchedule;
-      _ignoringBatteryOptimization = ignoringBattery;
+      _canScheduleExactAlarms = results[0];
+      _notificationsEnabled = results[1];
+      _canUseFullScreenIntent = results[2];
+      _ignoringBatteryOptimization = results[3];
       _loading = false;
     });
   }
@@ -153,6 +159,52 @@ class _AndroidAlarmReliabilitySectionState
             trailing: TextButton(
               onPressed: () async {
                 await AndroidAlarmPlatformService.openBatteryOptimizationSettings();
+                await _refreshStatus();
+              },
+              child: const Text('Open'),
+            ),
+          ),
+          ListTile(
+            title: const Text(
+              'Notification permission',
+              style: TextStyle(color: AppTheme.onSurface),
+            ),
+            subtitle: Text(
+              (_notificationsEnabled ?? false)
+                  ? 'Allowed'
+                  : 'Not allowed. Alarm notifications may not appear.',
+              style: TextStyle(
+                color: (_notificationsEnabled ?? false)
+                    ? AppTheme.onSurfaceSecondary
+                    : AppTheme.warning,
+              ),
+            ),
+            trailing: TextButton(
+              onPressed: () async {
+                await AndroidAlarmPlatformService.openNotificationSettings();
+                await _refreshStatus();
+              },
+              child: const Text('Open'),
+            ),
+          ),
+          ListTile(
+            title: const Text(
+              'Full-screen alarm display',
+              style: TextStyle(color: AppTheme.onSurface),
+            ),
+            subtitle: Text(
+              (_canUseFullScreenIntent ?? false)
+                  ? 'Allowed'
+                  : 'Not allowed. Alarm screen may require notification tap.',
+              style: TextStyle(
+                color: (_canUseFullScreenIntent ?? false)
+                    ? AppTheme.onSurfaceSecondary
+                    : AppTheme.warning,
+              ),
+            ),
+            trailing: TextButton(
+              onPressed: () async {
+                await AndroidAlarmPlatformService.openFullScreenIntentSettings();
                 await _refreshStatus();
               },
               child: const Text('Open'),
