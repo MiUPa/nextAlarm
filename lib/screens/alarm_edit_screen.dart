@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
 import '../services/alarm_service.dart';
+import '../services/android_alarm_platform_service.dart';
 import '../theme/app_theme.dart';
+import 'settings_screen.dart';
 
 class AlarmEditScreen extends StatefulWidget {
 	final models.Alarm? alarm;
@@ -524,6 +527,9 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	}
 
 	void _saveAlarm() async {
+		final alarmService = context.read<AlarmService>();
+		final canSave = await _confirmAlarmReliabilityBeforeSave();
+		if (!canSave) return;
 
 		final alarm = models.Alarm(
 			id: widget.alarm?.id,
@@ -538,8 +544,6 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 			gradualVolume: _gradualVolume,
 		);
 
-		final alarmService = context.read<AlarmService>();
-
 		if (widget.alarm == null) {
 			await alarmService.addAlarm(alarm);
 		} else {
@@ -549,6 +553,73 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 		if (mounted) {
 			Navigator.pop(context);
 		}
+	}
+
+	Future<bool> _confirmAlarmReliabilityBeforeSave() async {
+		if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+			return true;
+		}
+
+		final canScheduleExactAlarms =
+				await AndroidAlarmPlatformService.canScheduleExactAlarms();
+		final notificationsEnabled =
+				await AndroidAlarmPlatformService.areNotificationsEnabled();
+		final canUseFullScreenIntent =
+				await AndroidAlarmPlatformService.canUseFullScreenIntent();
+
+		if (!mounted) return false;
+
+		final missingChecks = <String>[];
+		if (!canScheduleExactAlarms) {
+			missingChecks.add('Exact alarm permission');
+		}
+		if (!notificationsEnabled) {
+			missingChecks.add('Notification permission');
+		}
+		if (!canUseFullScreenIntent) {
+			missingChecks.add('Full-screen alarm display');
+		}
+
+		if (missingChecks.isEmpty) {
+			return true;
+		}
+
+		final shouldSaveAnyway =
+				await showDialog<bool>(
+					context: context,
+					builder: (dialogContext) => AlertDialog(
+						backgroundColor: AppTheme.surface,
+						title: const Text(
+							'Alarm reliability warning',
+							style: TextStyle(color: AppTheme.onSurface),
+						),
+						content: Text(
+							'Some Android settings are disabled: ${missingChecks.join(', ')}.\n'
+							'The alarm screen may not appear automatically on lock screen or while '
+							'another app is open.',
+							style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+						),
+						actions: [
+							TextButton(
+								onPressed: () => Navigator.of(dialogContext).pop(false),
+								child: const Text('Review settings'),
+							),
+							TextButton(
+								onPressed: () => Navigator.of(dialogContext).pop(true),
+								child: const Text('Save anyway'),
+							),
+						],
+					),
+				) ??
+				false;
+
+		if (!mounted) return false;
+		if (shouldSaveAnyway) return true;
+
+		await Navigator.of(
+			context,
+		).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+		return false;
 	}
 }
 

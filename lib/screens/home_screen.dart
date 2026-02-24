@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
+import '../services/android_alarm_platform_service.dart';
 import '../services/app_update_service.dart';
 import '../services/notification_service.dart';
 import '../services/review_prompt_service.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	Timer? _appUpdateTimer;
 	Timer? _notificationPermissionTimer;
 	Timer? _reviewPromptTimer;
+	Timer? _androidReliabilityTimer;
 
 	@override
 	void initState() {
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 		// Check for app updates on Android
 		_checkForAppUpdate();
+		_checkAndroidAlarmReliability();
 
 		// Check if review prompt should be shown
 		_checkReviewPrompt();
@@ -76,6 +79,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 			if (shouldShow && mounted) {
 				_showReviewDialog();
 			}
+		});
+	}
+
+	void _checkAndroidAlarmReliability() {
+		if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+		_androidReliabilityTimer?.cancel();
+		_androidReliabilityTimer = Timer(const Duration(seconds: 2), () async {
+			if (!mounted) return;
+			final canScheduleExactAlarms =
+					await AndroidAlarmPlatformService.canScheduleExactAlarms();
+			final notificationsEnabled =
+					await AndroidAlarmPlatformService.areNotificationsEnabled();
+			final canUseFullScreenIntent =
+					await AndroidAlarmPlatformService.canUseFullScreenIntent();
+			if (!mounted) return;
+			if (canScheduleExactAlarms &&
+					notificationsEnabled &&
+					canUseFullScreenIntent) {
+				return;
+			}
+
+			ScaffoldMessenger.of(context)
+				..hideCurrentSnackBar()
+				..showSnackBar(
+					SnackBar(
+						content: const Text(
+							'Android alarm reliability settings need attention.',
+						),
+						action: SnackBarAction(
+							label: 'Settings',
+							onPressed: () => _openSettings(context),
+						),
+						duration: const Duration(seconds: 8),
+					),
+				);
 		});
 	}
 
@@ -184,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		_appUpdateTimer?.cancel();
 		_notificationPermissionTimer?.cancel();
 		_reviewPromptTimer?.cancel();
+		_androidReliabilityTimer?.cancel();
 		_fabController.dispose();
 		super.dispose();
 	}

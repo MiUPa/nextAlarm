@@ -43,6 +43,32 @@ class AndroidAlarmPlatformService {
         false;
   }
 
+  static Future<bool> canUseFullScreenIntent() async {
+    if (!_isAndroid) return true;
+    return (await _channel.invokeMethod<bool>('canUseFullScreenIntent')) ??
+        false;
+  }
+
+  static Future<bool> openFullScreenIntentSettings() async {
+    if (!_isAndroid) return false;
+    return (await _channel.invokeMethod<bool>(
+          'openFullScreenIntentSettings',
+        )) ??
+        false;
+  }
+
+  static Future<bool> areNotificationsEnabled() async {
+    if (!_isAndroid) return true;
+    return (await _channel.invokeMethod<bool>('areNotificationsEnabled')) ??
+        false;
+  }
+
+  static Future<bool> openNotificationSettings() async {
+    if (!_isAndroid) return false;
+    return (await _channel.invokeMethod<bool>('openNotificationSettings')) ??
+        false;
+  }
+
   static Future<bool> isIgnoringBatteryOptimizations() async {
     if (!_isAndroid) return true;
     return (await _channel.invokeMethod<bool>(
