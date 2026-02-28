@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -292,19 +291,10 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 		_requiredSteps = 5 + (difficulty * 10); // 15/25/35 steps based on difficulty
 
 		// Request activity recognition permission on Android 10+
-		if (!kIsWeb) {
-			final status = await Permission.activityRecognition.status;
-			if (status.isDenied) {
-				final result = await Permission.activityRecognition.request();
-				if (!result.isGranted) {
-					if (mounted) {
-						setState(() {
-							_stepError = 'permission_denied';
-						});
-					}
-					return;
-				}
-			} else if (status.isPermanentlyDenied) {
+		final status = await Permission.activityRecognition.status;
+		if (status.isDenied) {
+			final result = await Permission.activityRecognition.request();
+			if (!result.isGranted) {
 				if (mounted) {
 					setState(() {
 						_stepError = 'permission_denied';
@@ -312,6 +302,13 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 				}
 				return;
 			}
+		} else if (status.isPermanentlyDenied) {
+			if (mounted) {
+				setState(() {
+					_stepError = 'permission_denied';
+				});
+			}
+			return;
 		}
 
 		if (!mounted) return;
@@ -394,7 +391,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 						decoration: InputDecoration(
 							hintText: l10n.enterAnswer,
 							hintStyle: TextStyle(
-								color: Colors.white.withOpacity(0.3),
+								color: Colors.white.withValues(alpha: 0.3),
 							),
 							enabledBorder: const UnderlineInputBorder(
 								borderSide: BorderSide(color: Colors.white, width: 2),
@@ -473,7 +470,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 				Icon(
 					Icons.phone_android,
 					size: 80,
-					color: Colors.white.withOpacity(0.8),
+					color: Colors.white.withValues(alpha: 0.8),
 				),
 				const SizedBox(height: 40),
 				Text(
@@ -490,7 +487,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 					height: 10,
 					decoration: BoxDecoration(
 						borderRadius: BorderRadius.circular(5),
-						color: Colors.white.withOpacity(0.2),
+						color: Colors.white.withValues(alpha: 0.2),
 					),
 					child: FractionallySizedBox(
 						alignment: Alignment.centerLeft,
@@ -535,7 +532,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 					Container(
 						padding: const EdgeInsets.all(16),
 						decoration: BoxDecoration(
-							color: Colors.white.withOpacity(0.1),
+							color: Colors.white.withValues(alpha: 0.1),
 							borderRadius: BorderRadius.circular(12),
 						),
 						child: Text(
@@ -584,7 +581,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 				Icon(
 					Icons.directions_walk,
 					size: 80,
-					color: Colors.white.withOpacity(0.8),
+					color: Colors.white.withValues(alpha: 0.8),
 				),
 				const SizedBox(height: 40),
 				if (_stepError != null) ...[
@@ -630,7 +627,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 						height: 10,
 						decoration: BoxDecoration(
 							borderRadius: BorderRadius.circular(5),
-							color: Colors.white.withOpacity(0.2),
+							color: Colors.white.withValues(alpha: 0.2),
 						),
 						child: FractionallySizedBox(
 							alignment: Alignment.centerLeft,
@@ -682,9 +679,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
 													padding: const EdgeInsets.all(32),
 													decoration: BoxDecoration(
 														shape: BoxShape.circle,
-														color: AppTheme.error.withOpacity(0.2),
+														color: AppTheme.error.withValues(alpha: 0.2),
 														border: Border.all(
-															color: AppTheme.error.withOpacity(0.5),
+															color: AppTheme.error.withValues(alpha: 0.5),
 															width: 2,
 														),
 													),

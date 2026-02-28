@@ -7,7 +7,6 @@ import 'package:vibration/vibration.dart';
 import '../models/alarm.dart' as models;
 import 'android_alarm_platform_service.dart';
 import 'app_navigation_service.dart';
-import 'notification_service.dart';
 
 class _PlatformAlarmSound {
   const _PlatformAlarmSound({required this.android, required this.ios});
@@ -31,7 +30,7 @@ class AlarmService extends ChangeNotifier {
   models.Alarm? get ringingAlarm => _ringingAlarm;
 
   bool get _useAndroidPlatformScheduler =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+      defaultTargetPlatform == TargetPlatform.android;
 
   AlarmService() {
     _initialize();
@@ -116,14 +115,6 @@ class AlarmService extends ChangeNotifier {
     } else {
       _playAlarmSound();
       _startVibration(alarm);
-    }
-
-    // Send browser notification if on Web
-    if (kIsWeb) {
-      NotificationService.showNotification(
-        'NextAlarm',
-        '${alarm.label} - ${alarm.time.hour.toString().padLeft(2, '0')}:${alarm.time.minute.toString().padLeft(2, '0')}',
-      );
     }
 
     notifyListeners();

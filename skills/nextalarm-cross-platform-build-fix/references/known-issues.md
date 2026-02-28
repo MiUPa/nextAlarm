@@ -1,30 +1,6 @@
-# Known Cross-Platform Issues
+# Known Mobile Build Issues
 
-## 1) Conditional Export Mismatch
-
-Symptoms:
-- Build fails when web/stub classes differ.
-- Method not found on one platform.
-
-Checks:
-- `lib/services/notification_service.dart`
-- `lib/services/notification_service_web.dart`
-- `lib/services/notification_service_stub.dart`
-
-Rule:
-- Keep class names and public method signatures identical.
-
-## 2) Web-Only API Usage in Shared Code
-
-Symptoms:
-- Android build fails due `dart:html` usage.
-- Analyzer warns about web-only libraries.
-
-Checks:
-- Ensure `dart:html` stays in web-specific files only.
-- Keep shared layer behind conditional export.
-
-## 3) Flutter/Gradle Compatibility Drift
+## 1) Flutter/Gradle Compatibility Drift
 
 Symptoms:
 - Gradle sync/build errors after Flutter upgrade.
@@ -34,7 +10,7 @@ Checks:
 - Compare `android/settings.gradle.kts` and `android/build.gradle.kts` with current Flutter template.
 - Verify Kotlin, AGP, and Gradle wrapper compatibility.
 
-## 4) Manifest Permission/Component Errors
+## 2) Manifest Permission/Component Errors
 
 Symptoms:
 - Android build passes but runtime feature crashes.
@@ -47,6 +23,33 @@ Checks:
 Rule:
 - Add only necessary permissions and ensure runtime requests exist for dangerous permissions.
 
+## 3) iOS Project Drift
+
+Symptoms:
+- `flutter build ios` fails after plugin or Flutter upgrades.
+- Pod install or Xcode project settings fall behind current templates.
+
+Checks:
+- `ios/Podfile`
+- `ios/Runner/Info.plist`
+- `ios/Runner.xcodeproj/project.pbxproj`
+
+Rule:
+- Prefer the smallest template-aligned fix that restores buildability without changing app behavior.
+
+## 4) Analyzer / Deprecated API Noise
+
+Symptoms:
+- `flutter analyze` fails or becomes noisy after Flutter updates.
+- App still runs, but deprecated Flutter APIs accumulate.
+
+Checks:
+- UI files under `lib/screens/`
+- `lib/theme/app_theme.dart`
+
+Rule:
+- Prefer direct API replacements over adding ignores.
+
 ## 5) Dependency Constraint Conflicts
 
 Symptoms:
@@ -58,5 +61,4 @@ Checks:
 - `flutter pub outdated` output.
 
 Rule:
-- Prefer smallest viable version updates and verify both web + Android after each change.
-
+- Prefer smallest viable version updates and verify analyze + Android build after each change.

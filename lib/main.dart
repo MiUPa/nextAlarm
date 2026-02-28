@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -19,8 +18,6 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 /// Request microphone permission at app startup for voice recognition challenge
 Future<void> _requestMicrophonePermission() async {
-  if (kIsWeb) return; // Skip on web platform
-
   final status = await Permission.microphone.status;
   if (status.isDenied) {
     await Permission.microphone.request();
@@ -29,8 +26,6 @@ Future<void> _requestMicrophonePermission() async {
 
 /// Initialize notifications for Android
 Future<void> _initializeNotifications() async {
-  if (kIsWeb) return;
-
   const androidSettings = AndroidInitializationSettings(
     '@mipmap/launcher_icon',
   );

@@ -8,7 +8,6 @@ import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
 import '../services/android_alarm_platform_service.dart';
 import '../services/app_update_service.dart';
-import '../services/notification_service.dart';
 import '../services/review_prompt_service.dart';
 import '../models/alarm.dart' as models;
 import '../theme/app_theme.dart';
@@ -25,7 +24,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	late AnimationController _fabController;
 	Timer? _appUpdateTimer;
-	Timer? _notificationPermissionTimer;
 	Timer? _reviewPromptTimer;
 	Timer? _androidReliabilityTimer;
 
@@ -37,11 +35,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 			vsync: this,
 		);
 		_fabController.forward();
-
-		// Request notification permission on Web
-		if (kIsWeb) {
-			_requestNotificationPermission();
-		}
 
 		// Check for app updates on Android
 		_checkForAppUpdate();
@@ -60,15 +53,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		});
 	}
 
-	void _requestNotificationPermission() {
-		// Wait a bit for the UI to load.
-		_notificationPermissionTimer?.cancel();
-		_notificationPermissionTimer = Timer(const Duration(seconds: 1), () async {
-			if (!mounted) return;
-			await NotificationService.requestPermission();
-		});
-	}
-
 	void _checkReviewPrompt() {
 		// Wait for the UI to settle.
 		_reviewPromptTimer?.cancel();
@@ -83,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	}
 
 	void _checkAndroidAlarmReliability() {
-		if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+		if (defaultTargetPlatform != TargetPlatform.android) return;
 		_androidReliabilityTimer?.cancel();
 		_androidReliabilityTimer = Timer(const Duration(seconds: 2), () async {
 			if (!mounted) return;
@@ -204,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 								child: Text(
 									l10n.reviewPromptDismiss,
 									style: TextStyle(
-										color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+										color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.7),
 										fontSize: 13,
 										fontWeight: FontWeight.w400,
 									),
@@ -220,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 	@override
 	void dispose() {
 		_appUpdateTimer?.cancel();
-		_notificationPermissionTimer?.cancel();
 		_reviewPromptTimer?.cancel();
 		_androidReliabilityTimer?.cancel();
 		_fabController.dispose();
@@ -263,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 										end: Alignment.bottomCenter,
 										colors: [
 											AppTheme.background,
-											AppTheme.background.withOpacity(0),
+											AppTheme.background.withValues(alpha: 0),
 										],
 									),
 								),
@@ -283,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 												Icon(
 													Icons.alarm_off_outlined,
 													size: 80,
-													color: AppTheme.onSurfaceSecondary.withOpacity(0.5),
+													color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.5),
 												),
 												const SizedBox(height: 24),
 												Text(
@@ -296,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 												Text(
 													l10n.tapToCreateAlarm,
 													style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-														color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+														color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.7),
 													),
 												),
 											],
@@ -583,7 +566,7 @@ class _AlarmCardState extends State<_AlarmCard>
 																vertical: 6,
 															),
 															decoration: BoxDecoration(
-																color: AppTheme.primary.withOpacity(0.15),
+																color: AppTheme.primary.withValues(alpha: 0.15),
 																borderRadius: BorderRadius.circular(12),
 															),
 															child: Text(
