@@ -1,4 +1,4 @@
 interface:
   display_name: "NextAlarm Cross-Platform Build Fix"
-  short_description: "Diagnose and fix Android/Web build regressions"
-  default_prompt: "Use $nextalarm-cross-platform-build-fix to reproduce and fix build failures across Android and Web."
+  short_description: "Diagnose and fix mobile build regressions"
+  default_prompt: "Use $nextalarm-cross-platform-build-fix to reproduce and fix build failures in the mobile NextAlarm app."

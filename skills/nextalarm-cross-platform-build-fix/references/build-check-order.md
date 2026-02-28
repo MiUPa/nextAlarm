@@ -1,4 +1,4 @@
-# Cross-Platform Build Check Order
+# Mobile Build Check Order
 
 ## Purpose
 
@@ -16,18 +16,18 @@ Use this order to isolate failures quickly and avoid noisy multi-layer breakage.
 
 ## Platform Builds
 
-1. Web build:
-`flutter build web`
-2. Android build (fast check):
+1. Android build (fast check):
 `flutter build apk --debug`
-3. Android release artifact (when needed):
+2. Android release artifact (when needed):
 `flutter build appbundle --release`
+3. Optional iOS check on macOS:
+`flutter build ios --no-codesign`
 
 ## Typical Isolation Strategy
 
 1. If `flutter analyze` fails, fix Dart/API issues first.
-2. If Web fails but Android passes, inspect conditional imports/exports and web-only APIs.
-3. If Android Gradle fails, inspect `android/build.gradle.kts`, `android/settings.gradle.kts`, and plugin/dependency compatibility.
+2. If Android Gradle fails, inspect `android/build.gradle.kts`, `android/settings.gradle.kts`, and plugin/dependency compatibility.
+3. If iOS fails, inspect `ios/Podfile`, `Info.plist`, plugin integration, and Flutter/Xcode template drift.
 4. After fix, re-run the exact failing command, then re-run the full sequence.
 
 ## Helper Script
@@ -37,4 +37,3 @@ Run:
 
 Dry-run:
 `skills/nextalarm-cross-platform-build-fix/scripts/build_probe.sh --dry-run`
-

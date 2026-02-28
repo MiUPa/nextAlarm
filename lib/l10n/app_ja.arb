@@ -85,5 +85,8 @@
 	"reviewPromptMessage": "アプリを気に入っていただけたら、ぜひ評価をお願いします。皆さまのご意見が改善に役立ちます！",
 	"reviewPromptRate": "評価する",
 	"reviewPromptLater": "あとで",
-	"reviewPromptDismiss": "今後表示しない"
+	"reviewPromptDismiss": "今後表示しない",
+	"alarmIsRinging": "アラーム鳴動中",
+	"completeChallengeToStopAlarm": "アラームを止めるにはチャレンジを完了してください",
+	"startChallenge": "チャレンジを開始"
 }

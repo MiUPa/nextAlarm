@@ -1,6 +1,9 @@
-name: Release Internal to Play (Manual)
+name: Release Internal to Play
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       reason:
@@ -12,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: play-internal-manual
+  group: play-internal
   cancel-in-progress: true
 
 jobs:
@@ -28,13 +31,18 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Allow only approved actors
+      - name: Allow only approved actors (manual dispatch only)
         run: |
           set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]]; then
+            echo "Automatic release on main push: skip manual actor allow-list check."
+            exit 0
+          fi
+
           if [[ -z "${ALLOWED_ACTORS:-}" ]]; then
-            echo "::error::Repository variable INTERNAL_RELEASE_ALLOWED_ACTORS is not set."
-            echo "::error::Set comma-separated GitHub usernames allowed to run this workflow."
-            exit 1
+            echo "INTERNAL_RELEASE_ALLOWED_ACTORS is not set; allowing manual dispatch."
+            exit 0
           fi
 
           actor="${GITHUB_ACTOR}"

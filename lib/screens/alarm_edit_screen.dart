@@ -137,7 +137,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 											decoration: InputDecoration(
 												hintText: l10n.labelHint,
 												hintStyle: TextStyle(
-													color: AppTheme.onSurfaceSecondary.withOpacity(0.5),
+													color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.5),
 												),
 												border: InputBorder.none,
 												isDense: true,
@@ -209,7 +209,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							),
 							value: _vibrate,
 							activeTrackColor: AppTheme.primary,
-							activeColor: Colors.white,
+							activeThumbColor: Colors.white,
 							onChanged: (value) {
 								setState(() => _vibrate = value);
 							},
@@ -261,12 +261,12 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 							subtitle: Text(
 								l10n.gradualVolumeDescription,
 								style: Theme.of(context).textTheme.bodySmall?.copyWith(
-									color: AppTheme.onSurfaceSecondary.withOpacity(0.7),
+									color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.7),
 								),
 							),
 							value: _gradualVolume,
 							activeTrackColor: AppTheme.primary,
-							activeColor: Colors.white,
+							activeThumbColor: Colors.white,
 							onChanged: (value) {
 								setState(() => _gradualVolume = value);
 							},
@@ -380,22 +380,22 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						width: 40,
 						height: 4,
 						decoration: BoxDecoration(
-							color: AppTheme.onSurfaceSecondary.withOpacity(0.4),
+							color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
 							borderRadius: BorderRadius.circular(2),
 						),
 					),
 					const SizedBox(height: 8),
-					...models.AlarmSound.values.map((sound) =>
-						RadioListTile<models.AlarmSound>(
+					...models.AlarmSound.values.map(
+						(sound) => ListTile(
 							title: Text(
 								_getSoundName(l10n, sound),
 								style: const TextStyle(color: AppTheme.onSurface),
 							),
-							value: sound,
-							groupValue: _sound,
-							activeColor: AppTheme.primary,
-							onChanged: (value) {
-								setState(() => _sound = value!);
+							trailing: _sound == sound
+								? const Icon(Icons.check, color: AppTheme.primary)
+								: null,
+							onTap: () {
+								setState(() => _sound = sound);
 								Navigator.pop(context);
 							},
 						),
@@ -423,23 +423,22 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 						width: 40,
 						height: 4,
 						decoration: BoxDecoration(
-							color: AppTheme.onSurfaceSecondary.withOpacity(0.4),
+							color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
 							borderRadius: BorderRadius.circular(2),
 						),
 					),
 					const SizedBox(height: 8),
-					...models.VibrationIntensity.values.map((intensity) =>
-						RadioListTile<models.VibrationIntensity>(
+					...models.VibrationIntensity.values.map(
+						(intensity) => ListTile(
 							title: Text(
 								_getVibrationIntensityName(l10n, intensity),
 								style: const TextStyle(color: AppTheme.onSurface),
 							),
-							value: intensity,
-							groupValue: _vibrationIntensity,
-							activeColor: AppTheme.primary,
-							onChanged: (value) {
-								if (value == null) return;
-								setState(() => _vibrationIntensity = value);
+							trailing: _vibrationIntensity == intensity
+								? const Icon(Icons.check, color: AppTheme.primary)
+								: null,
+							onTap: () {
+								setState(() => _vibrationIntensity = intensity);
 								Navigator.pop(context);
 							},
 						),
@@ -556,7 +555,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
 	}
 
 	Future<bool> _confirmAlarmReliabilityBeforeSave() async {
-		if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+		if (defaultTargetPlatform != TargetPlatform.android) {
 			return true;
 		}
 
@@ -794,7 +793,7 @@ class _DifficultySelector extends StatelessWidget {
 								activeTrackColor: AppTheme.primary,
 								inactiveTrackColor: AppTheme.surfaceVariant,
 								thumbColor: AppTheme.primary,
-								overlayColor: AppTheme.primary.withOpacity(0.2),
+								overlayColor: AppTheme.primary.withValues(alpha: 0.2),
 								trackHeight: sliderTrackHeight,
 							),
 							child: Slider(

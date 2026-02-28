@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_review/in_app_review.dart';
 
@@ -14,8 +13,6 @@ class ReviewPromptService {
 
   /// Check if review prompt should be shown.
   static Future<bool> shouldShowPrompt() async {
-    if (kIsWeb) return false;
-
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
 

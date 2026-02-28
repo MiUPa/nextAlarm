@@ -7,8 +7,8 @@ cd "$ROOT_DIR"
 DRY_RUN=0
 SKIP_ANALYZE=0
 SKIP_TEST=0
-SKIP_WEB=0
 SKIP_ANDROID=0
+RUN_IOS=0
 ANDROID_MODE="debug"
 
 usage() {
@@ -20,8 +20,8 @@ Options:
   --dry-run                 Print commands without executing.
   --skip-analyze            Skip flutter analyze.
   --skip-test               Skip flutter test.
-  --skip-web                Skip flutter build web.
   --skip-android            Skip Android build.
+  --ios                     Also run flutter build ios --no-codesign.
   --android-mode <mode>     debug or release (default: debug).
   -h, --help                Show this help.
 EOF
@@ -60,12 +60,12 @@ parse_args() {
         SKIP_TEST=1
         shift
         ;;
-      --skip-web)
-        SKIP_WEB=1
-        shift
-        ;;
       --skip-android)
         SKIP_ANDROID=1
+        shift
+        ;;
+      --ios)
+        RUN_IOS=1
         shift
         ;;
       --android-mode)
@@ -92,6 +92,10 @@ run_android_build() {
   fi
 }
 
+run_ios_build() {
+  run_or_echo flutter build ios --no-codesign
+}
+
 main() {
   parse_args "$@"
   require_cmd flutter
@@ -107,12 +111,12 @@ main() {
     run_or_echo flutter test
   fi
 
-  if [[ "$SKIP_WEB" -eq 0 ]]; then
-    run_or_echo flutter build web
-  fi
-
   if [[ "$SKIP_ANDROID" -eq 0 ]]; then
     run_android_build
+  fi
+
+  if [[ "$RUN_IOS" -eq 1 ]]; then
+    run_ios_build
   fi
 
   echo "[INFO] Build probe completed."

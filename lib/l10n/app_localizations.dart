@@ -613,6 +613,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Don\'t show again'**
   String get reviewPromptDismiss;
+
+  /// No description provided for @alarmIsRinging.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm is ringing'**
+  String get alarmIsRinging;
+
+  /// No description provided for @completeChallengeToStopAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the challenge to stop the alarm'**
+  String get completeChallengeToStopAlarm;
+
+  /// No description provided for @startChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Start challenge'**
+  String get startChallenge;
 }
 
 class _AppLocalizationsDelegate

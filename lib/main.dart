@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -10,6 +9,7 @@ import 'services/alarm_service.dart';
 import 'services/app_navigation_service.dart';
 import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
+import 'screens/alarm_entry_screen.dart';
 import 'screens/alarm_ringing_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -19,8 +19,6 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 /// Request microphone permission at app startup for voice recognition challenge
 Future<void> _requestMicrophonePermission() async {
-  if (kIsWeb) return; // Skip on web platform
-
   final status = await Permission.microphone.status;
   if (status.isDenied) {
     await Permission.microphone.request();
@@ -29,8 +27,6 @@ Future<void> _requestMicrophonePermission() async {
 
 /// Initialize notifications for Android
 Future<void> _initializeNotifications() async {
-  if (kIsWeb) return;
-
   const androidSettings = AndroidInitializationSettings(
     '@mipmap/launcher_icon',
   );
@@ -123,8 +119,10 @@ class AlarmMonitor extends StatelessWidget {
         final ringingAlarm = alarmService.ringingAlarm;
 
         if (ringingAlarm != null) {
-          // Show alarm ringing screen
-          return AlarmRingingScreen(alarm: ringingAlarm);
+          if (alarmService.ringingUiStage == AlarmRingingUiStage.challenge) {
+            return AlarmRingingScreen(alarm: ringingAlarm);
+          }
+          return AlarmEntryScreen(alarm: ringingAlarm);
         }
 
         // Show home screen

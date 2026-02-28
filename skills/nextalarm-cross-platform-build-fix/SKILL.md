@@ -1,11 +1,11 @@
 ---
 name: nextalarm-cross-platform-build-fix
-description: Diagnose and fix build or compatibility regressions across Flutter Android and Web targets in NextAlarm, including conditional exports, Gradle/plugin compatibility, manifest/package updates, and reproducible verification commands.
+description: Diagnose and fix build or compatibility regressions in the mobile NextAlarm app, with Android-first verification and optional iOS checks.
 ---
 
 # Goal
 
-Resolve cross-platform build failures quickly while preserving behavior on both Android and Web.
+Resolve build failures quickly while preserving behavior on the mobile app targets.
 
 ## Use Bundled Resources
 
@@ -22,22 +22,23 @@ Start with these files unless logs point elsewhere:
 - `android/settings.gradle.kts`
 - `android/app/build.gradle.kts`
 - `android/app/src/main/AndroidManifest.xml`
-- `lib/services/notification_service.dart`
-- `lib/services/notification_service_web.dart`
-- `lib/services/notification_service_stub.dart`
+- `ios/Podfile`
+- `ios/Runner/Info.plist`
+- `lib/main.dart`
+- `lib/services/alarm_service.dart`
+- `lib/services/android_alarm_platform_service.dart`
 
 ## Workflow
 
 1. Reproduce failure with exact command and keep raw logs.
-2. Identify failure layer (Dart analyzer, Flutter toolchain, Gradle, Android manifest, Web imports).
+2. Identify failure layer (Dart analyzer, Flutter toolchain, Gradle, Android manifest, iOS project/config).
 3. Apply minimal targeted fix.
 4. Re-run only the failing command first, then full verification set.
 5. Report root cause, fix summary, and any residual risks.
 
 ## Guardrails
 
-- Keep conditional export class APIs identical between web/stub implementations.
+- Do not reintroduce browser or Web-only scope.
 - Do not add Android permissions unless required by active runtime code.
 - Prefer compatibility fixes that match current Flutter stable templates.
-- If a fix is platform-specific, verify the other platform still builds.
-
+- If a fix is platform-specific, verify the other mobile target is not obviously broken.

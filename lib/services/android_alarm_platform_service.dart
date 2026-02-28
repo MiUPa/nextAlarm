@@ -7,8 +7,7 @@ class AndroidAlarmPlatformService {
     'next_alarm/android_alarm',
   );
 
-  static bool get _isAndroid =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  static bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
 
   static Future<void> syncAlarms(List<models.Alarm> alarms) async {
     if (!_isAndroid) return;
