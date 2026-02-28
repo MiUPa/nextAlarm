@@ -280,4 +280,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reviewPromptDismiss => '今後表示しない';
+
+  @override
+  String get alarmIsRinging => 'アラーム鳴動中';
+
+  @override
+  String get completeChallengeToStopAlarm => 'アラームを止めるにはチャレンジを完了してください';
+
+  @override
+  String get startChallenge => 'チャレンジを開始';
 }

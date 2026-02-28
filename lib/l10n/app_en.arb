@@ -149,5 +149,8 @@
 	"reviewPromptMessage": "If you like this app, please take a moment to rate it. Your feedback helps us improve!",
 	"reviewPromptRate": "Rate Now",
 	"reviewPromptLater": "Later",
-	"reviewPromptDismiss": "Don't show again"
+	"reviewPromptDismiss": "Don't show again",
+	"alarmIsRinging": "Alarm is ringing",
+	"completeChallengeToStopAlarm": "Complete the challenge to stop the alarm",
+	"startChallenge": "Start challenge"
 }

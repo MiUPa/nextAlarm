@@ -14,12 +14,19 @@ class _PlatformAlarmSound {
   final AndroidSound android;
   final IosSound ios;
 }
+
+enum AlarmRingingUiStage {
+  entry,
+  challenge,
+}
+
 class AlarmService extends ChangeNotifier {
   List<models.Alarm> _alarms = [];
   static const String _storageKey = 'alarms';
   Timer? _checkTimer;
   Timer? _volumeTimer;
   models.Alarm? _ringingAlarm;
+  AlarmRingingUiStage _ringingUiStage = AlarmRingingUiStage.entry;
   final Set<String> _triggeredToday = {};
   bool _isPlayingSound = false;
   bool _isPollingPlatformAlarm = false;
@@ -28,6 +35,7 @@ class AlarmService extends ChangeNotifier {
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
+  AlarmRingingUiStage get ringingUiStage => _ringingUiStage;
 
   bool get _useAndroidPlatformScheduler =>
       defaultTargetPlatform == TargetPlatform.android;
@@ -105,6 +113,7 @@ class AlarmService extends ChangeNotifier {
 
   void _triggerAlarm(models.Alarm alarm) {
     _ringingAlarm = alarm;
+    _ringingUiStage = AlarmRingingUiStage.entry;
     AppNavigationService.popToRoot();
 
     if (_useAndroidPlatformScheduler) {
@@ -352,6 +361,7 @@ class AlarmService extends ChangeNotifier {
 
   void stopRingingAlarm() {
     _ringingAlarm = null;
+    _ringingUiStage = AlarmRingingUiStage.entry;
     _stopAlarmSound();
     _stopVibration();
     _volumeTimer?.cancel();
@@ -359,6 +369,13 @@ class AlarmService extends ChangeNotifier {
     if (_useAndroidPlatformScheduler) {
       AndroidAlarmPlatformService.stopAlarmRinging();
     }
+    notifyListeners();
+  }
+
+  void beginAlarmChallenge() {
+    if (_ringingAlarm == null) return;
+    if (_ringingUiStage == AlarmRingingUiStage.challenge) return;
+    _ringingUiStage = AlarmRingingUiStage.challenge;
     notifyListeners();
   }
 

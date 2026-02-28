@@ -300,4 +300,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reviewPromptDismiss => 'Don\'t show again';
+
+  @override
+  String get alarmIsRinging => 'Alarm is ringing';
+
+  @override
+  String get completeChallengeToStopAlarm =>
+      'Complete the challenge to stop the alarm';
+
+  @override
+  String get startChallenge => 'Start challenge';
 }

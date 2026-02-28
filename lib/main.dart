@@ -9,6 +9,7 @@ import 'services/alarm_service.dart';
 import 'services/app_navigation_service.dart';
 import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
+import 'screens/alarm_entry_screen.dart';
 import 'screens/alarm_ringing_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -118,8 +119,10 @@ class AlarmMonitor extends StatelessWidget {
         final ringingAlarm = alarmService.ringingAlarm;
 
         if (ringingAlarm != null) {
-          // Show alarm ringing screen
-          return AlarmRingingScreen(alarm: ringingAlarm);
+          if (alarmService.ringingUiStage == AlarmRingingUiStage.challenge) {
+            return AlarmRingingScreen(alarm: ringingAlarm);
+          }
+          return AlarmEntryScreen(alarm: ringingAlarm);
         }
 
         // Show home screen
