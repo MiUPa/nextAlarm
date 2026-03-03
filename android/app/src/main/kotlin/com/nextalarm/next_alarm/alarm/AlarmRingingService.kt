@@ -88,7 +88,8 @@ class AlarmRingingService : Service() {
         val launchIntent = Intent(this, AlarmRingingActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
             putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label)
         }
@@ -124,7 +125,8 @@ class AlarmRingingService : Service() {
         val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
             putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label)
         }

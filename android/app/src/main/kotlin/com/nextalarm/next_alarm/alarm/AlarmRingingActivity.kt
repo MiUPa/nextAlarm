@@ -36,7 +36,8 @@ class AlarmRingingActivity : Activity() {
         val launchIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId)
             putExtra(
                 AlarmReceiver.EXTRA_ALARM_LABEL,
