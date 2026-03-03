@@ -21,18 +21,7 @@ class AlarmReceiver : BroadcastReceiver() {
         scheduler.rescheduleAlarmById(alarmId)
         AlarmPrefs.setPendingRingingAlarmId(context, alarmId)
 
-        val ringingUiIntent = Intent(context, AlarmRingingActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_ALARM_ID, alarmId)
-            putExtra(EXTRA_ALARM_LABEL, label)
-        }
-        try {
-            context.startActivity(ringingUiIntent)
-        } catch (error: RuntimeException) {
-            Log.w(TAG, "Failed to launch ringing activity from receiver", error)
-        }
+        launchRingingActivity(context, alarmId, label)
 
         val serviceIntent = Intent(context, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_START
@@ -49,24 +38,27 @@ class AlarmReceiver : BroadcastReceiver() {
             context.startService(serviceIntent)
         }
 
+        Log.i(TAG, "Alarm triggered: $alarmId")
+    }
+
+    private fun launchRingingActivity(context: Context, alarmId: String, label: String) {
         // Full-screen notification intents are best-effort on modern Android,
-        // so we also attempt to launch the alarm activity directly.
-        // If the OS blocks background launch, the foreground notification still
-        // remains as a fallback path to open the alarm UI.
+        // so attempt to surface the alarm UI immediately as well.
+        // If background launch is blocked, the foreground notification still
+        // provides a fallback path to open the ringing screen.
         try {
             val activityIntent = Intent(context, AlarmRingingActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
                 putExtra(EXTRA_ALARM_ID, alarmId)
                 putExtra(EXTRA_ALARM_LABEL, label)
             }
             context.startActivity(activityIntent)
         } catch (error: Exception) {
-            Log.w(TAG, "Failed to launch AlarmRingingActivity directly", error)
+            Log.w(TAG, "Failed to launch AlarmRingingActivity", error)
         }
-
-        Log.i(TAG, "Alarm triggered: $alarmId")
     }
 
     companion object {
