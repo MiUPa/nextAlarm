@@ -14,6 +14,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationManagerCompat
+import com.nextalarm.next_alarm.alarm.AlarmLaunchState
 import com.nextalarm.next_alarm.alarm.AlarmPrefs
 import com.nextalarm.next_alarm.alarm.AlarmReceiver
 import com.nextalarm.next_alarm.alarm.AlarmRingingService
@@ -22,20 +23,21 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+open class MainActivity : FlutterActivity() {
 	private val alarmScheduler: AlarmScheduler by lazy {
 		AlarmScheduler(applicationContext)
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
+		prepareAlarmWindowBehavior(intent)
 		super.onCreate(savedInstanceState)
-		applyAlarmWindowBehavior(intent)
 		cachePendingAlarmFromIntent(intent)
 	}
 
 	override fun onNewIntent(intent: Intent) {
+		setIntent(intent)
+		prepareAlarmWindowBehavior(intent)
 		super.onNewIntent(intent)
-		applyAlarmWindowBehavior(intent)
 		cachePendingAlarmFromIntent(intent)
 	}
 
@@ -61,6 +63,24 @@ class MainActivity : FlutterActivity() {
 					}
 					"peekPendingRingingAlarmId" -> {
 						result.success(AlarmPrefs.peekPendingRingingAlarmId(applicationContext))
+					}
+					"getAlarmDebugInfo" -> {
+						result.success(
+							mapOf(
+								"manufacturer" to Build.MANUFACTURER,
+								"lastLaunchSource" to AlarmPrefs.getLastAlarmLaunchSource(applicationContext),
+								"lastLaunchAtMs" to AlarmPrefs.getLastAlarmLaunchAtMs(applicationContext),
+								"lastLaunchAlarmId" to AlarmPrefs.getLastAlarmLaunchAlarmId(applicationContext),
+							),
+						)
+					}
+					"markAlarmLaunchSource" -> {
+						val source = call.argument<String>("source")
+						val alarmId = call.argument<String>("alarmId")
+						if (!source.isNullOrBlank()) {
+							AlarmPrefs.setLastAlarmLaunchSource(applicationContext, source, alarmId)
+						}
+						result.success(true)
 					}
 					"canScheduleExactAlarms" -> {
 						result.success(canScheduleExactAlarms())
@@ -101,10 +121,14 @@ class MainActivity : FlutterActivity() {
 		val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID)
 		if (!alarmId.isNullOrBlank()) {
 			AlarmPrefs.setPendingRingingAlarmId(applicationContext, alarmId)
+			val launchSource = intent.getStringExtra(AlarmLaunchState.EXTRA_LAUNCH_SOURCE)
+			if (!launchSource.isNullOrBlank()) {
+				AlarmPrefs.setLastAlarmLaunchSource(applicationContext, launchSource, alarmId)
+			}
 		}
 	}
 
-	private fun applyAlarmWindowBehavior(intent: Intent?) {
+	private fun prepareAlarmWindowBehavior(intent: Intent?) {
 		val alarmId = intent?.getStringExtra(AlarmReceiver.EXTRA_ALARM_ID)
 		if (alarmId.isNullOrBlank()) return
 

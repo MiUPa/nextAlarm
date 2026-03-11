@@ -4,4 +4,15 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application>
+        <receiver
+            android:name=".debug.DebugAlarmCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.nextalarm.next_alarm.DEBUG_TRIGGER_ALARM" />
+                <action android:name="com.nextalarm.next_alarm.DEBUG_STOP_ALARM" />
+            </intent-filter>
+        </receiver>
+    </application>
 </manifest>
