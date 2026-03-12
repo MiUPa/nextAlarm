@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:vibration/vibration.dart';
@@ -15,12 +16,9 @@ class _PlatformAlarmSound {
   final IosSound ios;
 }
 
-enum AlarmRingingUiStage {
-  entry,
-  challenge,
-}
+enum AlarmRingingUiStage { entry, challenge }
 
-class AlarmService extends ChangeNotifier {
+class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   List<models.Alarm> _alarms = [];
   static const String _storageKey = 'alarms';
   Timer? _checkTimer;
@@ -32,6 +30,7 @@ class AlarmService extends ChangeNotifier {
   bool _isPollingPlatformAlarm = false;
   double _currentVolume = 1.0;
   _PlatformAlarmSound? _activePlatformSound;
+  AppLifecycleState _appLifecycleState;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
@@ -40,7 +39,10 @@ class AlarmService extends ChangeNotifier {
   bool get _useAndroidPlatformScheduler =>
       defaultTargetPlatform == TargetPlatform.android;
 
-  AlarmService() {
+  AlarmService()
+    : _appLifecycleState =
+          WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed {
+    WidgetsBinding.instance.addObserver(this);
     _initialize();
   }
 
@@ -48,7 +50,9 @@ class AlarmService extends ChangeNotifier {
     await _loadAlarms();
     if (_useAndroidPlatformScheduler) {
       await _syncPlatformAlarms();
-      await _consumePendingPlatformAlarm();
+      if (_isAppResumed) {
+        await _consumePendingPlatformAlarm();
+      }
     }
     _startAlarmChecker();
   }
@@ -56,14 +60,27 @@ class AlarmService extends ChangeNotifier {
   @override
   void dispose() {
     _checkTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLifecycleState = state;
+    if (_useAndroidPlatformScheduler && state == AppLifecycleState.resumed) {
+      _consumePendingPlatformAlarm();
+    }
+  }
+
+  bool get _isAppResumed => _appLifecycleState == AppLifecycleState.resumed;
 
   void _startAlarmChecker() {
     _checkTimer?.cancel();
     _checkTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_useAndroidPlatformScheduler) {
-        _consumePendingPlatformAlarm();
+        if (_isAppResumed) {
+          _consumePendingPlatformAlarm();
+        }
       } else {
         _checkAlarms();
       }
@@ -71,12 +88,27 @@ class AlarmService extends ChangeNotifier {
   }
 
   Future<void> _consumePendingPlatformAlarm() async {
-    if (_isPollingPlatformAlarm || _ringingAlarm != null) return;
+    if (!_isAppResumed || _isPollingPlatformAlarm || _ringingAlarm != null) {
+      return;
+    }
     _isPollingPlatformAlarm = true;
     try {
       final alarmId =
           await AndroidAlarmPlatformService.consumePendingRingingAlarmId();
       if (alarmId == null) return;
+      final debugInfo = await AndroidAlarmPlatformService.getAlarmDebugInfo();
+      final shouldMarkForeground =
+          debugInfo == null ||
+          debugInfo.lastLaunchAlarmId != alarmId ||
+          debugInfo.lastLaunchSource == null ||
+          debugInfo.lastLaunchSource ==
+              AndroidAlarmPlatformService.sourceNotificationOnly;
+      if (shouldMarkForeground) {
+        await AndroidAlarmPlatformService.markAlarmLaunchSource(
+          AndroidAlarmPlatformService.sourceAppForeground,
+          alarmId: alarmId,
+        );
+      }
       triggerAlarmById(alarmId);
     } finally {
       _isPollingPlatformAlarm = false;
@@ -144,13 +176,51 @@ class AlarmService extends ChangeNotifier {
     // Phase 4: SURPRISE slam out of silence ~1080ms
     0, 500, 80, 200, 100, 200,
     // Phase 5: Machine-gun staccato ~840ms
-    30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40, 30, 40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
+    30,
+    40,
     // Phase 6: Heavy slam + aftershock tremor ~1330ms
     80, 400, 50, 60, 30, 60, 30, 40, 30, 40, 150, 360,
     // Phase 7: Second fake calm — longer this time ~1600ms
     1200, 40, 360,
     // Phase 8: Erratic panic crescendo ~2300ms
-    0, 80, 60, 120, 40, 200, 30, 300, 20, 400, 50, 500, 20, 80, 20, 80, 20, 80, 20, 80,
+    0,
+    80,
+    60,
+    120,
+    40,
+    200,
+    30,
+    300,
+    20,
+    400,
+    50,
+    500,
+    20,
+    80,
+    20,
+    80,
+    20,
+    80,
+    20,
+    80,
     // Phase 9: Final desperation — sustained max buzz ~1800ms
     100, 800, 50, 300, 50, 500,
   ];
@@ -165,17 +235,54 @@ class AlarmService extends ChangeNotifier {
     // Phase 4: SURPRISE — full power from silence
     0, 255, 0, 255, 0, 255,
     // Phase 5: Full intensity rapid fire
-    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
     // Phase 6: Slam max, aftershock decay
     0, 255, 0, 200, 0, 160, 0, 120, 0, 100, 0, 255,
     // Phase 7: Barely there — false hope
     0, 60, 0,
     // Phase 8: Building panic — intensity ramps up
-    0, 100, 0, 140, 0, 180, 0, 210, 0, 240, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    0,
+    100,
+    0,
+    140,
+    0,
+    180,
+    0,
+    210,
+    0,
+    240,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
     // Phase 9: Sustained max — no escape
     0, 255, 0, 255, 0, 255,
   ];
-
 
   void _startVibration(models.Alarm alarm) {
     if (!alarm.vibrate) return;
@@ -214,10 +321,12 @@ class AlarmService extends ChangeNotifier {
     final base = _normalizedAggressiveIntensities;
     if (intensityScale >= 1.0) return base;
 
-    return base.map((value) {
-      if (value == 0) return 0;
-      return (value * intensityScale).round().clamp(1, 255);
-    }).toList(growable: false);
+    return base
+        .map((value) {
+          if (value == 0) return 0;
+          return (value * intensityScale).round().clamp(1, 255);
+        })
+        .toList(growable: false);
   }
 
   List<int> get _normalizedAggressiveIntensities {

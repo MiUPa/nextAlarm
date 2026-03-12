@@ -2,10 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/alarm.dart' as models;
 
+class AndroidAlarmDebugInfo {
+  const AndroidAlarmDebugInfo({
+    required this.manufacturer,
+    required this.lastLaunchSource,
+    required this.lastLaunchAt,
+    required this.lastLaunchAlarmId,
+  });
+
+  final String manufacturer;
+  final String? lastLaunchSource;
+  final DateTime? lastLaunchAt;
+  final String? lastLaunchAlarmId;
+}
+
 class AndroidAlarmPlatformService {
   static const MethodChannel _channel = MethodChannel(
     'next_alarm/android_alarm',
   );
+  static const String sourceServiceDirect = 'service_direct';
+  static const String sourceAppForeground = 'app_foreground';
+  static const String sourceNotificationFullscreen =
+      'notification_fullscreen';
+  static const String sourceNotificationTap = 'notification_tap';
+  static const String sourceNotificationAction = 'notification_action';
+  static const String sourceNotificationOnly = 'notification_only';
 
   static bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
 
@@ -28,6 +49,35 @@ class AndroidAlarmPlatformService {
     );
     if (alarmId == null || alarmId.isEmpty) return null;
     return alarmId;
+  }
+
+  static Future<AndroidAlarmDebugInfo?> getAlarmDebugInfo() async {
+    if (!_isAndroid) return null;
+    final info = await _channel.invokeMapMethod<String, dynamic>(
+      'getAlarmDebugInfo',
+    );
+    if (info == null) return null;
+
+    final lastLaunchAtMs = info['lastLaunchAtMs'];
+    return AndroidAlarmDebugInfo(
+      manufacturer: (info['manufacturer'] as String?) ?? 'Android',
+      lastLaunchSource: info['lastLaunchSource'] as String?,
+      lastLaunchAt: lastLaunchAtMs is int
+          ? DateTime.fromMillisecondsSinceEpoch(lastLaunchAtMs)
+          : null,
+      lastLaunchAlarmId: info['lastLaunchAlarmId'] as String?,
+    );
+  }
+
+  static Future<void> markAlarmLaunchSource(
+    String source, {
+    String? alarmId,
+  }) async {
+    if (!_isAndroid) return;
+    await _channel.invokeMethod<void>('markAlarmLaunchSource', {
+      'source': source,
+      'alarmId': alarmId,
+    });
   }
 
   static Future<bool> canScheduleExactAlarms() async {

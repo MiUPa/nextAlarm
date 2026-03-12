@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.nextalarm.next_alarm.MainActivity
+import com.nextalarm.next_alarm.AlarmActivity
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
@@ -143,7 +143,7 @@ class AlarmScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val showIntent = Intent(context, MainActivity::class.java).apply {
+        val showIntent = Intent(context, AlarmActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
                 Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -155,6 +155,7 @@ class AlarmScheduler(private val context: Context) {
             requestCode,
             showIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntentOptions.backgroundActivityStart(),
         )
 
         try {

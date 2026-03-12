@@ -21,8 +21,6 @@ class AlarmReceiver : BroadcastReceiver() {
         scheduler.rescheduleAlarmById(alarmId)
         AlarmPrefs.setPendingRingingAlarmId(context, alarmId)
 
-        launchRingingActivity(context, alarmId, label)
-
         val serviceIntent = Intent(context, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_START
             putExtra(EXTRA_ALARM_ID, alarmId)
@@ -39,26 +37,6 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         Log.i(TAG, "Alarm triggered: $alarmId")
-    }
-
-    private fun launchRingingActivity(context: Context, alarmId: String, label: String) {
-        // Full-screen notification intents are best-effort on modern Android,
-        // so attempt to surface the alarm UI immediately as well.
-        // If background launch is blocked, the foreground notification still
-        // provides a fallback path to open the ringing screen.
-        try {
-            val activityIntent = Intent(context, AlarmRingingActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                putExtra(EXTRA_ALARM_ID, alarmId)
-                putExtra(EXTRA_ALARM_LABEL, label)
-            }
-            context.startActivity(activityIntent)
-        } catch (error: Exception) {
-            Log.w(TAG, "Failed to launch AlarmRingingActivity", error)
-        }
     }
 
     companion object {

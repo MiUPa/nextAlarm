@@ -6,6 +6,9 @@ object AlarmPrefs {
     private const val PREFS_NAME = "next_alarm_android"
     private const val KEY_ALARMS_JSON = "alarms_json"
     private const val KEY_PENDING_RINGING_ALARM_ID = "pending_ringing_alarm_id"
+    private const val KEY_LAST_LAUNCH_SOURCE = "last_alarm_launch_source"
+    private const val KEY_LAST_LAUNCH_AT_MS = "last_alarm_launch_at_ms"
+    private const val KEY_LAST_LAUNCH_ALARM_ID = "last_alarm_launch_alarm_id"
 
     fun getAlarmsJson(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -40,5 +43,36 @@ object AlarmPrefs {
     fun clearPendingRingingAlarmId(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().remove(KEY_PENDING_RINGING_ALARM_ID).apply()
+    }
+
+    fun setLastAlarmLaunchSource(context: Context, source: String, alarmId: String?) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString(KEY_LAST_LAUNCH_SOURCE, source)
+            .putLong(KEY_LAST_LAUNCH_AT_MS, System.currentTimeMillis())
+            .apply()
+
+        if (!alarmId.isNullOrBlank()) {
+            prefs.edit().putString(KEY_LAST_LAUNCH_ALARM_ID, alarmId).apply()
+        }
+    }
+
+    fun getLastAlarmLaunchSource(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_LAST_LAUNCH_SOURCE, null)
+    }
+
+    fun getLastAlarmLaunchAtMs(context: Context): Long? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return if (prefs.contains(KEY_LAST_LAUNCH_AT_MS)) {
+            prefs.getLong(KEY_LAST_LAUNCH_AT_MS, 0L)
+        } else {
+            null
+        }
+    }
+
+    fun getLastAlarmLaunchAlarmId(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_LAST_LAUNCH_ALARM_ID, null)
     }
 }
