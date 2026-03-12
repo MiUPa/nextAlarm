@@ -6,8 +6,10 @@ import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.Ringtone
 import android.media.RingtoneManager
@@ -19,8 +21,9 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.nextalarm.next_alarm.MainActivity
+import androidx.core.content.ContextCompat
 import com.nextalarm.next_alarm.AlarmActivity
 import com.nextalarm.next_alarm.R
 
@@ -31,20 +34,60 @@ class AlarmRingingService : Service() {
     private var serviceNotificationId: Int = BASE_NOTIFICATION_ID
     private var alertNotificationId: Int = BASE_NOTIFICATION_ID + ALERT_NOTIFICATION_OFFSET
     private val loopHandler = Handler(Looper.getMainLooper())
-    private val loopCheckRunnable = object : Runnable {
+    private var activeAlarmId: String? = null
+    private var activeSound: Int = SOUND_SILENT
+    private var activeVibrate: Boolean = false
+    private var activeVibrationIntensity: Int = 1
+    private var isScreenReceiverRegistered = false
+    private val screenOffRecoveryRunnable = Runnable {
+        if (!isAlarmActive()) return@Runnable
+        Log.i(TAG, "Reasserting alarm playback after screen off")
+        acquireWakeLock()
+        ensureRingtonePlaying()
+        if (activeVibrate) {
+            startVibration(activeVibrationIntensity)
+        }
+    }
+    private val ringtoneMonitorRunnable = object : Runnable {
         override fun run() {
-            ringtone?.let {
-                if (!it.isPlaying) {
-                    it.play()
+            if (!isAlarmActive()) {
+                return
+            }
+            if (activeSound != SOUND_SILENT) {
+                val currentRingtone = ringtone
+                if (currentRingtone == null || !currentRingtone.isPlaying) {
+                    Log.i(TAG, "Ringtone stopped unexpectedly; restarting")
+                    startRingtone()
                 }
             }
-            loopHandler.postDelayed(this, LOOP_CHECK_INTERVAL_MS)
+            loopHandler.postDelayed(this, RINGTONE_MONITOR_INTERVAL_MS)
+        }
+    }
+    private val vibrationLoopRunnable = object : Runnable {
+        override fun run() {
+            if (!isAlarmActive() || !activeVibrate) {
+                return
+            }
+            playSingleVibrationCycle(activeVibrationIntensity)
+            loopHandler.postDelayed(this, VIBRATION_PATTERN_DURATION_MS)
+        }
+    }
+    private val screenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != Intent.ACTION_SCREEN_OFF || !isAlarmActive()) {
+                return
+            }
+            Log.i(TAG, "Screen turned off while alarm active")
+            acquireWakeLock()
+            loopHandler.removeCallbacks(screenOffRecoveryRunnable)
+            loopHandler.postDelayed(screenOffRecoveryRunnable, SCREEN_OFF_RECOVERY_DELAY_MS)
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+        registerScreenStateReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -58,10 +101,12 @@ class AlarmRingingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        loopHandler.removeCallbacks(screenOffRecoveryRunnable)
         stopRingtone()
         stopVibration()
         releaseWakeLock()
         cancelAlertNotification()
+        unregisterScreenStateReceiver()
         super.onDestroy()
     }
 
@@ -71,7 +116,13 @@ class AlarmRingingService : Service() {
         val sound = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_SOUND, 0)
         val vibrate = intent.getBooleanExtra(AlarmReceiver.EXTRA_ALARM_VIBRATE, true)
         val vibrationIntensity = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_VIBRATION_INTENSITY, 1)
+        activeAlarmId = alarmId
+        activeSound = sound
+        activeVibrate = vibrate
+        activeVibrationIntensity = vibrationIntensity
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
+        stopRingtone()
+        stopVibration()
 
         serviceNotificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
         alertNotificationId = serviceNotificationId + ALERT_NOTIFICATION_OFFSET
@@ -89,6 +140,8 @@ class AlarmRingingService : Service() {
             startVibration(vibrationIntensity)
         }
     }
+
+    private fun isAlarmActive(): Boolean = !activeAlarmId.isNullOrBlank()
 
     private fun acquireWakeLock() {
         if (wakeLock?.isHeld == true) return
@@ -245,6 +298,7 @@ class AlarmRingingService : Service() {
     }
 
     private fun startRingtone() {
+        if (activeSound == SOUND_SILENT) return
         stopRingtone()
         val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -258,15 +312,20 @@ class AlarmRingingService : Service() {
             }
             play()
         }
-        // For pre-API 28 devices that lack Ringtone.isLooping, poll and restart
-        // the ringtone when it finishes to achieve seamless looping.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            loopHandler.postDelayed(loopCheckRunnable, LOOP_CHECK_INTERVAL_MS)
+        loopHandler.removeCallbacks(ringtoneMonitorRunnable)
+        loopHandler.postDelayed(ringtoneMonitorRunnable, RINGTONE_MONITOR_INTERVAL_MS)
+    }
+
+    private fun ensureRingtonePlaying() {
+        if (activeSound == SOUND_SILENT) return
+        val currentRingtone = ringtone
+        if (currentRingtone == null || !currentRingtone.isPlaying) {
+            startRingtone()
         }
     }
 
     private fun stopRingtone() {
-        loopHandler.removeCallbacks(loopCheckRunnable)
+        loopHandler.removeCallbacks(ringtoneMonitorRunnable)
         ringtone?.stop()
         ringtone = null
     }
@@ -277,6 +336,8 @@ class AlarmRingingService : Service() {
      */
     private fun startVibration(intensityIndex: Int = 1) {
         stopVibration()
+        activeVibrate = true
+        activeVibrationIntensity = intensityIndex
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val manager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             manager.defaultVibrator
@@ -284,21 +345,12 @@ class AlarmRingingService : Service() {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+        playSingleVibrationCycle(intensityIndex)
+        loopHandler.postDelayed(vibrationLoopRunnable, VIBRATION_PATTERN_DURATION_MS)
+    }
 
-        // Aggressive repeating pattern: rapid bursts, pauses, slams.
-        // Format: [wait, vibrate, wait, vibrate, ...] in milliseconds.
-        // Repeats from index 0.
-        val pattern = longArrayOf(
-            // Rapid bursts
-            0, 100, 50, 100, 50, 200, 100, 100,
-            // Strong slam
-            200, 500, 100, 300,
-            // Brief pause then staccato
-            400, 80, 40, 80, 40, 80, 40, 80, 40, 80,
-            // Final sustained buzz
-            200, 600, 100, 400,
-        )
-
+    private fun playSingleVibrationCycle(intensityIndex: Int) {
+        val targetVibrator = vibrator ?: return
         // Scale amplitude based on intensity: gentle=40%, standard=70%, aggressive=100%
         val scale = when (intensityIndex) {
             0 -> 0.4
@@ -306,7 +358,7 @@ class AlarmRingingService : Service() {
             else -> 1.0
         }
         // Amplitudes: even indices = pause (0), odd indices = vibrate (scaled)
-        val amplitudes = IntArray(pattern.size) { i ->
+        val amplitudes = IntArray(VIBRATION_PATTERN.size) { i ->
             if (i % 2 == 0) 0 else (255 * scale).toInt().coerceIn(1, 255)
         }
 
@@ -315,22 +367,30 @@ class AlarmRingingService : Service() {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(
-                VibrationEffect.createWaveform(pattern, amplitudes, 0),
+            targetVibrator.cancel()
+            targetVibrator.vibrate(
+                VibrationEffect.createWaveform(VIBRATION_PATTERN, amplitudes, -1),
                 alarmAttributes,
             )
         } else {
             @Suppress("DEPRECATION")
-            vibrator?.vibrate(pattern, 0)
+            targetVibrator.cancel()
+            targetVibrator.vibrate(VIBRATION_PATTERN, -1)
         }
     }
 
     private fun stopVibration() {
+        loopHandler.removeCallbacks(vibrationLoopRunnable)
         vibrator?.cancel()
         vibrator = null
     }
 
     private fun stopAlarmAndSelf() {
+        activeAlarmId = null
+        activeSound = SOUND_SILENT
+        activeVibrate = false
+        activeVibrationIntensity = 1
+        loopHandler.removeCallbacks(screenOffRecoveryRunnable)
         AlarmPrefs.clearPendingRingingAlarmId(this)
         stopRingtone()
         stopVibration()
@@ -343,6 +403,23 @@ class AlarmRingingService : Service() {
     private fun cancelAlertNotification() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.cancel(alertNotificationId)
+    }
+
+    private fun registerScreenStateReceiver() {
+        if (isScreenReceiverRegistered) return
+        ContextCompat.registerReceiver(
+            this,
+            screenStateReceiver,
+            IntentFilter(Intent.ACTION_SCREEN_OFF),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        isScreenReceiverRegistered = true
+    }
+
+    private fun unregisterScreenStateReceiver() {
+        if (!isScreenReceiverRegistered) return
+        runCatching { unregisterReceiver(screenStateReceiver) }
+        isScreenReceiverRegistered = false
     }
 
     private fun createNotificationChannels() {
@@ -385,8 +462,16 @@ class AlarmRingingService : Service() {
         private const val BASE_NOTIFICATION_ID = 42000
         private const val ALERT_NOTIFICATION_OFFSET = 100000
         private const val SOUND_SILENT = 5 // AlarmSound.silent index in Dart enum
-        private const val LOOP_CHECK_INTERVAL_MS = 1000L
+        private const val RINGTONE_MONITOR_INTERVAL_MS = 1000L
+        private const val SCREEN_OFF_RECOVERY_DELAY_MS = 350L
         private const val WAKE_LOCK_TIMEOUT_MS = 30 * 60 * 1000L
         private const val TAG = "AlarmRingingService"
+        private val VIBRATION_PATTERN = longArrayOf(
+            0, 100, 50, 100, 50, 200, 100, 100,
+            200, 500, 100, 300,
+            400, 80, 40, 80, 40, 80, 40, 80, 40, 80,
+            200, 600, 100, 400,
+        )
+        private val VIBRATION_PATTERN_DURATION_MS = VIBRATION_PATTERN.sum()
     }
 }
