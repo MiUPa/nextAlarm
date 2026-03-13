@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
+import 'models/alarm.dart' show WakeUpChallenge;
 import 'services/alarm_service.dart';
 import 'services/app_navigation_service.dart';
 import 'services/locale_service.dart';
@@ -119,7 +120,8 @@ class AlarmMonitor extends StatelessWidget {
         final ringingAlarm = alarmService.ringingAlarm;
 
         if (ringingAlarm != null) {
-          if (alarmService.ringingUiStage == AlarmRingingUiStage.challenge) {
+          if (ringingAlarm.challenge != WakeUpChallenge.none ||
+              alarmService.ringingUiStage == AlarmRingingUiStage.challenge) {
             return AlarmRingingScreen(alarm: ringingAlarm);
           }
           return AlarmEntryScreen(alarm: ringingAlarm);

@@ -100,6 +100,14 @@ class AlarmRingingService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (isAlarmActive()) {
+            Log.i(TAG, "App task removed while alarm active; stopping playback")
+            stopAlarmAndSelf()
+        }
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         loopHandler.removeCallbacks(screenOffRecoveryRunnable)
         stopRingtone()
