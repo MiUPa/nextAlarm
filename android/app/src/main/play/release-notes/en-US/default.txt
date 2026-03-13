@@ -1,2 +1,2 @@
-Removed UI tap vibration feedback for a cleaner alarm setup experience.
-Alarm vibration behavior during ringing remains unchanged.
+Challenge alarms now open directly in the challenge screen without an extra start step.
+Force-closing the app while an alarm is ringing now stops playback instead of leaving it stuck on the device.

@@ -145,7 +145,9 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
 
   void _triggerAlarm(models.Alarm alarm) {
     _ringingAlarm = alarm;
-    _ringingUiStage = AlarmRingingUiStage.entry;
+    _ringingUiStage = alarm.challenge == models.WakeUpChallenge.none
+        ? AlarmRingingUiStage.entry
+        : AlarmRingingUiStage.challenge;
     AppNavigationService.popToRoot();
 
     if (_useAndroidPlatformScheduler) {
@@ -478,13 +480,6 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
     if (_useAndroidPlatformScheduler) {
       AndroidAlarmPlatformService.stopAlarmRinging();
     }
-    notifyListeners();
-  }
-
-  void beginAlarmChallenge() {
-    if (_ringingAlarm == null) return;
-    if (_ringingUiStage == AlarmRingingUiStage.challenge) return;
-    _ringingUiStage = AlarmRingingUiStage.challenge;
     notifyListeners();
   }
 
