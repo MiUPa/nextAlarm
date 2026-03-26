@@ -42,6 +42,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repeat => '繰り返し';
 
   @override
+  String get pauseDates => '休止日';
+
+  @override
+  String get pauseTomorrow => '明日を休止';
+
+  @override
+  String get resumeTomorrow => '明日の休止を解除';
+
+  @override
+  String get addPauseRange => '期間を追加';
+
+  @override
+  String get pauseDatesDescription => '選択した日だけこのアラームを鳴らしません。';
+
+  @override
+  String get noPauseDates => '休止日はまだありません';
+
+  @override
+  String get pauseSummaryTomorrow => '明日は休止';
+
+  @override
+  String pauseSummaryOne(String date) {
+    return '$dateは休止';
+  }
+
+  @override
+  String pauseSummaryMany(int count) {
+    return '$count件の休止日';
+  }
+
+  @override
   String get wakeUpChallenge => '起床チャレンジ';
 
   @override
@@ -183,6 +214,35 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get language => '言語';
+
+  @override
+  String get alarmBehavior => 'アラーム動作';
+
+  @override
+  String get defaultAlarmOptions => '新規アラームの初期値';
+
+  @override
+  String get silenceAfter => '自動停止';
+
+  @override
+  String get silenceAfterNever => '自動停止しない';
+
+  @override
+  String silenceAfterMinutes(int count) {
+    return '$count分後に停止';
+  }
+
+  @override
+  String get startWeekOn => '週の開始';
+
+  @override
+  String get weekStartMonday => '月曜';
+
+  @override
+  String get weekStartSunday => '日曜';
+
+  @override
+  String get newAlarmsUseThisDefault => '新規アラーム作成時の初期値として使用';
 
   @override
   String get languageSystem => 'システム設定';

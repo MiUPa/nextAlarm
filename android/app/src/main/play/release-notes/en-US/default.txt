@@ -1,2 +1,2 @@
-Removed UI tap vibration feedback for a cleaner alarm setup experience.
-Alarm vibration behavior during ringing remains unchanged.
+Recurring alarms can now be paused on specific dates, including a quick "pause tomorrow" option.
+Added shared alarm defaults and app-wide alarm behavior settings.

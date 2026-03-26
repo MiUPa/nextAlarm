@@ -22,8 +22,7 @@ class AndroidAlarmPlatformService {
   );
   static const String sourceServiceDirect = 'service_direct';
   static const String sourceAppForeground = 'app_foreground';
-  static const String sourceNotificationFullscreen =
-      'notification_fullscreen';
+  static const String sourceNotificationFullscreen = 'notification_fullscreen';
   static const String sourceNotificationTap = 'notification_tap';
   static const String sourceNotificationAction = 'notification_action';
   static const String sourceNotificationOnly = 'notification_only';
@@ -40,6 +39,13 @@ class AndroidAlarmPlatformService {
   static Future<void> rescheduleFromStorage() async {
     if (!_isAndroid) return;
     await _channel.invokeMethod<void>('rescheduleFromStorage');
+  }
+
+  static Future<void> syncAlarmSettings({int? silenceAfterMinutes}) async {
+    if (!_isAndroid) return;
+    await _channel.invokeMethod<void>('syncAlarmSettings', {
+      'silenceAfterMinutes': silenceAfterMinutes,
+    });
   }
 
   static Future<String?> consumePendingRingingAlarmId() async {

@@ -20,6 +20,7 @@ class AlarmScheduler(private val context: Context) {
         val minute: Int,
         val isEnabled: Boolean,
         val repeatDays: Set<Int>,
+        val pausedDates: Set<String>,
         val label: String,
         val sound: Int, // AlarmSound enum index from Dart (5 = silent)
         val vibrate: Boolean,
@@ -43,7 +44,13 @@ class AlarmScheduler(private val context: Context) {
 
     fun rescheduleAlarmById(alarmId: String) {
         val alarm = loadAlarmsFromStorage().firstOrNull { it.id == alarmId } ?: return
-        if (alarm.isEnabled) {
+        if (!alarm.isEnabled) {
+            return
+        }
+
+        if (alarm.repeatDays.isEmpty()) {
+            disableOneTimeAlarm(alarmId)
+        } else {
             scheduleAlarmInternal(alarm)
         }
     }
@@ -81,6 +88,13 @@ class AlarmScheduler(private val context: Context) {
                 if (value in 1..7) add(value)
             }
         }
+        val pausedDateArray = item.optJSONArray("pausedDates") ?: JSONArray()
+        val pausedDates = buildSet {
+            for (i in 0 until pausedDateArray.length()) {
+                val value = pausedDateArray.optString(i)
+                if (value.isNotBlank()) add(value)
+            }
+        }
 
         return AlarmPayload(
             id = id,
@@ -88,6 +102,7 @@ class AlarmScheduler(private val context: Context) {
             minute = item.optInt("minute", 0),
             isEnabled = item.optBoolean("isEnabled", true),
             repeatDays = repeatDays,
+            pausedDates = pausedDates,
             label = item.optString("label", ""),
             sound = item.optInt("sound", 0),
             vibrate = item.optBoolean("vibrate", true),
@@ -107,6 +122,11 @@ class AlarmScheduler(private val context: Context) {
         val repeatDays = repeatRaw.mapNotNull {
             (it as? Number)?.toInt()?.takeIf { day -> day in 1..7 }
         }.toSet()
+        @Suppress("UNCHECKED_CAST")
+        val pausedDateRaw = (item["pausedDates"] as? List<Any?>).orEmpty()
+        val pausedDates = pausedDateRaw.mapNotNull {
+            (it as? String)?.takeIf { dateKey -> dateKey.isNotBlank() }
+        }.toSet()
 
         val sound = (item["sound"] as? Number)?.toInt() ?: 0
         val vibrate = item["vibrate"] as? Boolean ?: true
@@ -118,6 +138,7 @@ class AlarmScheduler(private val context: Context) {
             minute = minute,
             isEnabled = isEnabled,
             repeatDays = repeatDays,
+            pausedDates = pausedDates,
             label = label,
             sound = sound,
             vibrate = vibrate,
@@ -211,13 +232,41 @@ class AlarmScheduler(private val context: Context) {
             next.add(Calendar.DAY_OF_YEAR, 1)
         }
 
-        if (alarm.repeatDays.isNotEmpty()) {
-            while (!alarm.repeatDays.contains(calendarToAlarmWeekday(next.get(Calendar.DAY_OF_WEEK)))) {
-                next.add(Calendar.DAY_OF_YEAR, 1)
-            }
+        var attempts = 0
+        while (!shouldTriggerOnDay(alarm, next) && attempts <= 730) {
+            next.add(Calendar.DAY_OF_YEAR, 1)
+            attempts += 1
         }
 
         return next.timeInMillis
+    }
+
+    private fun shouldTriggerOnDay(alarm: AlarmPayload, day: Calendar): Boolean {
+        val matchesRepeat = alarm.repeatDays.isEmpty() ||
+            alarm.repeatDays.contains(calendarToAlarmWeekday(day.get(Calendar.DAY_OF_WEEK)))
+        return matchesRepeat && !alarm.pausedDates.contains(calendarDateKey(day))
+    }
+
+    private fun calendarDateKey(day: Calendar): String {
+        val year = day.get(Calendar.YEAR).toString().padStart(4, '0')
+        val month = (day.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+        val date = day.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+        return "$year-$month-$date"
+    }
+
+    private fun disableOneTimeAlarm(alarmId: String) {
+        try {
+            val array = JSONArray(AlarmPrefs.getAlarmsJson(context))
+            for (i in 0 until array.length()) {
+                val item = array.optJSONObject(i) ?: continue
+                if (item.optString("id") != alarmId) continue
+                item.put("isEnabled", false)
+                AlarmPrefs.setAlarmsJson(context, array.toString())
+                break
+            }
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to disable one-time alarm $alarmId", error)
+        }
     }
 
     private fun calendarToAlarmWeekday(calendarDay: Int): Int {

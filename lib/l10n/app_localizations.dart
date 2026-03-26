@@ -164,6 +164,60 @@ abstract class AppLocalizations {
   /// **'Repeat'**
   String get repeat;
 
+  /// No description provided for @pauseDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause dates'**
+  String get pauseDates;
+
+  /// No description provided for @pauseTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause tomorrow'**
+  String get pauseTomorrow;
+
+  /// No description provided for @resumeTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume tomorrow'**
+  String get resumeTomorrow;
+
+  /// No description provided for @addPauseRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Add range'**
+  String get addPauseRange;
+
+  /// No description provided for @pauseDatesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this alarm on the selected dates only.'**
+  String get pauseDatesDescription;
+
+  /// No description provided for @noPauseDates.
+  ///
+  /// In en, this message translates to:
+  /// **'No pause dates scheduled'**
+  String get noPauseDates;
+
+  /// No description provided for @pauseSummaryTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused tomorrow'**
+  String get pauseSummaryTomorrow;
+
+  /// No description provided for @pauseSummaryOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused on {date}'**
+  String pauseSummaryOne(String date);
+
+  /// No description provided for @pauseSummaryMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pause dates'**
+  String pauseSummaryMany(int count);
+
   /// No description provided for @wakeUpChallenge.
   ///
   /// In en, this message translates to:
@@ -421,6 +475,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
+
+  /// No description provided for @alarmBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm behavior'**
+  String get alarmBehavior;
+
+  /// No description provided for @defaultAlarmOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults for new alarms'**
+  String get defaultAlarmOptions;
+
+  /// No description provided for @silenceAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Silence after'**
+  String get silenceAfter;
+
+  /// No description provided for @silenceAfterNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get silenceAfterNever;
+
+  /// No description provided for @silenceAfterMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'After {count} {count, plural, =1{minute} other{minutes}}'**
+  String silenceAfterMinutes(int count);
+
+  /// No description provided for @startWeekOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Start week on'**
+  String get startWeekOn;
+
+  /// No description provided for @weekStartMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get weekStartMonday;
+
+  /// No description provided for @weekStartSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get weekStartSunday;
+
+  /// No description provided for @newAlarmsUseThisDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Used when creating new alarms'**
+  String get newAlarmsUseThisDefault;
 
   /// No description provided for @languageSystem.
   ///
