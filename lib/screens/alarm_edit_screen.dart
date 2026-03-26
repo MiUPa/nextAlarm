@@ -94,7 +94,12 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: Column(
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.only(
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom + contentBottomSpacing,
+          ),
           children: [
             // Time Picker - Android style
             GestureDetector(
@@ -171,13 +176,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
               bottomPadding: sectionBottomPadding,
             ),
 
-            if (_repeatDays.isNotEmpty)
-              _buildSection(
-                l10n.pauseDates,
-                _buildPauseDatesSection(context, l10n),
-                topPadding: sectionTopPadding,
-                bottomPadding: sectionBottomPadding,
-              ),
+            if (_repeatDays.isNotEmpty) _buildPauseDatesTile(context, l10n),
 
             // Alarm sound
             ListTile(
@@ -641,93 +640,120 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     return false;
   }
 
-  Widget _buildPauseDatesSection(BuildContext context, AppLocalizations l10n) {
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
-    final tomorrowKey = models.alarmDateKey(tomorrow);
-    final isTomorrowPaused = _pausedDates.contains(tomorrowKey);
+  Widget _buildPauseDatesTile(BuildContext context, AppLocalizations l10n) {
     final sortedPausedDates =
         _pausedDates.map(models.alarmDateFromKey).whereType<DateTime>().toList()
           ..sort();
+    final hasPausedDates = sortedPausedDates.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _toggleTomorrowPause,
-                  icon: Icon(
-                    isTomorrowPaused ? Icons.play_arrow_rounded : Icons.pause,
-                  ),
-                  label: Text(
-                    isTomorrowPaused ? l10n.resumeTomorrow : l10n.pauseTomorrow,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () => _showPauseRangePicker(context),
-                  icon: const Icon(Icons.date_range_outlined),
-                  label: Text(l10n.addPauseRange),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            l10n.pauseDatesDescription,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            minLeadingWidth: 20,
+            horizontalTitleGap: 16,
+            visualDensity: const VisualDensity(vertical: -2),
+            leading: const Icon(
+              Icons.pause_circle_outline_rounded,
+              color: AppTheme.onSurfaceSecondary,
             ),
+            title: Text(
+              l10n.pauseDates,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: AppTheme.onSurface),
+            ),
+            subtitle: hasPausedDates
+                ? Text(
+                    _buildPauseDatesSummary(context, sortedPausedDates),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.onSurfaceSecondary,
+                    ),
+                  )
+                : null,
+            trailing: Icon(
+              hasPausedDates
+                  ? Icons.edit_calendar_outlined
+                  : Icons.add_circle_outline_rounded,
+              color: AppTheme.onSurfaceSecondary,
+            ),
+            onTap: () => _showPauseRangePicker(context),
           ),
-          const SizedBox(height: 12),
-          if (sortedPausedDates.isEmpty)
-            Text(
-              l10n.noPauseDates,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.onSurfaceSecondary,
+          if (hasPausedDates)
+            Padding(
+              padding: const EdgeInsets.only(left: 36, top: 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: sortedPausedDates
+                    .map((date) {
+                      final dateKey = models.alarmDateKey(date);
+                      return InputChip(
+                        label: Text(_formatPauseDate(context, date)),
+                        selected: true,
+                        selectedColor: AppTheme.primary.withValues(alpha: 0.18),
+                        onDeleted: () {
+                          setState(() {
+                            _pausedDates.remove(dateKey);
+                          });
+                        },
+                      );
+                    })
+                    .toList(growable: false),
               ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: sortedPausedDates
-                  .map((date) {
-                    final dateKey = models.alarmDateKey(date);
-                    return InputChip(
-                      label: Text(_formatPauseDate(context, date)),
-                      selected: true,
-                      selectedColor: AppTheme.primary.withValues(alpha: 0.18),
-                      onDeleted: () {
-                        setState(() {
-                          _pausedDates.remove(dateKey);
-                        });
-                      },
-                    );
-                  })
-                  .toList(growable: false),
             ),
         ],
       ),
     );
   }
 
-  void _toggleTomorrowPause() {
-    final tomorrowKey = models.alarmDateKey(
-      DateTime.now().add(const Duration(days: 1)),
-    );
-    setState(() {
-      if (_pausedDates.contains(tomorrowKey)) {
-        _pausedDates.remove(tomorrowKey);
-      } else {
-        _pausedDates.add(tomorrowKey);
+  String _buildPauseDatesSummary(
+    BuildContext context,
+    List<DateTime> sortedPausedDates,
+  ) {
+    if (sortedPausedDates.isEmpty) {
+      return '';
+    }
+    if (sortedPausedDates.length == 1) {
+      return _formatPauseDate(context, sortedPausedDates.first);
+    }
+    if (_isContiguousPauseDates(sortedPausedDates)) {
+      return '${_formatPauseDate(context, sortedPausedDates.first)} - ${_formatPauseDate(context, sortedPausedDates.last)}';
+    }
+
+    final preview = sortedPausedDates
+        .take(2)
+        .map((date) => _formatPauseDate(context, date))
+        .join(', ');
+    final remainingCount = sortedPausedDates.length - 2;
+    if (remainingCount <= 0) {
+      return preview;
+    }
+    return '$preview +$remainingCount';
+  }
+
+  bool _isContiguousPauseDates(List<DateTime> sortedPausedDates) {
+    for (var i = 1; i < sortedPausedDates.length; i++) {
+      final previous = DateTime(
+        sortedPausedDates[i - 1].year,
+        sortedPausedDates[i - 1].month,
+        sortedPausedDates[i - 1].day,
+      );
+      final current = DateTime(
+        sortedPausedDates[i].year,
+        sortedPausedDates[i].month,
+        sortedPausedDates[i].day,
+      );
+      if (current.difference(previous).inDays != 1) {
+        return false;
       }
-    });
+    }
+    return true;
   }
 
   Future<void> _showPauseRangePicker(BuildContext context) async {
