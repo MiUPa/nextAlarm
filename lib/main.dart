@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'models/alarm.dart' show WakeUpChallenge;
 import 'services/alarm_service.dart';
+import 'services/alarm_settings_service.dart';
 import 'services/app_navigation_service.dart';
 import 'services/locale_service.dart';
 import 'screens/home_screen.dart';
@@ -84,7 +85,15 @@ class NextAlarmApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AlarmService()),
+        ChangeNotifierProvider(create: (_) => AlarmSettingsService()),
+        ChangeNotifierProxyProvider<AlarmSettingsService, AlarmService>(
+          create: (_) => AlarmService(),
+          update: (_, alarmSettings, alarmService) {
+            alarmService ??= AlarmService();
+            alarmService.updateSettings(alarmSettings);
+            return alarmService;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => LocaleService()),
       ],
       child: Consumer<LocaleService>(

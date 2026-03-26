@@ -38,6 +38,7 @@ class AlarmRingingService : Service() {
     private var activeSound: Int = SOUND_SILENT
     private var activeVibrate: Boolean = false
     private var activeVibrationIntensity: Int = 1
+    private var autoStopRunnable: Runnable? = null
     private var isScreenReceiverRegistered = false
     private val screenOffRecoveryRunnable = Runnable {
         if (!isAlarmActive()) return@Runnable
@@ -131,6 +132,7 @@ class AlarmRingingService : Service() {
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
         stopRingtone()
         stopVibration()
+        cancelAutoStop()
 
         serviceNotificationId = BASE_NOTIFICATION_ID + (alarmId.hashCode() and 0x0fffffff)
         alertNotificationId = serviceNotificationId + ALERT_NOTIFICATION_OFFSET
@@ -139,6 +141,7 @@ class AlarmRingingService : Service() {
         acquireWakeLock()
         maybeLaunchAlarmActivityDirectly(alarmId, label)
         AlarmPrefs.setLastAlarmLaunchSource(this, AlarmLaunchState.SOURCE_NOTIFICATION_ONLY, alarmId)
+        scheduleAutoStop()
 
         // AlarmSound.silent index == 5 in Dart enum
         if (sound != SOUND_SILENT) {
@@ -394,11 +397,30 @@ class AlarmRingingService : Service() {
         vibrator = null
     }
 
+    private fun scheduleAutoStop() {
+        cancelAutoStop()
+        val minutes = AlarmPrefs.getSilenceAfterMinutes(this) ?: return
+        if (minutes <= 0) return
+
+        autoStopRunnable = Runnable {
+            if (!isAlarmActive()) return@Runnable
+            Log.i(TAG, "Auto-stopping alarm after $minutes minutes")
+            stopAlarmAndSelf()
+        }
+        loopHandler.postDelayed(autoStopRunnable!!, minutes * 60 * 1000L)
+    }
+
+    private fun cancelAutoStop() {
+        autoStopRunnable?.let(loopHandler::removeCallbacks)
+        autoStopRunnable = null
+    }
+
     private fun stopAlarmAndSelf() {
         activeAlarmId = null
         activeSound = SOUND_SILENT
         activeVibrate = false
         activeVibrationIntensity = 1
+        cancelAutoStop()
         loopHandler.removeCallbacks(screenOffRecoveryRunnable)
         AlarmPrefs.clearPendingRingingAlarmId(this)
         stopRingtone()

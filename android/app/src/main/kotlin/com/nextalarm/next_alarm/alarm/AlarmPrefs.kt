@@ -9,6 +9,7 @@ object AlarmPrefs {
     private const val KEY_LAST_LAUNCH_SOURCE = "last_alarm_launch_source"
     private const val KEY_LAST_LAUNCH_AT_MS = "last_alarm_launch_at_ms"
     private const val KEY_LAST_LAUNCH_ALARM_ID = "last_alarm_launch_alarm_id"
+    private const val KEY_SILENCE_AFTER_MINUTES = "silence_after_minutes"
 
     fun getAlarmsJson(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -74,5 +75,25 @@ object AlarmPrefs {
     fun getLastAlarmLaunchAlarmId(context: Context): String? {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getString(KEY_LAST_LAUNCH_ALARM_ID, null)
+    }
+
+    fun setSilenceAfterMinutes(context: Context, minutes: Int?) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        if (minutes == null || minutes <= 0) {
+            editor.remove(KEY_SILENCE_AFTER_MINUTES)
+        } else {
+            editor.putInt(KEY_SILENCE_AFTER_MINUTES, minutes)
+        }
+        editor.apply()
+    }
+
+    fun getSilenceAfterMinutes(context: Context): Int? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return if (prefs.contains(KEY_SILENCE_AFTER_MINUTES)) {
+            prefs.getInt(KEY_SILENCE_AFTER_MINUTES, 0)
+        } else {
+            null
+        }
     }
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
 import '../services/alarm_service.dart';
 import '../services/android_alarm_platform_service.dart';
+import '../services/alarm_settings_service.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 
@@ -23,6 +25,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
   late int _minute;
   late TextEditingController _labelController;
   late Set<int> _repeatDays;
+  late Set<String> _pausedDates;
   late models.WakeUpChallenge _challenge;
   late int _challengeDifficulty;
   late models.AlarmSound _sound;
@@ -33,17 +36,23 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
   @override
   void initState() {
     super.initState();
+    final alarmSettings = context.read<AlarmSettingsService>();
     _hour = widget.alarm?.time.hour ?? DateTime.now().hour;
     _minute = widget.alarm?.time.minute ?? DateTime.now().minute;
     _labelController = TextEditingController(text: widget.alarm?.label ?? '');
     _repeatDays = Set.from(widget.alarm?.repeatDays ?? {});
+    _pausedDates = Set.from(
+      widget.alarm?.prunePastPausedDates().pausedDates ?? const <String>{},
+    );
     _challenge = widget.alarm?.challenge ?? models.WakeUpChallenge.none;
     _challengeDifficulty = widget.alarm?.challengeDifficulty ?? 2;
-    _sound = widget.alarm?.sound ?? models.AlarmSound.defaultAlarm;
-    _vibrate = widget.alarm?.vibrate ?? true;
+    _sound = widget.alarm?.sound ?? alarmSettings.defaultSound;
+    _vibrate = widget.alarm?.vibrate ?? alarmSettings.defaultVibrate;
     _vibrationIntensity =
-        widget.alarm?.vibrationIntensity ?? models.VibrationIntensity.standard;
-    _gradualVolume = widget.alarm?.gradualVolume ?? false;
+        widget.alarm?.vibrationIntensity ??
+        alarmSettings.defaultVibrationIntensity;
+    _gradualVolume =
+        widget.alarm?.gradualVolume ?? alarmSettings.defaultGradualVolume;
   }
 
   @override
@@ -161,6 +170,14 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
               topPadding: sectionTopPadding,
               bottomPadding: sectionBottomPadding,
             ),
+
+            if (_repeatDays.isNotEmpty)
+              _buildSection(
+                l10n.pauseDates,
+                _buildPauseDatesSection(context, l10n),
+                topPadding: sectionTopPadding,
+                bottomPadding: sectionBottomPadding,
+              ),
 
             // Alarm sound
             ListTile(
@@ -536,6 +553,7 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
       time: models.TimeOfDay(hour: _hour, minute: _minute),
       label: _labelController.text,
       repeatDays: _repeatDays,
+      pausedDates: _repeatDays.isEmpty ? const {} : _pausedDates,
       challenge: _challenge,
       challengeDifficulty: _challengeDifficulty,
       sound: _sound,
@@ -622,6 +640,141 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
     return false;
   }
+
+  Widget _buildPauseDatesSection(BuildContext context, AppLocalizations l10n) {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final tomorrowKey = models.alarmDateKey(tomorrow);
+    final isTomorrowPaused = _pausedDates.contains(tomorrowKey);
+    final sortedPausedDates =
+        _pausedDates.map(models.alarmDateFromKey).whereType<DateTime>().toList()
+          ..sort();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _toggleTomorrowPause,
+                  icon: Icon(
+                    isTomorrowPaused ? Icons.play_arrow_rounded : Icons.pause,
+                  ),
+                  label: Text(
+                    isTomorrowPaused ? l10n.resumeTomorrow : l10n.pauseTomorrow,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => _showPauseRangePicker(context),
+                  icon: const Icon(Icons.date_range_outlined),
+                  label: Text(l10n.addPauseRange),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.pauseDatesDescription,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (sortedPausedDates.isEmpty)
+            Text(
+              l10n.noPauseDates,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.onSurfaceSecondary,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: sortedPausedDates
+                  .map((date) {
+                    final dateKey = models.alarmDateKey(date);
+                    return InputChip(
+                      label: Text(_formatPauseDate(context, date)),
+                      selected: true,
+                      selectedColor: AppTheme.primary.withValues(alpha: 0.18),
+                      onDeleted: () {
+                        setState(() {
+                          _pausedDates.remove(dateKey);
+                        });
+                      },
+                    );
+                  })
+                  .toList(growable: false),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleTomorrowPause() {
+    final tomorrowKey = models.alarmDateKey(
+      DateTime.now().add(const Duration(days: 1)),
+    );
+    setState(() {
+      if (_pausedDates.contains(tomorrowKey)) {
+        _pausedDates.remove(tomorrowKey);
+      } else {
+        _pausedDates.add(tomorrowKey);
+      }
+    });
+  }
+
+  Future<void> _showPauseRangePicker(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 1, now.month, now.day),
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: AppTheme.primary,
+              surface: AppTheme.surface,
+              onSurface: AppTheme.onSurface,
+            ),
+            scaffoldBackgroundColor: AppTheme.background,
+            dialogTheme: const DialogThemeData(
+              backgroundColor: AppTheme.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      var cursor = DateTime(
+        picked.start.year,
+        picked.start.month,
+        picked.start.day,
+      );
+      final end = DateTime(picked.end.year, picked.end.month, picked.end.day);
+      while (!cursor.isAfter(end)) {
+        _pausedDates.add(models.alarmDateKey(cursor));
+        cursor = cursor.add(const Duration(days: 1));
+      }
+    });
+  }
+
+  String _formatPauseDate(BuildContext context, DateTime date) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.MMMd(locale).format(date);
+  }
 }
 
 class _RepeatDaysSelector extends StatelessWidget {
@@ -638,15 +791,17 @@ class _RepeatDaysSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final days = [
-      l10n.dayMonday,
-      l10n.dayTuesday,
-      l10n.dayWednesday,
-      l10n.dayThursday,
-      l10n.dayFriday,
-      l10n.daySaturday,
-      l10n.daySunday,
-    ];
+    final alarmSettings = context.watch<AlarmSettingsService>();
+    final dayLabels = <int, String>{
+      1: l10n.dayMonday,
+      2: l10n.dayTuesday,
+      3: l10n.dayWednesday,
+      4: l10n.dayThursday,
+      5: l10n.dayFriday,
+      6: l10n.daySaturday,
+      7: l10n.daySunday,
+    };
+    final orderedWeekdays = alarmSettings.weekdayOrder;
     final chipSize = compact ? 40.0 : 44.0;
     final dayFontSize = compact ? 12.0 : 14.0;
 
@@ -654,8 +809,8 @@ class _RepeatDaysSelector extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(7, (index) {
-          final dayNumber = index + 1;
+        children: List.generate(orderedWeekdays.length, (index) {
+          final dayNumber = orderedWeekdays[index];
           final isSelected = selectedDays.contains(dayNumber);
 
           return GestureDetector(
@@ -677,7 +832,7 @@ class _RepeatDaysSelector extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  days[index],
+                  dayLabels[dayNumber]!,
                   style: TextStyle(
                     color: isSelected
                         ? Colors.white

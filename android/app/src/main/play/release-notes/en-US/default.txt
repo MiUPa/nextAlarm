@@ -1,2 +1,2 @@
-Challenge alarms now open directly in the challenge screen without an extra start step.
-Force-closing the app while an alarm is ringing now stops playback instead of leaving it stuck on the device.
+Recurring alarms can now be paused on specific dates, including a quick "pause tomorrow" option.
+Added shared alarm defaults and app-wide alarm behavior settings.

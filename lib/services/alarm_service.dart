@@ -7,6 +7,7 @@ import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:vibration/vibration.dart';
 import '../models/alarm.dart' as models;
 import 'android_alarm_platform_service.dart';
+import 'alarm_settings_service.dart';
 import 'app_navigation_service.dart';
 
 class _PlatformAlarmSound {
@@ -23,6 +24,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   static const String _storageKey = 'alarms';
   Timer? _checkTimer;
   Timer? _volumeTimer;
+  Timer? _autoStopTimer;
   models.Alarm? _ringingAlarm;
   AlarmRingingUiStage _ringingUiStage = AlarmRingingUiStage.entry;
   final Set<String> _triggeredToday = {};
@@ -31,6 +33,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   double _currentVolume = 1.0;
   _PlatformAlarmSound? _activePlatformSound;
   AppLifecycleState _appLifecycleState;
+  AlarmSettingsService? _settings;
 
   List<models.Alarm> get alarms => List.unmodifiable(_alarms);
   models.Alarm? get ringingAlarm => _ringingAlarm;
@@ -60,8 +63,16 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     _checkTimer?.cancel();
+    _autoStopTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void updateSettings(AlarmSettingsService settings) {
+    _settings = settings;
+    if (_ringingAlarm != null) {
+      _scheduleAutoStop();
+    }
   }
 
   @override
@@ -129,8 +140,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
       // Check if this is the right time and not triggered yet today
       if (alarmMinute == currentMinute && !_triggeredToday.contains(alarmKey)) {
         // Check if today matches repeat days
-        if (alarm.repeatDays.isEmpty ||
-            alarm.repeatDays.contains(now.weekday)) {
+        if (models.alarmShouldTriggerOnDate(alarm, now)) {
           _triggerAlarm(alarm);
           _triggeredToday.add(alarmKey);
 
@@ -148,6 +158,12 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
     _ringingUiStage = alarm.challenge == models.WakeUpChallenge.none
         ? AlarmRingingUiStage.entry
         : AlarmRingingUiStage.challenge;
+    _scheduleAutoStop();
+
+    if (alarm.repeatDays.isEmpty && alarm.isEnabled) {
+      unawaited(_disableOneTimeAlarmAfterTrigger(alarm));
+    }
+
     AppNavigationService.popToRoot();
 
     if (_useAndroidPlatformScheduler) {
@@ -471,6 +487,8 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void stopRingingAlarm() {
+    _autoStopTimer?.cancel();
+    _autoStopTimer = null;
     _ringingAlarm = null;
     _ringingUiStage = AlarmRingingUiStage.entry;
     _stopAlarmSound();
@@ -495,10 +513,16 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _loadAlarms() async {
     final prefs = await SharedPreferences.getInstance();
     final alarmsJson = prefs.getStringList(_storageKey) ?? [];
+    var didPrunePausedDates = false;
 
-    _alarms = alarmsJson
-        .map((json) => models.Alarm.fromJson(jsonDecode(json)))
-        .toList();
+    _alarms = alarmsJson.map((json) {
+      final alarm = models.Alarm.fromJson(jsonDecode(json));
+      final prunedAlarm = alarm.prunePastPausedDates();
+      if (prunedAlarm.pausedDates.length != alarm.pausedDates.length) {
+        didPrunePausedDates = true;
+      }
+      return prunedAlarm;
+    }).toList();
 
     // Sort by time
     _alarms.sort((a, b) {
@@ -506,6 +530,11 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
       final bMinutes = b.time.hour * 60 + b.time.minute;
       return aMinutes.compareTo(bMinutes);
     });
+
+    if (didPrunePausedDates) {
+      await _saveAlarms();
+      await _syncPlatformAlarms();
+    }
 
     notifyListeners();
   }
@@ -526,7 +555,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> addAlarm(models.Alarm alarm) async {
-    _alarms.add(alarm);
+    _alarms.add(alarm.prunePastPausedDates());
 
     // Sort by time
     _alarms.sort((a, b) {
@@ -544,7 +573,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> updateAlarm(models.Alarm alarm) async {
     final index = _alarms.indexWhere((a) => a.id == alarm.id);
     if (index != -1) {
-      _alarms[index] = alarm;
+      _alarms[index] = alarm.prunePastPausedDates();
 
       // Re-sort after update
       _alarms.sort((a, b) {
@@ -588,29 +617,8 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  DateTime calculateNextAlarmTime(models.Alarm alarm) {
-    final now = DateTime.now();
-    var next = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      alarm.time.hour,
-      alarm.time.minute,
-    );
-
-    // If alarm time has passed today, move to tomorrow
-    if (next.isBefore(now)) {
-      next = next.add(const Duration(days: 1));
-    }
-
-    // If alarm has repeat days, find next occurrence
-    if (alarm.repeatDays.isNotEmpty) {
-      while (!alarm.repeatDays.contains(next.weekday)) {
-        next = next.add(const Duration(days: 1));
-      }
-    }
-
-    return next;
+  DateTime calculateNextAlarmTime(models.Alarm alarm, {DateTime? from}) {
+    return models.nextAlarmDateTime(alarm, from ?? DateTime.now());
   }
 
   String getTimeUntilAlarm(models.Alarm alarm) {
@@ -637,5 +645,32 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
 
     final minutes = diff.inMinutes;
     return 'in $minutes ${minutes == 1 ? 'minute' : 'minutes'}';
+  }
+
+  void _scheduleAutoStop() {
+    _autoStopTimer?.cancel();
+    _autoStopTimer = null;
+
+    final duration = _settings?.silenceAfterDuration;
+    if (duration == null || duration.inMilliseconds <= 0) {
+      return;
+    }
+
+    _autoStopTimer = Timer(duration, stopRingingAlarm);
+  }
+
+  Future<void> _disableOneTimeAlarmAfterTrigger(models.Alarm alarm) async {
+    final index = _alarms.indexWhere(
+      (storedAlarm) => storedAlarm.id == alarm.id,
+    );
+    if (index == -1) return;
+
+    final storedAlarm = _alarms[index];
+    if (!storedAlarm.isEnabled || storedAlarm.repeatDays.isNotEmpty) return;
+
+    _alarms[index] = storedAlarm.copyWith(isEnabled: false);
+    await _saveAlarms();
+    await _syncPlatformAlarms();
+    notifyListeners();
   }
 }

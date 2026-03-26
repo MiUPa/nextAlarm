@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../models/alarm.dart' as models;
 import '../services/android_alarm_platform_service.dart';
+import '../services/alarm_settings_service.dart';
 import '../services/locale_service.dart';
 import '../theme/app_theme.dart';
 
@@ -12,6 +14,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final localeService = context.watch<LocaleService>();
+    final alarmSettings = context.watch<AlarmSettingsService>();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -33,6 +36,16 @@ class SettingsScreen extends StatelessWidget {
                 localeService.setLocale(locale);
               },
             ),
+          ),
+          _buildSection(
+            context,
+            l10n.alarmBehavior,
+            _AlarmBehaviorSettings(settings: alarmSettings),
+          ),
+          _buildSection(
+            context,
+            l10n.defaultAlarmOptions,
+            _AlarmDefaultsSettings(settings: alarmSettings),
           ),
           const _AndroidAlarmReliabilitySection(),
         ],
@@ -447,5 +460,356 @@ class _LanguageSelector extends StatelessWidget {
         );
       }).toList(),
     );
+  }
+}
+
+class _AlarmBehaviorSettings extends StatelessWidget {
+  const _AlarmBehaviorSettings({required this.settings});
+
+  final AlarmSettingsService settings;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      children: [
+        ListTile(
+          title: Text(
+            l10n.silenceAfter,
+            style: const TextStyle(color: AppTheme.onSurface),
+          ),
+          subtitle: Text(
+            _silenceAfterLabel(l10n, settings.silenceAfterMinutes),
+            style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppTheme.onSurfaceSecondary,
+          ),
+          onTap: () => _showSilenceAfterPicker(context),
+        ),
+        ListTile(
+          title: Text(
+            l10n.startWeekOn,
+            style: const TextStyle(color: AppTheme.onSurface),
+          ),
+          subtitle: Text(
+            settings.weekStart == AlarmWeekStart.sunday
+                ? l10n.weekStartSunday
+                : l10n.weekStartMonday,
+            style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppTheme.onSurfaceSecondary,
+          ),
+          onTap: () => _showWeekStartPicker(context),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showSilenceAfterPicker(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final options = <int?>[null, 1, 5, 10, 15, 30];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...options.map(
+              (minutes) => ListTile(
+                title: Text(
+                  _silenceAfterLabel(l10n, minutes),
+                  style: const TextStyle(color: AppTheme.onSurface),
+                ),
+                trailing: settings.silenceAfterMinutes == minutes
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () async {
+                  await settings.setSilenceAfterMinutes(minutes);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showWeekStartPicker(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...[
+              (AlarmWeekStart.monday, l10n.weekStartMonday),
+              (AlarmWeekStart.sunday, l10n.weekStartSunday),
+            ].map(
+              (option) => ListTile(
+                title: Text(
+                  option.$2,
+                  style: const TextStyle(color: AppTheme.onSurface),
+                ),
+                trailing: settings.weekStart == option.$1
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () async {
+                  await settings.setWeekStart(option.$1);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
+    );
+  }
+
+  String _silenceAfterLabel(AppLocalizations l10n, int? minutes) {
+    if (minutes == null || minutes <= 0) {
+      return l10n.silenceAfterNever;
+    }
+    return l10n.silenceAfterMinutes(minutes);
+  }
+}
+
+class _AlarmDefaultsSettings extends StatelessWidget {
+  const _AlarmDefaultsSettings({required this.settings});
+
+  final AlarmSettingsService settings;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      children: [
+        ListTile(
+          title: Text(
+            l10n.alarmSound,
+            style: const TextStyle(color: AppTheme.onSurface),
+          ),
+          subtitle: Text(
+            _soundName(l10n, settings.defaultSound),
+            style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppTheme.onSurfaceSecondary,
+          ),
+          onTap: () => _showSoundPicker(context),
+        ),
+        SwitchListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: Text(
+            l10n.vibration,
+            style: const TextStyle(color: AppTheme.onSurface),
+          ),
+          value: settings.defaultVibrate,
+          activeTrackColor: AppTheme.primary,
+          activeThumbColor: Colors.white,
+          onChanged: (value) => settings.setDefaultVibrate(value),
+        ),
+        if (settings.defaultVibrate)
+          ListTile(
+            title: Text(
+              l10n.vibrationIntensity,
+              style: const TextStyle(color: AppTheme.onSurface),
+            ),
+            subtitle: Text(
+              _vibrationIntensityName(l10n, settings.defaultVibrationIntensity),
+              style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+            ),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppTheme.onSurfaceSecondary,
+            ),
+            onTap: () => _showVibrationIntensityPicker(context),
+          ),
+        SwitchListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: Text(
+            l10n.gradualVolume,
+            style: const TextStyle(color: AppTheme.onSurface),
+          ),
+          subtitle: Text(
+            l10n.newAlarmsUseThisDefault,
+            style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+          ),
+          value: settings.defaultGradualVolume,
+          activeTrackColor: AppTheme.primary,
+          activeThumbColor: Colors.white,
+          onChanged: (value) => settings.setDefaultGradualVolume(value),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showSoundPicker(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...models.AlarmSound.values.map(
+              (sound) => ListTile(
+                title: Text(
+                  _soundName(l10n, sound),
+                  style: const TextStyle(color: AppTheme.onSurface),
+                ),
+                trailing: settings.defaultSound == sound
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () async {
+                  await settings.setDefaultSound(sound);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showVibrationIntensityPicker(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...models.VibrationIntensity.values.map(
+              (intensity) => ListTile(
+                title: Text(
+                  _vibrationIntensityName(l10n, intensity),
+                  style: const TextStyle(color: AppTheme.onSurface),
+                ),
+                trailing: settings.defaultVibrationIntensity == intensity
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () async {
+                  await settings.setDefaultVibrationIntensity(intensity);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
+    );
+  }
+
+  String _soundName(AppLocalizations l10n, models.AlarmSound sound) {
+    switch (sound) {
+      case models.AlarmSound.defaultAlarm:
+        return l10n.soundDefault;
+      case models.AlarmSound.gentle:
+        return l10n.soundGentle;
+      case models.AlarmSound.digital:
+        return l10n.soundDigital;
+      case models.AlarmSound.classic:
+        return l10n.soundClassic;
+      case models.AlarmSound.nature:
+        return l10n.soundNature;
+      case models.AlarmSound.silent:
+        return l10n.soundSilent;
+    }
+  }
+
+  String _vibrationIntensityName(
+    AppLocalizations l10n,
+    models.VibrationIntensity intensity,
+  ) {
+    switch (intensity) {
+      case models.VibrationIntensity.gentle:
+        return l10n.vibrationIntensityGentle;
+      case models.VibrationIntensity.standard:
+        return l10n.vibrationIntensityStandard;
+      case models.VibrationIntensity.aggressive:
+        return l10n.vibrationIntensityAggressive;
+    }
   }
 }

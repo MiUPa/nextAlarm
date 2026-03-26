@@ -1,27 +1,10 @@
 import 'package:uuid/uuid.dart';
 
-enum WakeUpChallenge {
-  none,
-  math,
-  voiceRecognition,
-  shake,
-  steps,
-}
+enum WakeUpChallenge { none, math, voiceRecognition, shake, steps }
 
-enum AlarmSound {
-  defaultAlarm,
-  gentle,
-  digital,
-  classic,
-  nature,
-  silent,
-}
+enum AlarmSound { defaultAlarm, gentle, digital, classic, nature, silent }
 
-enum VibrationIntensity {
-  gentle,
-  standard,
-  aggressive,
-}
+enum VibrationIntensity { gentle, standard, aggressive }
 
 class Alarm {
   final String id;
@@ -29,6 +12,7 @@ class Alarm {
   final String label;
   final bool isEnabled;
   final Set<int> repeatDays; // 1-7 (Monday-Sunday)
+  final Set<String> pausedDates; // yyyy-MM-dd
   final WakeUpChallenge challenge;
   final int challengeDifficulty; // 1-5
   final String? challengeData; // phrase for voice, etc.
@@ -45,6 +29,7 @@ class Alarm {
     this.label = '',
     this.isEnabled = true,
     this.repeatDays = const {},
+    this.pausedDates = const {},
     this.challenge = WakeUpChallenge.none,
     this.challengeDifficulty = 3,
     this.challengeData,
@@ -61,6 +46,7 @@ class Alarm {
     String? label,
     bool? isEnabled,
     Set<int>? repeatDays,
+    Set<String>? pausedDates,
     WakeUpChallenge? challenge,
     int? challengeDifficulty,
     String? challengeData,
@@ -77,6 +63,7 @@ class Alarm {
       label: label ?? this.label,
       isEnabled: isEnabled ?? this.isEnabled,
       repeatDays: repeatDays ?? this.repeatDays,
+      pausedDates: pausedDates ?? this.pausedDates,
       challenge: challenge ?? this.challenge,
       challengeDifficulty: challengeDifficulty ?? this.challengeDifficulty,
       challengeData: challengeData ?? this.challengeData,
@@ -97,6 +84,7 @@ class Alarm {
       'label': label,
       'isEnabled': isEnabled,
       'repeatDays': repeatDays.toList(),
+      'pausedDates': pausedDates.toList()..sort(),
       'challenge': challenge.index,
       'challengeDifficulty': challengeDifficulty,
       'challengeData': challengeData,
@@ -116,6 +104,7 @@ class Alarm {
       label: json['label'] ?? '',
       isEnabled: json['isEnabled'] ?? true,
       repeatDays: Set<int>.from(json['repeatDays'] ?? []),
+      pausedDates: Set<String>.from(json['pausedDates'] ?? []),
       challenge: WakeUpChallenge.values[json['challenge'] ?? 0],
       challengeDifficulty: json['challengeDifficulty'] ?? 3,
       challengeData: json['challengeData'],
@@ -177,8 +166,75 @@ class Alarm {
         return 'Walk steps';
     }
   }
+
+  bool isPausedOn(DateTime date) {
+    return pausedDates.contains(alarmDateKey(date));
+  }
+
+  Alarm prunePastPausedDates([DateTime? now]) {
+    final todayKey = alarmDateKey(now ?? DateTime.now());
+    final nextPausedDates = pausedDates.where((dateKey) {
+      return dateKey.compareTo(todayKey) >= 0;
+    }).toSet();
+
+    if (nextPausedDates.length == pausedDates.length &&
+        nextPausedDates.containsAll(pausedDates)) {
+      return this;
+    }
+
+    return copyWith(pausedDates: nextPausedDates);
+  }
 }
 
+String alarmDateKey(DateTime date) {
+  final normalized = DateTime(date.year, date.month, date.day);
+  final year = normalized.year.toString().padLeft(4, '0');
+  final month = normalized.month.toString().padLeft(2, '0');
+  final day = normalized.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
+}
+
+DateTime? alarmDateFromKey(String dateKey) {
+  try {
+    final parsed = DateTime.parse(dateKey);
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  } catch (_) {
+    return null;
+  }
+}
+
+bool alarmShouldTriggerOnDate(Alarm alarm, DateTime date) {
+  final matchesRepeat =
+      alarm.repeatDays.isEmpty || alarm.repeatDays.contains(date.weekday);
+  return matchesRepeat && !alarm.isPausedOn(date);
+}
+
+DateTime nextAlarmDateTime(
+  Alarm alarm,
+  DateTime from, {
+  int maxLookAheadDays = 730,
+}) {
+  var next = DateTime(
+    from.year,
+    from.month,
+    from.day,
+    alarm.time.hour,
+    alarm.time.minute,
+  );
+
+  if (next.isBefore(from)) {
+    next = next.add(const Duration(days: 1));
+  }
+
+  var attempts = 0;
+  while (!alarmShouldTriggerOnDate(alarm, next) &&
+      attempts < maxLookAheadDays) {
+    next = next.add(const Duration(days: 1));
+    attempts += 1;
+  }
+
+  return next;
+}
 
 VibrationIntensity _vibrationIntensityFromJson(dynamic rawValue) {
   if (rawValue is! int) return VibrationIntensity.standard;
@@ -200,9 +256,7 @@ class TimeOfDay {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is TimeOfDay &&
-      other.hour == hour &&
-      other.minute == minute;
+    return other is TimeOfDay && other.hour == hour && other.minute == minute;
   }
 
   @override

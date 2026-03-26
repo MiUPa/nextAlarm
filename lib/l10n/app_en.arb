@@ -17,6 +17,29 @@
 	"label": "Label",
 	"labelHint": "Alarm name",
 	"repeat": "Repeat",
+	"pauseDates": "Pause dates",
+	"pauseTomorrow": "Pause tomorrow",
+	"resumeTomorrow": "Resume tomorrow",
+	"addPauseRange": "Add range",
+	"pauseDatesDescription": "Skip this alarm on the selected dates only.",
+	"noPauseDates": "No pause dates scheduled",
+	"pauseSummaryTomorrow": "Paused tomorrow",
+	"pauseSummaryOne": "Paused on {date}",
+	"@pauseSummaryOne": {
+		"placeholders": {
+			"date": {
+				"type": "String"
+			}
+		}
+	},
+	"pauseSummaryMany": "{count} pause dates",
+	"@pauseSummaryMany": {
+		"placeholders": {
+			"count": {
+				"type": "int"
+			}
+		}
+	},
 	"wakeUpChallenge": "Wake-up Challenge",
 	"difficulty": "Difficulty",
 	"challengeNone": "None",
@@ -118,6 +141,22 @@
 	"challengeNotImplemented": "This challenge is not implemented yet",
 	"settings": "Settings",
 	"language": "Language",
+	"alarmBehavior": "Alarm behavior",
+	"defaultAlarmOptions": "Defaults for new alarms",
+	"silenceAfter": "Silence after",
+	"silenceAfterNever": "Never",
+	"silenceAfterMinutes": "After {count} {count, plural, =1{minute} other{minutes}}",
+	"@silenceAfterMinutes": {
+		"placeholders": {
+			"count": {
+				"type": "int"
+			}
+		}
+	},
+	"startWeekOn": "Start week on",
+	"weekStartMonday": "Monday",
+	"weekStartSunday": "Sunday",
+	"newAlarmsUseThisDefault": "Used when creating new alarms",
 	"languageSystem": "System default",
 	"languageEnglish": "English",
 	"languageJapanese": "Japanese",

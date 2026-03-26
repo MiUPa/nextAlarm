@@ -42,6 +42,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repeat => 'Repeat';
 
   @override
+  String get pauseDates => 'Pause dates';
+
+  @override
+  String get pauseTomorrow => 'Pause tomorrow';
+
+  @override
+  String get resumeTomorrow => 'Resume tomorrow';
+
+  @override
+  String get addPauseRange => 'Add range';
+
+  @override
+  String get pauseDatesDescription =>
+      'Skip this alarm on the selected dates only.';
+
+  @override
+  String get noPauseDates => 'No pause dates scheduled';
+
+  @override
+  String get pauseSummaryTomorrow => 'Paused tomorrow';
+
+  @override
+  String pauseSummaryOne(String date) {
+    return 'Paused on $date';
+  }
+
+  @override
+  String pauseSummaryMany(int count) {
+    return '$count pause dates';
+  }
+
+  @override
   String get wakeUpChallenge => 'Wake-up Challenge';
 
   @override
@@ -202,6 +234,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get language => 'Language';
+
+  @override
+  String get alarmBehavior => 'Alarm behavior';
+
+  @override
+  String get defaultAlarmOptions => 'Defaults for new alarms';
+
+  @override
+  String get silenceAfter => 'Silence after';
+
+  @override
+  String get silenceAfterNever => 'Never';
+
+  @override
+  String silenceAfterMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'minutes',
+      one: 'minute',
+    );
+    return 'After $count $_temp0';
+  }
+
+  @override
+  String get startWeekOn => 'Start week on';
+
+  @override
+  String get weekStartMonday => 'Monday';
+
+  @override
+  String get weekStartSunday => 'Sunday';
+
+  @override
+  String get newAlarmsUseThisDefault => 'Used when creating new alarms';
 
   @override
   String get languageSystem => 'System default';

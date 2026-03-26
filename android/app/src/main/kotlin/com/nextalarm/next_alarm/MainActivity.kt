@@ -54,6 +54,11 @@ open class MainActivity : FlutterActivity() {
 						alarmScheduler.syncAlarms(alarms)
 						result.success(true)
 					}
+					"syncAlarmSettings" -> {
+						val silenceAfterMinutes = call.argument<Int>("silenceAfterMinutes")
+						AlarmPrefs.setSilenceAfterMinutes(applicationContext, silenceAfterMinutes)
+						result.success(true)
+					}
 					"rescheduleFromStorage" -> {
 						alarmScheduler.rescheduleFromStorage()
 						result.success(true)
