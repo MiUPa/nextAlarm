@@ -1,2 +1,2 @@
-Recurring alarms can now be paused on specific dates, including a quick "pause tomorrow" option.
-Added shared alarm defaults and app-wide alarm behavior settings.
+Pause-date controls in alarm edit now follow the Android Clock style more closely.
+Choosing "Don't show again" for the review prompt now suppresses it for 30 days.

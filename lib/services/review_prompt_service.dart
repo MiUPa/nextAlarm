@@ -9,7 +9,7 @@ class ReviewPromptService {
 
   static const int _initialDelayDays = 3;
   static const int _laterIntervalDays = 14;
-  static const int _dismissedIntervalDays = 90;
+  static const int _dismissedIntervalDays = 30;
 
   /// Check if review prompt should be shown.
   static Future<bool> shouldShowPrompt() async {
@@ -59,7 +59,7 @@ class ReviewPromptService {
     await prefs.setString(_keyNextPromptDate, nextPrompt.toIso8601String());
   }
 
-  /// User chose "Don't show again" - suppress for 90 days.
+  /// User chose "Don't show again" - suppress for 30 days.
   static Future<void> dismiss() async {
     final prefs = await SharedPreferences.getInstance();
     final dismissedUntil = DateTime.now().add(const Duration(days: _dismissedIntervalDays));
