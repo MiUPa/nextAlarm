@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
@@ -23,6 +24,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  static const _androidReliabilityEducationKey =
+      'android_reliability_education_shown';
   late AnimationController _fabController;
   Timer? _appUpdateTimer;
   Timer? _reviewPromptTimer;
@@ -72,34 +75,89 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _androidReliabilityTimer?.cancel();
     _androidReliabilityTimer = Timer(const Duration(seconds: 2), () async {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
       final canScheduleExactAlarms =
           await AndroidAlarmPlatformService.canScheduleExactAlarms();
       final notificationsEnabled =
           await AndroidAlarmPlatformService.areNotificationsEnabled();
       final canUseFullScreenIntent =
           await AndroidAlarmPlatformService.canUseFullScreenIntent();
+      final ignoringBatteryOptimization =
+          await AndroidAlarmPlatformService.isIgnoringBatteryOptimizations();
       if (!mounted) return;
       if (canScheduleExactAlarms &&
           notificationsEnabled &&
-          canUseFullScreenIntent) {
+          canUseFullScreenIntent &&
+          ignoringBatteryOptimization) {
         return;
       }
+
+      final prefs = await SharedPreferences.getInstance();
+      final didShowEducation =
+          prefs.getBool(_androidReliabilityEducationKey) ?? false;
+      if (!didShowEducation && mounted) {
+        await prefs.setBool(_androidReliabilityEducationKey, true);
+        await _showAndroidReliabilityEducationDialog(l10n);
+        return;
+      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: const Text(
-              'Android alarm reliability settings need attention.',
-            ),
+            content: Text(l10n.androidReliabilityNeedsAttention),
             action: SnackBarAction(
-              label: 'Settings',
+              label: l10n.settings,
               onPressed: () => _openSettings(context),
             ),
             duration: const Duration(seconds: 8),
           ),
         );
     });
+  }
+
+  Future<void> _showAndroidReliabilityEducationDialog(
+    AppLocalizations l10n,
+  ) async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          l10n.androidReliabilityIntroTitle,
+          style: const TextStyle(
+            color: AppTheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          l10n.androidReliabilityIntroMessage,
+          style: const TextStyle(
+            color: AppTheme.onSurfaceSecondary,
+            fontSize: 15,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.later),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _openSettings(context);
+            },
+            child: Text(l10n.settings),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showReviewDialog() {

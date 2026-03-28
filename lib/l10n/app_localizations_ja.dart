@@ -21,6 +21,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tapToCreateAlarm => '+をタップして最初のアラームを作成';
 
   @override
+  String get androidReliabilityNeedsAttention => 'Android のアラーム信頼性設定を確認してください。';
+
+  @override
+  String get androidReliabilityIntroTitle => 'Android で確実に鳴らすための確認';
+
+  @override
+  String get androidReliabilityIntroMessage =>
+      'アラームを確実に鳴らすには、通知、正確なアラーム、全画面表示、省電力設定を確認しておくことをおすすめします。';
+
+  @override
+  String get later => 'あとで';
+
+  @override
   String get addAlarm => 'アラームを追加';
 
   @override
@@ -36,7 +49,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get label => 'ラベル';
 
   @override
-  String get labelHint => 'アラーム名';
+  String get labelHint => 'ラベルを追加';
 
   @override
   String get repeat => '繰り返し';
@@ -196,7 +209,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get speechNotAvailable => '音声認識が利用できません';
 
   @override
+  String get voiceChallengeNeedsMicrophone => '音声チャレンジにはマイクの許可が必要です';
+
+  @override
   String get walkToStop => '歩いてアラームを停止';
+
+  @override
+  String get stepsChallengeNeedsActivityPermission => '歩数チャレンジには身体活動の許可が必要です';
 
   @override
   String get stepSensorNotAvailable => 'この端末では歩数センサーが利用できません';

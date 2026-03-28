@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
@@ -64,293 +66,440 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    const isCompactLayout = true;
-    const sectionTopPadding = 14.0;
-    const sectionBottomPadding = 8.0;
-    const timePickerHeight = 140.0;
-    const timePickerVerticalPadding = 20.0;
-    const timeFontSize = 64.0;
-    const contentBottomSpacing = 12.0;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        centerTitle: true,
+        title: Text(widget.alarm != null ? l10n.editAlarm : l10n.addAlarm),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: widget.alarm != null
-            ? IconButton(
-                onPressed: _deleteAlarm,
-                icon: const Icon(Icons.delete_outline),
-                color: AppTheme.danger,
-                tooltip: l10n.deleteAlarm,
-              )
-            : null,
-        actions: [TextButton(onPressed: _saveAlarm, child: Text(l10n.save))],
       ),
+      bottomNavigationBar: _buildBottomActionBar(context, l10n),
       body: SafeArea(
         top: false,
         child: ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.only(
-            bottom:
-                MediaQuery.of(context).viewInsets.bottom + contentBottomSpacing,
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 24,
           ),
-          children: [
-            // Time Picker - Android style
-            GestureDetector(
-              onTap: () => _showTimePicker(context),
-              child: Container(
-                height: timePickerHeight,
-                padding: const EdgeInsets.symmetric(
-                  vertical: timePickerVerticalPadding,
-                ),
-                child: Center(
-                  child: Text(
-                    '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(
-                      fontSize: timeFontSize,
-                      fontWeight: FontWeight.w300,
-                      color: AppTheme.onSurface,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Label
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: Row(
-                children: [
-                  Text(
-                    l10n.label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppTheme.onSurfaceSecondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: _labelController,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppTheme.onSurface,
-                      ),
-                      textAlign: TextAlign.end,
-                      decoration: InputDecoration(
-                        hintText: l10n.labelHint,
-                        hintStyle: TextStyle(
-                          color: AppTheme.onSurfaceSecondary.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Repeat days
-            _buildSection(
-              l10n.repeat,
-              _RepeatDaysSelector(
-                selectedDays: _repeatDays,
-                compact: isCompactLayout,
-                onChanged: (days) {
-                  setState(() => _repeatDays = days);
-                },
-              ),
-              topPadding: sectionTopPadding,
-              bottomPadding: sectionBottomPadding,
-            ),
-
-            if (_repeatDays.isNotEmpty) _buildPauseDatesTile(context, l10n),
-
-            // Alarm sound
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 2,
-              ),
-              visualDensity: const VisualDensity(vertical: -2),
-              title: Text(
-                l10n.alarmSound,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppTheme.onSurfaceSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _getSoundName(l10n, _sound),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: AppTheme.onSurface),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppTheme.onSurfaceSecondary,
-                  ),
-                ],
-              ),
-              onTap: () {
-                _showSoundPicker(context);
-              },
-            ),
-
-            // Vibration toggle
-            SwitchListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -2),
-              title: Text(
-                l10n.vibration,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppTheme.onSurfaceSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              value: _vibrate,
-              activeTrackColor: AppTheme.primary,
-              activeThumbColor: Colors.white,
-              onChanged: (value) {
-                setState(() => _vibrate = value);
-              },
-            ),
-
-            if (_vibrate)
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 4,
-                ),
-                title: Text(
-                  l10n.vibrationIntensity,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppTheme.onSurfaceSecondary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _getVibrationIntensityName(l10n, _vibrationIntensity),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppTheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppTheme.onSurfaceSecondary,
-                    ),
-                  ],
-                ),
-                onTap: () {
-                  _showVibrationIntensityPicker(context);
-                },
-              ),
-
-            // Gradual volume
-            SwitchListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -2),
-              title: Text(
-                l10n.gradualVolume,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppTheme.onSurfaceSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              subtitle: Text(
-                l10n.gradualVolumeDescription,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.7),
-                ),
-              ),
-              value: _gradualVolume,
-              activeTrackColor: AppTheme.primary,
-              activeThumbColor: Colors.white,
-              onChanged: (value) {
-                setState(() => _gradualVolume = value);
-              },
-            ),
-
-            // Wake-up challenge
-            _buildSection(
-              l10n.wakeUpChallenge,
-              _ChallengeSelector(
-                selected: _challenge,
-                compact: isCompactLayout,
-                onChanged: (challenge) {
-                  setState(() => _challenge = challenge);
-                },
-              ),
-              topPadding: sectionTopPadding,
-              bottomPadding: sectionBottomPadding,
-            ),
-
-            // Challenge difficulty
-            if (_challenge != models.WakeUpChallenge.none)
-              _buildSection(
-                l10n.difficulty,
-                _DifficultySelector(
-                  difficulty: _challengeDifficulty,
-                  compact: isCompactLayout,
-                  onChanged: (value) {
-                    setState(() => _challengeDifficulty = value);
-                  },
-                ),
-                topPadding: sectionTopPadding,
-                bottomPadding: sectionBottomPadding,
-              ),
-
-            const SizedBox(height: contentBottomSpacing),
-          ],
+          children: [_buildAlarmCard(context, l10n)],
         ),
       ),
     );
   }
 
-  Widget _buildSection(
-    String title,
-    Widget child, {
-    double topPadding = 24,
-    double bottomPadding = 12,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildAlarmCard(BuildContext context, AppLocalizations l10n) {
+    return _buildPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLabelField(context, l10n),
+          const SizedBox(height: 20),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => _showTimePicker(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  _buildTimeDisplay(context),
+                  const SizedBox(height: 8),
+                  Text(
+                    _buildRepeatSummary(context, l10n),
+                    style: const TextStyle(
+                      color: AppTheme.onSurfaceSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          _RepeatDaysSelector(
+            selectedDays: _repeatDays,
+            compact: false,
+            onChanged: (days) {
+              setState(() => _repeatDays = days);
+            },
+          ),
+          if (_repeatDays.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            _buildDivider(),
+            _buildPauseDatesTile(context, l10n, inPanel: true),
+          ],
+          const SizedBox(height: 18),
+          _buildDivider(),
+          _buildOptionTile(
+            context,
+            icon: Icons.notifications_active_outlined,
+            title: l10n.alarmSound,
+            value: _getSoundName(l10n, _sound),
+            onTap: () => _showSoundPicker(context),
+          ),
+          _buildDivider(),
+          _buildSwitchTile(
+            context,
+            icon: Icons.vibration_rounded,
+            title: l10n.vibration,
+            value: _vibrate,
+            onChanged: (value) => setState(() => _vibrate = value),
+          ),
+          if (_vibrate) ...[
+            _buildDivider(),
+            _buildOptionTile(
+              context,
+              icon: Icons.graphic_eq_rounded,
+              title: l10n.vibrationIntensity,
+              value: _getVibrationIntensityName(l10n, _vibrationIntensity),
+              onTap: () => _showVibrationIntensityPicker(context),
+            ),
+          ],
+          _buildDivider(),
+          _buildSwitchTile(
+            context,
+            icon: Icons.trending_up_rounded,
+            title: l10n.gradualVolume,
+            subtitle: l10n.gradualVolumeDescription,
+            value: _gradualVolume,
+            onChanged: (value) => setState(() => _gradualVolume = value),
+          ),
+          const SizedBox(height: 20),
+          _buildSectionLabel(context, l10n.wakeUpChallenge),
+          const SizedBox(height: 14),
+          _ChallengeSelector(
+            selected: _challenge,
+            compact: false,
+            onChanged: _handleChallengeSelected,
+          ),
+          if (_challenge != models.WakeUpChallenge.none) ...[
+            const SizedBox(height: 20),
+            _buildDivider(),
+            const SizedBox(height: 18),
+            _buildSectionLabel(context, l10n.difficulty),
+            const SizedBox(height: 8),
+            _DifficultySelector(
+              difficulty: _challengeDifficulty,
+              compact: false,
+              onChanged: (value) {
+                setState(() => _challengeDifficulty = value);
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActionBar(BuildContext context, AppLocalizations l10n) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            border: Border(
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Row(
+            children: [
+              if (widget.alarm != null)
+                TextButton(
+                  onPressed: _deleteAlarm,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.danger,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                      vertical: 14,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(l10n.delete),
+                ),
+              const Spacer(),
+              SizedBox(
+                width: 148,
+                child: FilledButton(
+                  onPressed: _saveAlarm,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: Text(l10n.save),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabelField(BuildContext context, AppLocalizations l10n) {
+    return Row(
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(20, topPadding, 20, bottomPadding),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppTheme.onSurfaceSecondary,
-              letterSpacing: 0.5,
+        const Icon(
+          Icons.label_outline_rounded,
+          color: AppTheme.onSurfaceSecondary,
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextField(
+            controller: _labelController,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppTheme.onSurface,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: l10n.labelHint,
+              hintStyle: TextStyle(
+                color: AppTheme.onSurfaceSecondary.withValues(alpha: 0.75),
+              ),
+              filled: false,
+              border: InputBorder.none,
+              isCollapsed: true,
+              contentPadding: EdgeInsets.zero,
             ),
           ),
         ),
-        child,
       ],
     );
+  }
+
+  Widget _buildTimeDisplay(BuildContext context) {
+    final parts = _formatAlarmTime(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          parts[0],
+          style: const TextStyle(
+            fontSize: 72,
+            fontWeight: FontWeight.w300,
+            color: AppTheme.onSurface,
+            letterSpacing: -3,
+          ),
+        ),
+        if (parts.length > 1) ...[
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              parts[1],
+              style: const TextStyle(
+                color: AppTheme.onSurfaceSecondary,
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPanel({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF242428), Color(0xFF1C1C1E)],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionLabel(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        color: AppTheme.onSurfaceSecondary,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      minLeadingWidth: 24,
+      horizontalTitleGap: 16,
+      visualDensity: const VisualDensity(vertical: -1),
+      leading: Icon(icon, color: AppTheme.onSurfaceSecondary),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: AppTheme.onSurface,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.onSurfaceSecondary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.chevron_right, color: AppTheme.onSurfaceSecondary),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSwitchTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      minLeadingWidth: 24,
+      horizontalTitleGap: 16,
+      visualDensity: const VisualDensity(vertical: -1),
+      leading: Icon(icon, color: AppTheme.onSurfaceSecondary),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: AppTheme.onSurface,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: subtitle == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: AppTheme.onSurfaceSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+      trailing: Switch(
+        value: value,
+        activeTrackColor: AppTheme.primary,
+        activeThumbColor: Colors.white,
+        onChanged: onChanged,
+      ),
+      onTap: () => onChanged(!value),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: Colors.white.withValues(alpha: 0.06),
+    );
+  }
+
+  String _buildRepeatSummary(BuildContext context, AppLocalizations l10n) {
+    if (_repeatDays.isEmpty) {
+      return l10n.repeatOnce;
+    }
+
+    if (_repeatDays.length == 7) {
+      return l10n.repeatEveryDay;
+    }
+
+    if (_repeatDays.length == 5 &&
+        !_repeatDays.contains(6) &&
+        !_repeatDays.contains(7)) {
+      return l10n.repeatWeekdays;
+    }
+
+    if (_repeatDays.length == 2 &&
+        _repeatDays.contains(6) &&
+        _repeatDays.contains(7)) {
+      return l10n.repeatWeekends;
+    }
+
+    final alarmSettings = context.read<AlarmSettingsService>();
+    final labels = <int, String>{
+      1: l10n.dayMonday,
+      2: l10n.dayTuesday,
+      3: l10n.dayWednesday,
+      4: l10n.dayThursday,
+      5: l10n.dayFriday,
+      6: l10n.daySaturday,
+      7: l10n.daySunday,
+    };
+
+    return alarmSettings.weekdayOrder
+        .where(_repeatDays.contains)
+        .map((day) => labels[day]!)
+        .join(', ');
+  }
+
+  List<String> _formatAlarmTime(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final alwaysUse24HourFormat = MediaQuery.of(context).alwaysUse24HourFormat;
+    final formatted = localizations.formatTimeOfDay(
+      TimeOfDay(hour: _hour, minute: _minute),
+      alwaysUse24HourFormat: alwaysUse24HourFormat,
+    );
+
+    if (alwaysUse24HourFormat) {
+      return [formatted];
+    }
+
+    final parts = formatted.split(' ');
+    if (parts.length < 2) {
+      return [formatted];
+    }
+
+    return [parts.sublist(0, parts.length - 1).join(' '), parts.last];
   }
 
   String _getVibrationIntensityName(
@@ -542,10 +691,130 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     }
   }
 
+  Future<void> _handleChallengeSelected(
+    models.WakeUpChallenge challenge,
+  ) async {
+    if (_challenge == challenge) return;
+
+    final isReady = await _ensureChallengeReady(challenge, showFeedback: true);
+    if (!mounted || !isReady) return;
+
+    setState(() => _challenge = challenge);
+  }
+
+  Future<bool> _ensureSelectedChallengeReady() {
+    return _ensureChallengeReady(_challenge, showFeedback: true);
+  }
+
+  Future<bool> _ensureChallengeReady(
+    models.WakeUpChallenge challenge, {
+    required bool showFeedback,
+  }) async {
+    switch (challenge) {
+      case models.WakeUpChallenge.none:
+      case models.WakeUpChallenge.math:
+      case models.WakeUpChallenge.shake:
+        return true;
+      case models.WakeUpChallenge.voiceRecognition:
+        return _ensureVoiceChallengeReady(showFeedback: showFeedback);
+      case models.WakeUpChallenge.steps:
+        return _ensureStepsChallengeReady(showFeedback: showFeedback);
+    }
+  }
+
+  Future<bool> _ensureVoiceChallengeReady({required bool showFeedback}) async {
+    final l10n = AppLocalizations.of(context)!;
+    final permissionGranted = await _ensurePermissionGranted(
+      permission: Permission.microphone,
+      deniedMessage: l10n.voiceChallengeNeedsMicrophone,
+      showFeedback: showFeedback,
+    );
+    if (!permissionGranted || !mounted) return false;
+
+    final speech = stt.SpeechToText();
+    final available = await speech.initialize();
+    if (!available) {
+      if (showFeedback && mounted) {
+        _showChallengeBlockedSnackBar(l10n.speechNotAvailable);
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<bool> _ensureStepsChallengeReady({required bool showFeedback}) async {
+    final l10n = AppLocalizations.of(context)!;
+    final permissionGranted = await _ensurePermissionGranted(
+      permission: Permission.activityRecognition,
+      deniedMessage: l10n.stepsChallengeNeedsActivityPermission,
+      showFeedback: showFeedback,
+    );
+    if (!permissionGranted || !mounted) return false;
+
+    final hasStepCounterSensor =
+        await AndroidAlarmPlatformService.hasStepCounterSensor();
+    if (!hasStepCounterSensor) {
+      if (showFeedback && mounted) {
+        _showChallengeBlockedSnackBar(l10n.stepSensorNotAvailable);
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<bool> _ensurePermissionGranted({
+    required Permission permission,
+    required String deniedMessage,
+    required bool showFeedback,
+  }) async {
+    var status = await permission.status;
+    if (status.isDenied) {
+      status = await permission.request();
+    }
+
+    if (status.isGranted) {
+      return true;
+    }
+
+    if (showFeedback && mounted) {
+      _showChallengeBlockedSnackBar(
+        deniedMessage,
+        withSettingsAction: status.isPermanentlyDenied || status.isRestricted,
+      );
+    }
+    return false;
+  }
+
+  void _showChallengeBlockedSnackBar(
+    String message, {
+    bool withSettingsAction = false,
+  }) {
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: withSettingsAction
+              ? SnackBarAction(
+                  label: AppLocalizations.of(context)!.settings,
+                  onPressed: openAppSettings,
+                )
+              : null,
+        ),
+      );
+  }
+
   void _saveAlarm() async {
     final alarmService = context.read<AlarmService>();
     final canSave = await _confirmAlarmReliabilityBeforeSave();
     if (!canSave) return;
+    final challengeReady = await _ensureSelectedChallengeReady();
+    if (!challengeReady) return;
 
     final alarm = models.Alarm(
       id: widget.alarm?.id,
@@ -577,12 +846,16 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
       return true;
     }
 
+    await _requestNotificationPermissionIfNeeded();
+
     final canScheduleExactAlarms =
         await AndroidAlarmPlatformService.canScheduleExactAlarms();
     final notificationsEnabled =
         await AndroidAlarmPlatformService.areNotificationsEnabled();
     final canUseFullScreenIntent =
         await AndroidAlarmPlatformService.canUseFullScreenIntent();
+    final ignoringBatteryOptimization =
+        await AndroidAlarmPlatformService.isIgnoringBatteryOptimizations();
 
     if (!mounted) return false;
 
@@ -595,6 +868,9 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     }
     if (!canUseFullScreenIntent) {
       missingChecks.add('Full-screen alarm display');
+    }
+    if (!ignoringBatteryOptimization) {
+      missingChecks.add('Battery optimization');
     }
 
     if (missingChecks.isEmpty) {
@@ -640,14 +916,27 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     return false;
   }
 
-  Widget _buildPauseDatesTile(BuildContext context, AppLocalizations l10n) {
+  Future<void> _requestNotificationPermissionIfNeeded() async {
+    final status = await Permission.notification.status;
+    if (status.isDenied) {
+      await Permission.notification.request();
+    }
+  }
+
+  Widget _buildPauseDatesTile(
+    BuildContext context,
+    AppLocalizations l10n, {
+    bool inPanel = false,
+  }) {
     final sortedPausedDates =
         _pausedDates.map(models.alarmDateFromKey).whereType<DateTime>().toList()
           ..sort();
     final hasPausedDates = sortedPausedDates.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      padding: inPanel
+          ? const EdgeInsets.fromLTRB(0, 16, 0, 0)
+          : const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -831,47 +1120,49 @@ class _RepeatDaysSelector extends StatelessWidget {
     final chipSize = compact ? 40.0 : 44.0;
     final dayFontSize = compact ? 12.0 : 14.0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(orderedWeekdays.length, (index) {
-          final dayNumber = orderedWeekdays[index];
-          final isSelected = selectedDays.contains(dayNumber);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(orderedWeekdays.length, (index) {
+        final dayNumber = orderedWeekdays[index];
+        final isSelected = selectedDays.contains(dayNumber);
 
-          return GestureDetector(
-            onTap: () {
-              final newDays = Set<int>.from(selectedDays);
-              if (isSelected) {
-                newDays.remove(dayNumber);
-              } else {
-                newDays.add(dayNumber);
-              }
-              onChanged(newDays);
-            },
-            child: Container(
-              width: chipSize,
-              height: chipSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
+        return GestureDetector(
+          onTap: () {
+            final newDays = Set<int>.from(selectedDays);
+            if (isSelected) {
+              newDays.remove(dayNumber);
+            } else {
+              newDays.add(dayNumber);
+            }
+            onChanged(newDays);
+          },
+          child: Container(
+            width: chipSize,
+            height: chipSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected ? AppTheme.primary : Colors.transparent,
+              border: Border.all(
+                color: isSelected
+                    ? AppTheme.primary
+                    : Colors.white.withValues(alpha: 0.12),
               ),
-              child: Center(
-                child: Text(
-                  dayLabels[dayNumber]!,
-                  style: TextStyle(
-                    color: isSelected
-                        ? Colors.white
-                        : AppTheme.onSurfaceSecondary,
-                    fontSize: dayFontSize,
-                    fontWeight: FontWeight.w600,
-                  ),
+            ),
+            child: Center(
+              child: Text(
+                dayLabels[dayNumber]!,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : AppTheme.onSurfaceSecondary,
+                  fontSize: dayFontSize,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          );
-        }),
-      ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -879,7 +1170,7 @@ class _RepeatDaysSelector extends StatelessWidget {
 class _ChallengeSelector extends StatelessWidget {
   final models.WakeUpChallenge selected;
   final bool compact;
-  final ValueChanged<models.WakeUpChallenge> onChanged;
+  final Future<void> Function(models.WakeUpChallenge) onChanged;
 
   const _ChallengeSelector({
     required this.selected,
@@ -916,7 +1207,7 @@ class _ChallengeSelector extends StatelessWidget {
       height: selectorHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.zero,
         itemCount: challenges.length,
         itemBuilder: (context, index) {
           final (challenge, icon, label) = challenges[index];
@@ -928,8 +1219,15 @@ class _ChallengeSelector extends StatelessWidget {
               width: itemWidth,
               margin: EdgeInsets.symmetric(horizontal: itemMargin),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
+                color: isSelected
+                    ? AppTheme.primary.withValues(alpha: 0.16)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? AppTheme.primary
+                      : Colors.white.withValues(alpha: 0.08),
+                ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -937,7 +1235,7 @@ class _ChallengeSelector extends StatelessWidget {
                   Icon(
                     icon,
                     color: isSelected
-                        ? Colors.white
+                        ? AppTheme.primary
                         : AppTheme.onSurfaceSecondary,
                     size: iconSize,
                   ),
@@ -946,7 +1244,7 @@ class _ChallengeSelector extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: isSelected
-                          ? Colors.white
+                          ? AppTheme.primary
                           : AppTheme.onSurfaceSecondary,
                       fontSize: labelFontSize,
                       fontWeight: FontWeight.w600,

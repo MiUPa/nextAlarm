@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -110,6 +112,9 @@ open class MainActivity : FlutterActivity() {
 					}
 					"openBatteryOptimizationSettings" -> {
 						result.success(openBatteryOptimizationSettings())
+					}
+					"hasStepCounterSensor" -> {
+						result.success(hasStepCounterSensor())
 					}
 					"stopAlarmRinging" -> {
 						stopAlarmService()
@@ -266,6 +271,12 @@ open class MainActivity : FlutterActivity() {
 			Log.w(TAG, "Failed to open battery optimization settings", error)
 			false
 		}
+	}
+
+	private fun hasStepCounterSensor(): Boolean {
+		val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+		return sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null ||
+			sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) != null
 	}
 
 	private fun stopAlarmService() {

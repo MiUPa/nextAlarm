@@ -122,6 +122,30 @@ abstract class AppLocalizations {
   /// **'Tap + to create your first alarm'**
   String get tapToCreateAlarm;
 
+  /// No description provided for @androidReliabilityNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Android alarm reliability settings need attention.'**
+  String get androidReliabilityNeedsAttention;
+
+  /// No description provided for @androidReliabilityIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Android reliability settings'**
+  String get androidReliabilityIntroTitle;
+
+  /// No description provided for @androidReliabilityIntroMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Before relying on this app, review notification, exact alarm, full-screen display, and battery settings so alarms can ring reliably.'**
+  String get androidReliabilityIntroMessage;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
   /// No description provided for @addAlarm.
   ///
   /// In en, this message translates to:
@@ -155,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @labelHint.
   ///
   /// In en, this message translates to:
-  /// **'Alarm name'**
+  /// **'Add label'**
   String get labelHint;
 
   /// No description provided for @repeat.
@@ -440,11 +464,23 @@ abstract class AppLocalizations {
   /// **'Speech recognition not available'**
   String get speechNotAvailable;
 
+  /// No description provided for @voiceChallengeNeedsMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is required for the Voice challenge'**
+  String get voiceChallengeNeedsMicrophone;
+
   /// No description provided for @walkToStop.
   ///
   /// In en, this message translates to:
   /// **'Walk to stop the alarm'**
   String get walkToStop;
+
+  /// No description provided for @stepsChallengeNeedsActivityPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity recognition permission is required for the Steps challenge'**
+  String get stepsChallengeNeedsActivityPermission;
 
   /// No description provided for @stepSensorNotAvailable.
   ///
