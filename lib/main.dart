@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -19,14 +18,6 @@ import 'theme/app_theme.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-/// Request microphone permission at app startup for voice recognition challenge
-Future<void> _requestMicrophonePermission() async {
-  final status = await Permission.microphone.status;
-  if (status.isDenied) {
-    await Permission.microphone.request();
-  }
-}
-
 /// Initialize notifications for Android
 Future<void> _initializeNotifications() async {
   const androidSettings = AndroidInitializationSettings(
@@ -41,13 +32,6 @@ Future<void> _initializeNotifications() async {
       debugPrint('Notification tapped: ${response.payload}');
     },
   );
-
-  // Request notification permission for Android 13+
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
-      ?.requestNotificationsPermission();
 }
 
 void main() async {
@@ -55,9 +39,6 @@ void main() async {
 
   // Initialize notifications
   await _initializeNotifications();
-
-  // Request microphone permission at startup for voice recognition challenge
-  await _requestMicrophonePermission();
 
   // Set system UI overlay style for status bar
   SystemChrome.setSystemUIOverlayStyle(

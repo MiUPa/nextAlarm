@@ -164,6 +164,7 @@ class AlarmService extends ChangeNotifier with WidgetsBindingObserver {
       unawaited(_disableOneTimeAlarmAfterTrigger(alarm));
     }
 
+    AppNavigationService.hideCurrentSnackBar();
     AppNavigationService.popToRoot();
 
     if (_useAndroidPlatformScheduler) {

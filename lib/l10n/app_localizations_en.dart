@@ -21,6 +21,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tapToCreateAlarm => 'Tap + to create your first alarm';
 
   @override
+  String get androidReliabilityNeedsAttention =>
+      'Android alarm reliability settings need attention.';
+
+  @override
+  String get androidReliabilityIntroTitle =>
+      'Check Android reliability settings';
+
+  @override
+  String get androidReliabilityIntroMessage =>
+      'Before relying on this app, review notification, exact alarm, full-screen display, and battery settings so alarms can ring reliably.';
+
+  @override
+  String get later => 'Later';
+
+  @override
   String get addAlarm => 'Add Alarm';
 
   @override
@@ -36,7 +51,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get label => 'Label';
 
   @override
-  String get labelHint => 'Alarm name';
+  String get labelHint => 'Add label';
 
   @override
   String get repeat => 'Repeat';
@@ -215,7 +230,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechNotAvailable => 'Speech recognition not available';
 
   @override
+  String get voiceChallengeNeedsMicrophone =>
+      'Microphone permission is required for the Voice challenge';
+
+  @override
   String get walkToStop => 'Walk to stop the alarm';
+
+  @override
+  String get stepsChallengeNeedsActivityPermission =>
+      'Activity recognition permission is required for the Steps challenge';
 
   @override
   String get stepSensorNotAvailable =>

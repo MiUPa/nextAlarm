@@ -140,6 +140,11 @@ class AndroidAlarmPlatformService {
         false;
   }
 
+  static Future<bool> hasStepCounterSensor() async {
+    if (!_isAndroid) return true;
+    return (await _channel.invokeMethod<bool>('hasStepCounterSensor')) ?? false;
+  }
+
   static Future<void> stopAlarmRinging() async {
     if (!_isAndroid) return;
     await _channel.invokeMethod<void>('stopAlarmRinging');

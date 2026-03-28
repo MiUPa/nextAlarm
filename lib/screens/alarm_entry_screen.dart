@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart' as models;
 import '../services/alarm_service.dart';
@@ -17,80 +18,84 @@ class AlarmEntryScreen extends StatelessWidget {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: Container(
+        body: DecoratedBox(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1a1a2e), Color(0xFF16213e), Color(0xFF0f3460)],
+              colors: [Color(0xFF191C30), Color(0xFF142544), Color(0xFF0B3B63)],
             ),
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Align(
+                    child: _StatusPill(
+                      icon: Icons.notifications_active_rounded,
+                      label: l10n.alarmIsRinging,
+                    ),
+                  ),
                   const Spacer(),
                   _buildAlarmIcon(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   Text(
                     _formattedTime(alarm.time),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 72,
+                      fontSize: 76,
                       fontWeight: FontWeight.w300,
                       color: Colors.white,
-                      letterSpacing: -2,
+                      letterSpacing: -3,
                     ),
                   ),
-                  if (alarm.label.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      alarm.label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white70,
-                      ),
+                  const SizedBox(height: 18),
+                  if (alarm.label.trim().isNotEmpty) ...[
+                    _MessageCard(
+                      icon: Icons.flag_rounded,
+                      title: alarm.label.trim(),
                     ),
+                    const SizedBox(height: 18),
                   ],
-                  const SizedBox(height: 28),
-                  Text(
-                    l10n.alarmIsRinging,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   Text(
                     l10n.stopAlarm,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white70,
+                    ),
                   ),
                   const Spacer(),
-                  ElevatedButton(
-                    onPressed: () {
-                      final alarmService = context.read<AlarmService>();
-                      alarmService.stopRingingAlarm();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.error,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.error.withValues(alpha: 0.32),
+                          blurRadius: 24,
+                          offset: const Offset(0, 14),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      l10n.stopAlarm,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<AlarmService>().stopRingingAlarm();
+                      },
+                      icon: const Icon(Icons.alarm_off_rounded),
+                      label: Text(l10n.stopAlarm),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.error,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -106,16 +111,23 @@ class AlarmEntryScreen extends StatelessWidget {
   Widget _buildAlarmIcon() {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppTheme.error.withValues(alpha: 0.22),
+          color: AppTheme.error.withValues(alpha: 0.18),
           border: Border.all(
-            color: AppTheme.error.withValues(alpha: 0.5),
+            color: AppTheme.error.withValues(alpha: 0.52),
             width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.error.withValues(alpha: 0.16),
+              blurRadius: 28,
+              spreadRadius: 8,
+            ),
+          ],
         ),
-        child: const Icon(Icons.alarm, size: 72, color: AppTheme.error),
+        child: const Icon(Icons.alarm_rounded, size: 72, color: AppTheme.error),
       ),
     );
   }
@@ -124,5 +136,92 @@ class AlarmEntryScreen extends StatelessWidget {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageCard extends StatelessWidget {
+  const _MessageCard({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.warning.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppTheme.warning),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

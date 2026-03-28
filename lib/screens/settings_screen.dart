@@ -333,8 +333,8 @@ class _AndroidAlarmReliabilitySectionState
         summary:
             'Samsung often needs battery and notification allow-lists aligned for reliable alarm takeover.',
         steps: [
-          'Set Battery to Unrestricted for WakeShock.',
-          'Add WakeShock to Never sleeping apps if that option exists.',
+          'Set Battery to Unrestricted for NextAlarm.',
+          'Add NextAlarm to Never sleeping apps if that option exists.',
           'Confirm lock-screen notifications and full-screen alarms are allowed.',
         ],
       );
@@ -348,8 +348,8 @@ class _AndroidAlarmReliabilitySectionState
         summary:
             'MIUI and HyperOS commonly block alarm takeovers unless background launch is explicitly allowed.',
         steps: [
-          'Set Battery saver to No restrictions for WakeShock.',
-          'Enable Auto-start for WakeShock if your device exposes that toggle.',
+          'Set Battery saver to No restrictions for NextAlarm.',
+          'Enable Auto-start for NextAlarm if your device exposes that toggle.',
           'Allow lock-screen notifications and full-screen alarm display.',
         ],
       );
@@ -363,8 +363,8 @@ class _AndroidAlarmReliabilitySectionState
         summary:
             'These devices often need background activity permissions in addition to battery exclusions.',
         steps: [
-          'Set Battery to Don\'t optimize or Unrestricted for WakeShock.',
-          'Allow auto launch, background launch, or startup management for WakeShock.',
+          'Set Battery to Don\'t optimize or Unrestricted for NextAlarm.',
+          'Allow auto launch, background launch, or startup management for NextAlarm.',
           'Keep notifications, floating alerts, and lock-screen alerts enabled.',
         ],
       );
@@ -376,8 +376,8 @@ class _AndroidAlarmReliabilitySectionState
         summary:
             'FuntouchOS can suppress alarm UI unless autostart and background permissions are both enabled.',
         steps: [
-          'Enable Auto start for WakeShock.',
-          'Disable battery optimization for WakeShock.',
+          'Enable Auto start for NextAlarm.',
+          'Disable battery optimization for NextAlarm.',
           'Keep pop-up notifications and lock-screen notifications enabled.',
         ],
       );
@@ -401,7 +401,7 @@ class _AndroidAlarmReliabilitySectionState
       summary:
           'If alarm UI does not appear reliably, align battery, notification, and startup permissions first.',
       steps: [
-        'Disable battery optimization for WakeShock if available.',
+        'Disable battery optimization for NextAlarm if available.',
         'Confirm notifications and full-screen alarms are allowed.',
         'Look for auto-start, background launch, or popup display settings from your device maker.',
       ],
