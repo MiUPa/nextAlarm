@@ -78,6 +78,7 @@
 - Roll out staged percentage first (recommended), then 100%.
 
 ## Current Project Status (as of this branch)
+- Target internal release: `0.1.15+27`.
 - Signed AAB build: OK (`build/app/outputs/bundle/release/app-release.aab`).
 - Key properties present locally: OK.
-- One analyzer error in old widget test was fixed.
+- Analyzer/test baseline is expected before Play upload.

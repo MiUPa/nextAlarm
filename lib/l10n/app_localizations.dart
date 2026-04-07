@@ -470,6 +470,18 @@ abstract class AppLocalizations {
   /// **'Microphone permission is required for the Voice challenge'**
   String get voiceChallengeNeedsMicrophone;
 
+  /// No description provided for @microphonePermissionRationaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access?'**
+  String get microphonePermissionRationaleTitle;
+
+  /// No description provided for @microphonePermissionRationaleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'NextAlarm uses the microphone only for the Voice challenge after the alarm starts ringing.'**
+  String get microphonePermissionRationaleMessage;
+
   /// No description provided for @walkToStop.
   ///
   /// In en, this message translates to:
@@ -481,6 +493,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activity recognition permission is required for the Steps challenge'**
   String get stepsChallengeNeedsActivityPermission;
+
+  /// No description provided for @activityPermissionRationaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow activity access?'**
+  String get activityPermissionRationaleTitle;
+
+  /// No description provided for @activityPermissionRationaleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'NextAlarm uses activity recognition only to count your steps for the Steps challenge after the alarm starts ringing.'**
+  String get activityPermissionRationaleMessage;
 
   /// No description provided for @stepSensorNotAvailable.
   ///
@@ -505,6 +529,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
+
+  /// No description provided for @permissionContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get permissionContinue;
+
+  /// No description provided for @permissionSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission needed'**
+  String get permissionSettingsTitle;
+
+  /// No description provided for @permissionSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permission is turned off. Open Android Settings to enable it.'**
+  String get permissionSettingsMessage;
+
+  /// No description provided for @notificationPermissionRationaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow alarm notifications?'**
+  String get notificationPermissionRationaleTitle;
+
+  /// No description provided for @notificationPermissionRationaleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Android needs notification permission to show ringing alarms and full-screen alarm alerts reliably.'**
+  String get notificationPermissionRationaleMessage;
 
   /// No description provided for @language.
   ///

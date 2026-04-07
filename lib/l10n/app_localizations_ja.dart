@@ -212,10 +212,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get voiceChallengeNeedsMicrophone => '音声チャレンジにはマイクの許可が必要です';
 
   @override
+  String get microphonePermissionRationaleTitle => 'マイクの許可が必要です';
+
+  @override
+  String get microphonePermissionRationaleMessage =>
+      '音声チャレンジでは、アラームが鳴った後に音声を認識するためだけにマイクを使用します。';
+
+  @override
   String get walkToStop => '歩いてアラームを停止';
 
   @override
   String get stepsChallengeNeedsActivityPermission => '歩数チャレンジには身体活動の許可が必要です';
+
+  @override
+  String get activityPermissionRationaleTitle => '身体活動の許可が必要です';
+
+  @override
+  String get activityPermissionRationaleMessage =>
+      '歩数チャレンジでは、アラームが鳴った後に歩数を数えるためだけに身体活動を使用します。';
 
   @override
   String get stepSensorNotAvailable => 'この端末では歩数センサーが利用できません';
@@ -230,6 +244,23 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settings => '設定';
+
+  @override
+  String get permissionContinue => '続ける';
+
+  @override
+  String get permissionSettingsTitle => '設定で許可してください';
+
+  @override
+  String get permissionSettingsMessage =>
+      'この権限はオフになっています。Android の設定から許可を有効にしてください。';
+
+  @override
+  String get notificationPermissionRationaleTitle => '通知の許可が必要です';
+
+  @override
+  String get notificationPermissionRationaleMessage =>
+      'Android では、鳴動中の通知と全画面アラートを安定して表示するために通知の許可が必要です。';
 
   @override
   String get language => '言語';

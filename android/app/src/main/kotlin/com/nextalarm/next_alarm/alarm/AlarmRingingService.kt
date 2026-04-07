@@ -11,8 +11,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.media.Ringtone
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -29,6 +31,7 @@ import com.nextalarm.next_alarm.R
 
 class AlarmRingingService : Service() {
     private var ringtone: Ringtone? = null
+    private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var serviceNotificationId: Int = BASE_NOTIFICATION_ID
@@ -38,13 +41,15 @@ class AlarmRingingService : Service() {
     private var activeSound: Int = SOUND_SILENT
     private var activeVibrate: Boolean = false
     private var activeVibrationIntensity: Int = 1
+    private var activeGradualVolume: Boolean = false
+    private var currentVolume: Float = MAX_VOLUME
     private var autoStopRunnable: Runnable? = null
     private var isScreenReceiverRegistered = false
     private val screenOffRecoveryRunnable = Runnable {
         if (!isAlarmActive()) return@Runnable
         Log.i(TAG, "Reasserting alarm playback after screen off")
         acquireWakeLock()
-        ensureRingtonePlaying()
+        ensurePlaybackActive()
         if (activeVibrate) {
             startVibration(activeVibrationIntensity)
         }
@@ -55,13 +60,36 @@ class AlarmRingingService : Service() {
                 return
             }
             if (activeSound != SOUND_SILENT) {
-                val currentRingtone = ringtone
-                if (currentRingtone == null || !currentRingtone.isPlaying) {
-                    Log.i(TAG, "Ringtone stopped unexpectedly; restarting")
-                    startRingtone()
+                if (!isPlaybackActive()) {
+                    Log.i(TAG, "Alarm playback stopped unexpectedly; restarting")
+                    startPlayback()
                 }
             }
             loopHandler.postDelayed(this, RINGTONE_MONITOR_INTERVAL_MS)
+        }
+    }
+    private val volumeRampRunnable = object : Runnable {
+        override fun run() {
+            if (!isAlarmActive() || !activeGradualVolume) {
+                return
+            }
+
+            val player = mediaPlayer ?: return
+            if (!player.isPlaying) {
+                return
+            }
+
+            if (currentVolume >= MAX_VOLUME) {
+                return
+            }
+
+            currentVolume = (currentVolume + VOLUME_STEP).coerceAtMost(MAX_VOLUME)
+            player.setVolume(currentVolume, currentVolume)
+            Log.i(TAG, "Alarm volume increased to $currentVolume")
+
+            if (currentVolume < MAX_VOLUME) {
+                loopHandler.postDelayed(this, VOLUME_STEP_INTERVAL_MS)
+            }
         }
     }
     private val vibrationLoopRunnable = object : Runnable {
@@ -111,7 +139,7 @@ class AlarmRingingService : Service() {
 
     override fun onDestroy() {
         loopHandler.removeCallbacks(screenOffRecoveryRunnable)
-        stopRingtone()
+        stopPlayback()
         stopVibration()
         releaseWakeLock()
         cancelAlertNotification()
@@ -125,12 +153,15 @@ class AlarmRingingService : Service() {
         val sound = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_SOUND, 0)
         val vibrate = intent.getBooleanExtra(AlarmReceiver.EXTRA_ALARM_VIBRATE, true)
         val vibrationIntensity = intent.getIntExtra(AlarmReceiver.EXTRA_ALARM_VIBRATION_INTENSITY, 1)
+        val gradualVolume = intent.getBooleanExtra(AlarmReceiver.EXTRA_ALARM_GRADUAL_VOLUME, false)
         activeAlarmId = alarmId
         activeSound = sound
         activeVibrate = vibrate
         activeVibrationIntensity = vibrationIntensity
+        activeGradualVolume = gradualVolume && sound != SOUND_SILENT
+        currentVolume = if (activeGradualVolume) INITIAL_VOLUME else MAX_VOLUME
         AlarmPrefs.setPendingRingingAlarmId(this, alarmId)
-        stopRingtone()
+        stopPlayback()
         stopVibration()
         cancelAutoStop()
 
@@ -145,7 +176,7 @@ class AlarmRingingService : Service() {
 
         // AlarmSound.silent index == 5 in Dart enum
         if (sound != SOUND_SILENT) {
-            startRingtone()
+            startPlayback()
         }
         if (vibrate) {
             startVibration(vibrationIntensity)
@@ -309,11 +340,25 @@ class AlarmRingingService : Service() {
         }
     }
 
-    private fun startRingtone() {
+    private fun startPlayback() {
         if (activeSound == SOUND_SILENT) return
-        stopRingtone()
-        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+        val alarmUri = resolveAlarmUri(activeSound)
+        if (alarmUri == null) {
+            Log.w(TAG, "No ringtone URI resolved for sound index $activeSound")
+            return
+        }
+
+        if (activeGradualVolume) {
+            startMediaPlayer(alarmUri)
+        } else {
+            startRingtone(alarmUri)
+        }
+    }
+
+    private fun startRingtone(alarmUri: Uri) {
+        stopPlayback()
+        currentVolume = MAX_VOLUME
         ringtone = RingtoneManager.getRingtone(this, alarmUri)?.apply {
             audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
@@ -328,18 +373,67 @@ class AlarmRingingService : Service() {
         loopHandler.postDelayed(ringtoneMonitorRunnable, RINGTONE_MONITOR_INTERVAL_MS)
     }
 
-    private fun ensureRingtonePlaying() {
+    private fun startMediaPlayer(alarmUri: Uri) {
+        stopPlayback()
+
+        currentVolume = currentVolume.coerceIn(INITIAL_VOLUME, MAX_VOLUME)
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                setDataSource(this@AlarmRingingService, alarmUri)
+                isLooping = true
+                setVolume(currentVolume, currentVolume)
+                prepare()
+                start()
+            }
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to start gradual alarm playback", error)
+            mediaPlayer?.release()
+            mediaPlayer = null
+            currentVolume = MAX_VOLUME
+            activeGradualVolume = false
+            startRingtone(alarmUri)
+            return
+        }
+
+        loopHandler.removeCallbacks(volumeRampRunnable)
+        if (currentVolume < MAX_VOLUME) {
+            loopHandler.postDelayed(volumeRampRunnable, VOLUME_STEP_INTERVAL_MS)
+        }
+        loopHandler.removeCallbacks(ringtoneMonitorRunnable)
+        loopHandler.postDelayed(ringtoneMonitorRunnable, RINGTONE_MONITOR_INTERVAL_MS)
+    }
+
+    private fun ensurePlaybackActive() {
         if (activeSound == SOUND_SILENT) return
-        val currentRingtone = ringtone
-        if (currentRingtone == null || !currentRingtone.isPlaying) {
-            startRingtone()
+        if (!isPlaybackActive()) {
+            startPlayback()
         }
     }
 
-    private fun stopRingtone() {
+    private fun isPlaybackActive(): Boolean {
+        val currentPlayer = mediaPlayer
+        if (currentPlayer != null) {
+            return runCatching { currentPlayer.isPlaying }.getOrDefault(false)
+        }
+
+        val currentRingtone = ringtone
+        return currentRingtone?.isPlaying == true
+    }
+
+    private fun stopPlayback() {
         loopHandler.removeCallbacks(ringtoneMonitorRunnable)
+        loopHandler.removeCallbacks(volumeRampRunnable)
         ringtone?.stop()
         ringtone = null
+        runCatching { mediaPlayer?.stop() }
+        runCatching { mediaPlayer?.release() }
+        mediaPlayer = null
     }
 
     /**
@@ -420,10 +514,12 @@ class AlarmRingingService : Service() {
         activeSound = SOUND_SILENT
         activeVibrate = false
         activeVibrationIntensity = 1
+        activeGradualVolume = false
+        currentVolume = MAX_VOLUME
         cancelAutoStop()
         loopHandler.removeCallbacks(screenOffRecoveryRunnable)
         AlarmPrefs.clearPendingRingingAlarmId(this)
-        stopRingtone()
+        stopPlayback()
         stopVibration()
         releaseWakeLock()
         cancelAlertNotification()
@@ -485,6 +581,19 @@ class AlarmRingingService : Service() {
         manager.createNotificationChannel(alertChannel)
     }
 
+    private fun resolveAlarmUri(sound: Int): Uri? {
+        val primaryType = when (sound) {
+            SOUND_GENTLE, SOUND_NATURE -> RingtoneManager.TYPE_NOTIFICATION
+            SOUND_CLASSIC -> RingtoneManager.TYPE_RINGTONE
+            else -> RingtoneManager.TYPE_ALARM
+        }
+
+        return RingtoneManager.getDefaultUri(primaryType)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+    }
+
     companion object {
         const val ACTION_START = "com.nextalarm.next_alarm.ALARM_RINGING_START"
         const val ACTION_STOP = "com.nextalarm.next_alarm.ALARM_RINGING_STOP"
@@ -492,11 +601,18 @@ class AlarmRingingService : Service() {
         private const val ALERT_CHANNEL_ID = "alarm_alert_channel"
         private const val BASE_NOTIFICATION_ID = 42000
         private const val ALERT_NOTIFICATION_OFFSET = 100000
+        private const val SOUND_GENTLE = 1
+        private const val SOUND_CLASSIC = 3
+        private const val SOUND_NATURE = 4
         private const val SOUND_SILENT = 5 // AlarmSound.silent index in Dart enum
         private const val RINGTONE_MONITOR_INTERVAL_MS = 1000L
+        private const val VOLUME_STEP_INTERVAL_MS = 5000L
         private const val SCREEN_OFF_RECOVERY_DELAY_MS = 350L
         private const val WAKE_LOCK_TIMEOUT_MS = 30 * 60 * 1000L
         private const val TAG = "AlarmRingingService"
+        private const val INITIAL_VOLUME = 0.1f
+        private const val MAX_VOLUME = 1.0f
+        private const val VOLUME_STEP = 0.15f
         private val VIBRATION_PATTERN = longArrayOf(
             0, 100, 50, 100, 50, 200, 100, 100,
             200, 500, 100, 300,

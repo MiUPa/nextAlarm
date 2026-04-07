@@ -234,11 +234,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone permission is required for the Voice challenge';
 
   @override
+  String get microphonePermissionRationaleTitle => 'Allow microphone access?';
+
+  @override
+  String get microphonePermissionRationaleMessage =>
+      'NextAlarm uses the microphone only for the Voice challenge after the alarm starts ringing.';
+
+  @override
   String get walkToStop => 'Walk to stop the alarm';
 
   @override
   String get stepsChallengeNeedsActivityPermission =>
       'Activity recognition permission is required for the Steps challenge';
+
+  @override
+  String get activityPermissionRationaleTitle => 'Allow activity access?';
+
+  @override
+  String get activityPermissionRationaleMessage =>
+      'NextAlarm uses activity recognition only to count your steps for the Steps challenge after the alarm starts ringing.';
 
   @override
   String get stepSensorNotAvailable =>
@@ -254,6 +268,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings => 'Settings';
+
+  @override
+  String get permissionContinue => 'Continue';
+
+  @override
+  String get permissionSettingsTitle => 'Permission needed';
+
+  @override
+  String get permissionSettingsMessage =>
+      'This permission is turned off. Open Android Settings to enable it.';
+
+  @override
+  String get notificationPermissionRationaleTitle =>
+      'Allow alarm notifications?';
+
+  @override
+  String get notificationPermissionRationaleMessage =>
+      'Android needs notification permission to show ringing alarms and full-screen alarm alerts reliably.';
 
   @override
   String get language => 'Language';
