@@ -112,6 +112,50 @@ flutter build ios --no-codesign
 - Preserve the two-stage ringing flow: entry screen first, challenge screen second.
 - Avoid broad dependency churn unless the current version is the direct cause of failure.
 
+## Codex Operating Defaults
+
+- For non-trivial work, anchor execution around four points: Goal, Context, Constraints, Done.
+- Keep durable agent guidance in this file. If the same mistake or clarification repeats, update `AGENTS.md` instead of relying on one-off prompts.
+- Keep permissions tight by default. Prefer workspace-local reads, edits, and routine commands; escalate only when a required step truly exceeds the sandbox.
+- Do not stop at code generation alone. Prefer the smallest relevant verification step first, then expand to broader checks when the risk justifies it.
+- If a workflow becomes repetitive and stable, codify it in `scripts/` or `skills/` instead of repeating ad hoc command sequences.
+
+## Language-Specific Guidance
+
+### Dart / Flutter
+
+- Preserve the existing split between models, services, screens, and theme. Do not introduce a new state-management approach when `provider` and the current service layer are sufficient.
+- Route user-facing copy through localization where applicable. Avoid hardcoded UI strings in Dart when `AppLocalizations` should own them.
+- Reuse `AppTheme` and existing visual tokens before adding new styling primitives.
+- Keep alarm-stage behavior explicit. Changes around ringing must preserve entry-screen-first and challenge-screen-second routing.
+- Prefer focused edits over large refactors in reliability-sensitive code such as `alarm_service.dart` and alarm-related screens.
+
+### Kotlin / Android
+
+- Treat `android/app/src/main/kotlin/.../alarm/` as reliability-critical code. Preserve exact-alarm, foreground-service, wake-lock, notification, and full-screen intent behavior unless the change clearly improves reliability.
+- Keep Dart/native contracts aligned. If alarm payload fields, enum indexes, intent extras, or platform-channel method names change, update both sides in the same task.
+- Add permissions, exported components, or background behaviors only when runtime code actively needs them and the manifest/service change is justified.
+- Prefer safe fallbacks and targeted diagnostics over broad rewrites in alarm scheduling and ringing code.
+
+### Shell / Release Scripts
+
+- Keep shell scripts strict and explicit: `set -euo pipefail`, validated env vars, and repo-root-relative paths.
+- Fail fast on signing, service-account, and artifact preconditions. Do not silently weaken release guardrails.
+- Preserve the internal-first Play release policy unless the user explicitly requests a policy change.
+
+### Markdown / Localization
+
+- `README.md` is the canonical project overview. Keep `README.ja.md` aligned when setup steps, product scope, or user-visible behavior changes.
+- When behavior changes, update the nearest relevant doc or release note instead of leaving the operational impact implicit.
+- Prefer concrete commands, artifact paths, and platform-specific notes over generic prose.
+
+## Verification by Change Type
+
+- Dart UI or service changes: run `flutter analyze` and the narrowest relevant `flutter test`.
+- Native Android alarm changes: run `flutter analyze`, `flutter test`, and `flutter build apk --debug`; prefer physical-device checks using `docs/android_alarm_reliability_testplan.md`.
+- Release script changes: exercise the narrowest safe path that proves the modified logic, while keeping `build/app/outputs/bundle/release/app-release.aab` as the expected release artifact.
+- Docs-only changes: review for consistency and command accuracy; no app build is required.
+
 ## Current Focus Areas
 
 - Alarm reliability across Android OEM variations

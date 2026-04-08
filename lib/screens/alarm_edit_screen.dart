@@ -727,6 +727,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     final permissionGranted = await _ensurePermissionGranted(
       permission: Permission.microphone,
       deniedMessage: l10n.voiceChallengeNeedsMicrophone,
+      rationaleTitle: l10n.microphonePermissionRationaleTitle,
+      rationaleMessage: l10n.microphonePermissionRationaleMessage,
       showFeedback: showFeedback,
     );
     if (!permissionGranted || !mounted) return false;
@@ -748,6 +750,8 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
     final permissionGranted = await _ensurePermissionGranted(
       permission: Permission.activityRecognition,
       deniedMessage: l10n.stepsChallengeNeedsActivityPermission,
+      rationaleTitle: l10n.activityPermissionRationaleTitle,
+      rationaleMessage: l10n.activityPermissionRationaleMessage,
       showFeedback: showFeedback,
     );
     if (!permissionGranted || !mounted) return false;
@@ -767,10 +771,27 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
   Future<bool> _ensurePermissionGranted({
     required Permission permission,
     required String deniedMessage,
+    required String rationaleTitle,
+    required String rationaleMessage,
     required bool showFeedback,
   }) async {
     var status = await permission.status;
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+
     if (status.isDenied) {
+      if (isAndroid && showFeedback) {
+        final shouldShowRationale = await permission.shouldShowRequestRationale;
+        if (shouldShowRationale) {
+          final shouldContinue = await _showPermissionRationaleDialog(
+            title: rationaleTitle,
+            message: rationaleMessage,
+          );
+          if (!shouldContinue) {
+            return false;
+          }
+        }
+      }
+
       status = await permission.request();
     }
 
@@ -778,13 +799,100 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
       return true;
     }
 
-    if (showFeedback && mounted) {
-      _showChallengeBlockedSnackBar(
-        deniedMessage,
-        withSettingsAction: status.isPermanentlyDenied || status.isRestricted,
-      );
+    if (!showFeedback || !mounted) {
+      return false;
     }
+
+    if (status.isPermanentlyDenied || status.isRestricted) {
+      await _showPermissionSettingsDialog(
+        deniedMessage: deniedMessage,
+        onOpenSettings: permission == Permission.notification
+            ? _openAndroidNotificationSettings
+            : openAppSettings,
+      );
+      return false;
+    }
+
+    _showChallengeBlockedSnackBar(deniedMessage);
     return false;
+  }
+
+  Future<bool> _showPermissionRationaleDialog({
+    required String title,
+    required String message,
+  }) async {
+    if (!mounted) return false;
+
+    final l10n = AppLocalizations.of(context)!;
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            backgroundColor: AppTheme.surface,
+            title: Text(
+              title,
+              style: const TextStyle(color: AppTheme.onSurface),
+            ),
+            content: Text(
+              message,
+              style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(l10n.permissionContinue),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _showPermissionSettingsDialog({
+    required String deniedMessage,
+    required Future<bool> Function() onOpenSettings,
+  }) async {
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: Text(
+          l10n.permissionSettingsTitle,
+          style: const TextStyle(color: AppTheme.onSurface),
+        ),
+        content: Text(
+          '$deniedMessage\n\n${l10n.permissionSettingsMessage}',
+          style: const TextStyle(color: AppTheme.onSurfaceSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await onOpenSettings();
+            },
+            child: Text(l10n.settings),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _openAndroidNotificationSettings() async {
+    final opened = await AndroidAlarmPlatformService.openNotificationSettings();
+    if (opened) {
+      return true;
+    }
+    return openAppSettings();
   }
 
   void _showChallengeBlockedSnackBar(
@@ -917,10 +1025,25 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
   }
 
   Future<void> _requestNotificationPermissionIfNeeded() async {
-    final status = await Permission.notification.status;
-    if (status.isDenied) {
-      await Permission.notification.request();
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return;
     }
+
+    final status = await Permission.notification.status;
+    if (!status.isDenied || !mounted) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final shouldContinue = await _showPermissionRationaleDialog(
+      title: l10n.notificationPermissionRationaleTitle,
+      message: l10n.notificationPermissionRationaleMessage,
+    );
+    if (!shouldContinue) {
+      return;
+    }
+
+    await Permission.notification.request();
   }
 
   Widget _buildPauseDatesTile(

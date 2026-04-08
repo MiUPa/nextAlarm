@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -39,6 +40,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
   String _targetPhrase = '';
   String _recognizedText = '';
   bool _isListening = false;
+  String? _voiceError;
 
   // Step challenge
   StreamSubscription<StepCount>? _stepSubscription;
@@ -83,6 +85,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
     _pulseController.dispose();
     _accelerometerSubscription?.cancel();
     _stepSubscription?.cancel();
+    _speech.stop();
     super.dispose();
   }
 
@@ -239,16 +242,29 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
   }
 
   Future<void> _initializeSpeechRecognition() async {
+    final permissionGranted = await _hasPermissionForActiveAlarm(
+      Permission.microphone,
+    );
+    if (!permissionGranted) {
+      if (mounted) {
+        setState(() {
+          _voiceError = 'permission_denied';
+        });
+      }
+      return;
+    }
+
     final available = await _speech.initialize();
     if (!available && mounted) {
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.speechNotAvailable)));
+      setState(() {
+        _voiceError = 'speech_unavailable';
+      });
     }
   }
 
   void _startListening() async {
+    if (_voiceError != null) return;
+
     final localeService = context.read<LocaleService>();
     final effectiveLocale = localeService.getEffectiveLocale(context);
     final localeId = effectiveLocale.languageCode == 'ja' ? 'ja_JP' : 'en_US';
@@ -292,18 +308,10 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
         5 + (difficulty * 10); // 15/25/35 steps based on difficulty
 
     // Request activity recognition permission on Android 10+
-    final status = await Permission.activityRecognition.status;
-    if (status.isDenied) {
-      final result = await Permission.activityRecognition.request();
-      if (!result.isGranted) {
-        if (mounted) {
-          setState(() {
-            _stepError = 'permission_denied';
-          });
-        }
-        return;
-      }
-    } else if (status.isPermanentlyDenied) {
+    final permissionGranted = await _hasPermissionForActiveAlarm(
+      Permission.activityRecognition,
+    );
+    if (!permissionGranted) {
       if (mounted) {
         setState(() {
           _stepError = 'permission_denied';
@@ -338,6 +346,14 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
         });
       },
     );
+  }
+
+  Future<bool> _hasPermissionForActiveAlarm(Permission permission) async {
+    var status = await permission.status;
+    if (defaultTargetPlatform != TargetPlatform.android && status.isDenied) {
+      status = await permission.request();
+    }
+    return status.isGranted;
   }
 
   Widget _buildChallengeContent() {
@@ -527,32 +543,61 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 40),
-        if (_recognizedText.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+        if (_voiceError != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Text(
+              _voiceError == 'permission_denied'
+                  ? l10n.voiceChallengeNeedsMicrophone
+                  : l10n.speechNotAvailable,
+              style: const TextStyle(fontSize: 16, color: Colors.redAccent),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _stopAlarm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Text(
-              l10n.recognized(_recognizedText),
-              style: const TextStyle(fontSize: 16, color: Colors.white70),
+              l10n.stopAlarm,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
             ),
           ),
-        const SizedBox(height: 40),
-        ElevatedButton.icon(
-          onPressed: _isListening ? _stopListening : _startListening,
-          icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-          label: Text(_isListening ? l10n.listening : l10n.tapMicrophone),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isListening ? AppTheme.error : AppTheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+        ] else ...[
+          if (_recognizedText.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                l10n.recognized(_recognizedText),
+                style: const TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+            ),
+          const SizedBox(height: 40),
+          ElevatedButton.icon(
+            onPressed: _isListening ? _stopListening : _startListening,
+            icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+            label: Text(_isListening ? l10n.listening : l10n.tapMicrophone),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isListening ? AppTheme.error : AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -582,7 +627,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen>
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Text(
-              l10n.stepSensorNotAvailable,
+              _stepError == 'permission_denied'
+                  ? l10n.stepsChallengeNeedsActivityPermission
+                  : l10n.stepSensorNotAvailable,
               style: const TextStyle(fontSize: 16, color: Colors.redAccent),
               textAlign: TextAlign.center,
             ),
